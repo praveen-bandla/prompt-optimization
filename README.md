@@ -169,6 +169,8 @@ When you're ready to share your changes, push your branch to the remote reposito
 git push --set-upstream origin <branch-name>
 ```
 
+This basically pushes the updated changes to your branch. Once thats done, we can approve the changes via github directly.
+
 <br>
 
 ### Data Handling
