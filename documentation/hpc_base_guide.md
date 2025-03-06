@@ -6,6 +6,7 @@ By the end of this document, you should have a decent understand of HPC, and be 
 
 I AM A COMPLETE NOOB I COULD BE WRONG SORRY TYVM I TRIED MY BEST
 
+<br>
 
 ## High-Level Guide of our HPC
 
@@ -55,10 +56,13 @@ We have 3 categories of file storage on the HPC. One of them is `archive` which 
 
 Given that all our code will be backed up through repository, the only thing we need to worry about duplicating is our data files. We will back those up on Home, but use scratch otherwise for primary purpose.
 
+<br>
+
 ## Connecting to HPC
 
 If you are connecting from a remote location that is not on the NYU network (e.g. home)
 
+<br>
 
 ## Setting up HPC
 
@@ -102,6 +106,30 @@ As mentioned earlier, you have file sizes available per type of directory. Use t
 ```bash
 myquota
 ```
+
+<br>
+
+### Remote Explorer (**)
+
+(Writing this section off of memory, I will sit with you to get this done). This section is super helfpul. It allows you to set up your HPC the same way you would use your VSCode for local files. By the end of this section, you should be able to navigate your file directory through HPC the way you would for local files.
+
+#### Step 1: Download Remote - SSH
+
+This is an extension on VSCode. Watch the little gif they have btw, super helpful.
+
+#### Step 2: Set-up the SSH
+
+Once you download the extension, you should see a little monitor icon pop-up in the sidebar. Open that and you should see an SSH toggle.
+
+Once there, enter: ```ssh {net_id}@greene.hpc.nyu.edu```
+
+Then, it should prompt you to enter a config file for access. Use the one sourced from your local files.
+
+#### Step 3: Access HPC
+
+There should be a little icon at the bottom left. Click on it and it should give you an option to connect to host. Select the file directory you want and then we should be good.
+
+
 
 ### File Directory System
 
@@ -161,6 +189,7 @@ cd /scratch/{your_netid}
 
 Now, for every successive login, you should open by default to scratch. If doing something in the `/home/{net_id}` file directory, navigate using `cd` and `ls`.
 
+REMEMBER TO CLOSE THE REMOTE CONNECTION EVERYTIME YOU STEP OUT, OTHERWISE IT COULD KILL YOUR SSH KEY. I HAD TO RESTART MINE RN IT WAS SAD
 
 
 
