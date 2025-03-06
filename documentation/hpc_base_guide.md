@@ -60,9 +60,11 @@ Given that all our code will be backed up through repository, the only thing we 
 
 ## Connecting to HPC
 
-If you are connecting from a remote location that is not on the NYU network (e.g. home)
+If you are connecting from a remote location that is not on the NYU network (e.g. from your home), you will need to use the NYU VPN.
+* See [Guide for Installing and Using VPN on Mac](https://www.nyu.edu/servicelink/KB0011175)
+* See [Guide for Installing and Using VPN on Windows](https://www.nyu.edu/servicelink/KB0011177)
 
-<br>
+Once you have established an NYU VPN connection, you can proceed as if you were connected to the NYU network.
 
 ## Setting up HPC
 
@@ -186,6 +188,8 @@ if [ -d ~/.bashrc.d ]; then
 ```bash
 cd /scratch/{your_netid}
 ```
+
+4. Once added, hit Enter. Then, type 'control + X' to exit the text editor. 
 
 Now, for every successive login, you should open by default to scratch. If doing something in the `/home/{net_id}` file directory, navigate using `cd` and `ls`.
 
