@@ -50,10 +50,10 @@ Key Concepts:<br>
 ### File Directory
 
 We have 3 categories of file storage on the HPC. One of them is `archive` which we will ignore for now. The other two:
-- **Home (50GB)**: Main folder, is backed up. Has smaller file size limite and a limited number of files
+- **Home (50GB)**: Main folder, is backed up. Has smaller file size limit and a limited number of files
 - **Scratch (5TB)**: Not backed up. Has much larger file size limit. Jason recommended we just use scratch for everything.
 
-Given that we all code backed up through repository, the only thing we need to worry about duplicating is our data files. We will back those up on Home, but use scratch otherwise for primary purpose.
+Given that all our code will be backed up through repository, the only thing we need to worry about duplicating is our data files. We will back those up on Home, but use scratch otherwise for primary purpose.
 
 
 ## Setting up HPC
