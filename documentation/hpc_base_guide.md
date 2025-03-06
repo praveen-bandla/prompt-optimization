@@ -123,7 +123,11 @@ This is an extension on VSCode. Watch the little gif they have btw, super helpfu
 
 Once you download the extension, you should see a little monitor icon pop-up in the sidebar. Open that and you should see an SSH toggle.
 
+<<<<<<< HEAD
 Once there, select the "+" next to "SSH" and enter: ```ssh {net_id}@greene.hpc.nyu.edu```
+=======
+Once there, enter: ```ssh {net_id}@greene.hpc.nyu.edu```
+>>>>>>> origin/main
 
 Then, it should prompt you to enter a config file for access. Use the one sourced from your local files.
 
