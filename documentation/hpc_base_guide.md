@@ -16,7 +16,7 @@ High-Performance Computing (HPC) is a centralized computer far more powerful tha
 
 ### Nodes
 
-In an HPC system, nodes are individual computers (servers) that work together to process jobs. we connect to the HPC through nodes. Types of nodes:
+In an HPC system, nodes are individual computers (servers) that work together to process jobs. We connect to the HPC through nodes. Types of nodes:
 
 1. **Login Node**: The entry point where you connect to the HPC (via SSH). *This also works exactly like a local computer. In many ways, you treat it as identical*.
 2. **Compute Nodes**: The machines that actually run your jobs. These have CPUs, GPUs, that we use. We do not directly interact with compute nodes. We send jobs via the job scheduler (SLURM - see more below)
@@ -25,7 +25,7 @@ In an HPC system, nodes are individual computers (servers) that work together to
 
 ### Burst Nodes and GCP
 
-Bust is the node that allows us to access compute resources from GCP. We connect to the burst node after connecting to the login node. We only need burst when using GCP resources. Considerations related to GCP:
+Burst is the node that allows us to access compute resources from GCP. We connect to the burst node after connecting to the login node. We only need burst when using GCP resources. Considerations related to GCP:
 
 1. **Burst runs a separate SLURM cluster on GCP, not on Greene's on-premise (on-prem) HPC**. This is associated with our credentials - we are approved through NLU.
 2. **We must copy data from Greene to the Burst instance before running Jobs**: The files that we will store in Green's directory is not automatically accessible via burst (see later for file directory).
