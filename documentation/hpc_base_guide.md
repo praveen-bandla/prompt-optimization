@@ -131,6 +131,46 @@ Then, it should prompt you to enter a config file for access. Use the one source
 
 There should be a little icon at the bottom left. Click on it and it should give you an option to connect to host. Select the file directory you want and then we should be good.
 
+MAKE SURE TO CLOSE REMOTE CONNECTION WHEN YOU'RE DONE. SHE GETS TRIGGERED WHEN YOU DONT
+Click the the Remote Connection blue box (bottom left) and then choose close remote connection.
+
+
+#### Troubleshooting Remote Explorer
+
+Since making this guide, my remote explorer died twice. I don't have the exact message, but if its failing, you should see a warning error pop-up, and should read something like:
+
+> *Could not establish connection to "greene.hpc.nyu.edu": Remote host key has changed, port forwarding is disabled.*
+
+This is not a thorough guide on how to resolve it, but somethings that might work - I don't understand it fully, but more so documenting what worked for me.
+If this happens, at a high-level, what you want to do is get rid of your Remote-SSH and restart it.
+
+#### Step 1: Getting Rid of Existing SSH
+
+First, remove the SSH key you have using (exactly):
+
+```bash
+ssh-keygen -R greene.hpc.nyu.edu
+```
+
+Then, make the corresponding changes to the config file. To do so, run `cmd + shift + P` (pallete, useful for accessing many meta options). Search for `Remote-SSH: Open SSH Configuration file`. Then, manually get rid of the saved SSH key-config that you see for greene hpc. Save the file and close.
+
+#### Step 2: Reconnect to Greene via Terminal
+
+Run your standard command to sign-in:
+
+```bash
+ssh {net_id}@greene.hpc.nyu.edu
+```
+
+Follow the process to sign-in.
+
+#### Step 3: Add Remote-SSH once again
+
+Do so with `cmd + shift + p` followed by `Remote-SSH: Add New SSH Host`
+
+Follow the same procedure that you used to set-up remote explorer and you should be good? It worked perfectly the first time, but the second time didn't work super well. 
+
+
 
 
 ### File Directory System

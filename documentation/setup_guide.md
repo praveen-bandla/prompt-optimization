@@ -99,6 +99,11 @@ Venv - virtual enviornments, are a python-specific tool used to create isolated 
 
 We each have a venv that we store on our repository clones. These files exist in our local copies and not actually in the main (added to gitignore). Whenever we add new packages, we update the `requirements.txt` file (a file that contains all packages we use). Thus, whenever we pull main/branch, we update our venv to include any new packages that we used by downloading the differences in packages between what we already had venv and any new packages in `requirements.txt`. There are commands to simplify everything dw (I worried).
 
+Further notes as it relates to the project:
+- The venv is **NOT** tied to a specific branch and will exist in your repository once created. It is independent of Git branches and persists across branch switches.
+- It is not affected by resetting your branch. Since the venv is not tracked by Git, switching or resetting branches won't modify your venv.
+- If you load a different state of the project (i.e., switch to a different branch that has a different set of dependencies), you should refresh your venv to ensure it matches the state of the project in that branch (by installing the packages listed in `requirements.txt`).
+
 ### Setting up Your Very Own VENV
 
 #### Installing Pip in Your Login Node
@@ -175,7 +180,15 @@ pip install -r requirements.txt
 
 <br>
 
-## Branches
+## Git Branches
 
-im too tired rn send help. will update later ahh
+I will divide up this subsection into a conceptual guide and a usage section.
+
+### Conceptual Guide
+
+A **branch** in Git is essentially a linked copy derived from a specific snapshot of your codebase. It represents an independent line of development within your project derived from a specific root directory. Like literal tree branches. Branches allow you to make changes independent of the main project - useful for working on different parts of the project separately, to ensure that a bug in a branch doesn't screw everything in main, etc.
+
+#### When Do We Create a Branch
+
+
 
