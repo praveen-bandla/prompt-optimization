@@ -55,6 +55,10 @@ We have 3 categories of file storage on the HPC. One of them is `archive` which 
 
 Given that all our code will be backed up through repository, the only thing we need to worry about duplicating is our data files. We will back those up on Home, but use scratch otherwise for primary purpose.
 
+## Connecting to HPC
+
+If you are connecting from a remote location that is not on the NYU network (e.g. home)
+
 
 ## Setting up HPC
 
