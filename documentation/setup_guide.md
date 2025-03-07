@@ -186,9 +186,18 @@ I will divide up this subsection into a conceptual guide and a usage section.
 
 ### Conceptual Guide
 
-A **branch** in Git is essentially a linked copy derived from a specific snapshot of your codebase. It represents an independent line of development within your project derived from a specific root directory. Like literal tree branches. Branches allow you to make changes independent of the main project - useful for working on different parts of the project separately, to ensure that a bug in a branch doesn't screw everything in main, etc.
+A **branch** in Git is essentially a linked copy derived from a specific snapshot of your codebase. It represents an independent line of development within your project derived from a specific root directory. Like literal tree branches. Branches allow you to make changes independent of the main project - useful for working on different parts of the project separately, to ensure that a bug in a branch doesn't screw everything in main, etc. 
 
-#### When Do We Create a Branch
+**Creating a Branch**: We create a branch for every new *feature development*, *bug fix*, *experimentation*, *peer collaboration*, etc. A branch is created whenever we want to: add new functionality/components to our code, test errors by removing certain moving parts in the code (to fix bugs), try new functionality to make decisions, or general version control.
 
+**Merge a Branch**: When you merge a branch, you bring changes you make in your branch into another branch (typically `main`). Merging happens when your work (purpose for creating the branch) is complete and ready to be included into the main project.
+
+**Pull Requests (PR)**: A request to merge changes from one branch into another, typically from a feature branch into the main branch. Allows other team people to review the changes before they are merged. Typically, organizations have individuals take turns between creating PRs and approving PRs. We can just have any one other person review the code before approving a PR.
+
+**Merge Conflicts**: Typically, assuming clean code and correct branch management, you do not run into Merge conflicts. These occur when Git is unable to automatically merge changes from two different branches. Happens for many reasons, but bottom line is when changes are made to the same line of code from different branches, and Git cannot determine which version to keep. When merge conflicts occur, you have to resolve them manually.
+
+**Deleting a Branch**: Once the branch has been successfully merged, you delete the branch. Then, you create a new branch for every new work you do.
+
+**Naming a Branch**: something like `feature-name` or `bug-fix`
 
 
