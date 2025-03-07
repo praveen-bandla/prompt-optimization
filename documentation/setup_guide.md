@@ -184,6 +184,8 @@ pip install -r requirements.txt
 
 I will divide up this subsection into a conceptual guide and a usage section.
 
+Before anything, memorize - NEVER DIRECTLY PUSH TO MAIN, NEVER EDIT ON MAIN.
+
 ### Conceptual Guide
 
 A **branch** in Git is essentially a linked copy derived from a specific snapshot of your codebase. It represents an independent line of development within your project derived from a specific root directory. Like literal tree branches. Branches allow you to make changes independent of the main project - useful for working on different parts of the project separately, to ensure that a bug in a branch doesn't screw everything in main, etc. 
@@ -198,6 +200,110 @@ A **branch** in Git is essentially a linked copy derived from a specific snapsho
 
 **Deleting a Branch**: Once the branch has been successfully merged, you delete the branch. Then, you create a new branch for every new work you do.
 
-**Naming a Branch**: something like `feature-name` or `bug-fix`
+**Naming a Branch**: name it something like `feature/feature-name` or `bug/big-fix`
+
+<br>
+
+### Implementation Guide
+
+This is meant to be a starting point but is not exhaustive by any means. Will focus on some key commands.
+
+#### Working With Branches
+
+##### Create a New Branch
+
+Before working on a new feature or bug fix, create a branch by running:
+
+```bash
+git checkout -b <branch-name>
+```
+This creates a new branch **AND** switches to it
+
+##### View Current Branch
+
+If you run:
+
+```bash
+git branch
+```
+
+You should all the branches available to you in the directory. The active branch is marked with an asterick (`*`)
+
+##### Switch to an Existing Branch
+
+Move between branches, using:
+
+```bash
+git checkout <branch-name>
+```
+
+#### Making Changes and Committing
+
+##### Check the Status of your Changes
+
+Run:
+
+```bash
+git status
+```
+
+This should you the changes that were made in your local directory but aren't *pushed* to GitHub.
+
+##### Stage Changes for Commit
+
+```bash
+git add .
+```
+
+##### Commit Changes
+
+```bash
+git commit -m "Descriptive message of what this commit did (ex: added files/ edited documentation/)"
+```
+
+##### Push Changes
+
+```bash
+git push origin <your-branch>
+```
+
+If the branch you're pushing through does not exist on the remote repo yet, it may ask you to push upstream using:
+
+```bash
+git push -u origin <branch-name>
+```
+
+But make sure to always fetch your branch before committing to it.
+
+
+#### Resetting Changes
+
+If you ever run into a situation, where you made some changes on your local repo copy that you want to discard and get the latest version of whatever exists in the remote repo (github), use this:
+
+```bash
+git fetch origin
+git reset --hard origin/<branch-name>
+```
+
+THIS IS IRREVERSIBLE, YOUR CHANGES ARE GONE FOREVER SO BE CAREFUL.
+
+
+### Creating PRs (Pull Requests) (**)
+
+Let us standardize the way we do PRs through GitHub's UI. Here is the process:
+
+1. Make sure to have pushed your changes to the branch using `git push origin <your-branch-name>`
+2. In the GitHub Repo, switch to your branch by clicking the `branches` dropdown on the repo page
+3. Start a new PR by clicking the `Pull Requests` tab near the top of the page
+4. In the `Compare Changes` section:
+    - **Base Branch**: Select `main` (or whatever branch you want to merge into [probably main])
+    - **Compare branch**: Select your branch
+5. GitHub will show the differences between the branches
+6. Add a title to the PR (e.g, added code for inferencing)
+7. Description: Leave blank, who cares lol
+8. Click `Create Pull Request`
+
+Assuming there is no merge conflict, feel free to `Merge PR`. Then, it should give you the option of `Deleting your branch`
+
 
 
