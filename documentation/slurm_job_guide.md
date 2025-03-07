@@ -23,7 +23,7 @@ SLURM expects a file in a specific format in order to execute a job. See an exam
 
 **NOTE: This .sbatch file will run a CPU job. Keep reading for running a GPU job.**
 
-_cpu_job.sbatch:_
+_slurm_job.sbatch:_
 ```
 # tells the shell how to execute the script, not related to SLURM 
 !/bin/bash
@@ -57,13 +57,37 @@ module load python/intel/3.8.6      # Loads the module for the software we are u
 
 #  Activate and run using your virtual environment
 source /path/to/venv/bin/activate
-srun /path/to/venv/bin/python ./<file-name>.py
+python ./<file-name>.py
 ```
 * Any line beginning with #SBATCH is read by SLURM and used to determine queueing. If you want to comment out an SBATCH directive, use a second # e.g. `##SBATCH`
 * Once the first non-comment, non-SBATCH-directive line is encountered, SLURM stops looking for SBATCH directives and runs the rest as a bash file.
 * By default, the script will start running in the directory that you ran .sbatch from.
 * For more information on additional SBATCH directives, see [here](https://sites.google.com/nyu.edu/nyu-hpc/training-support/general-hpc-topics/slurm-submitting-jobs?authuser=0#h.7xswxliwmidw).
 * We can delay starting a job until another has finished. See above link "options for delaying starting a job" for more info.
+
+### Running with GPU
+**To specify that you want to use a GPU**, add the following directive in the .sbatch file:
+```
+#SBATCH --gres=gpu:1                        # :1 specifies one GPU card
+```
+* For most things, we should (hopefully) only need one GPU.
+* Multiple GPUs is needed for fine-tuning large models (like 70B).
+* If we run with 1 GPU and it seems slow, we can try with 2. But keep in mind it will affect our queue time.
+
+**To request a specific card type**:
+ There are three NVIDIA GPUs available:
+* RTX8000
+`
+#SBATCH --gres=gpu:rtx8000:1
+`
+* V100
+`
+#SBATCH --gres=gpu:v100:1
+`
+* A100
+`
+#SBATCH --gres=gpu:a100:1
+`
 
 ### Submitting a job
 
@@ -117,9 +141,62 @@ Include in .sbatch file:
 Your stderr and stdout will be output in this new directory unless you explicitly specify a different path with `#SBATCH --output` and `#SBATCH --error`.
 <br/>
 
+#### What if my .py is in a different directory than .sbatch?
+This is the case for us. We will specify the absolute or relative path to the python script in .sbatch.
+```bash
+source /path/to/venv/bin/activate
+
+# Run Python script in a different directory
+python /absolute/path/to/my_script.py
+```
+If the script is one directory above the .sbatch file, use:
+```bash
+python ../my_script.py
+```
+<br/>
+
 #### What if I want to move a file upon job completion?
 This will be especially useful since we run jobs in `/scratch/` but want to store big data files in `/home/` or `/archive/`.
 Include at the end of .sbatch:
 ```bash
 mv <output>.json /home/$USER/...           # or another file location
 ```
+<br/>
+
+#### Running .sbatch and .py with parameters (file dependencies)
+Method: Hardcode parameters in .sbatch. Use if simple, fixed inputs.
+```bash
+#!/bin/bash
+#SBATCH --job-name=my_job
+#SBATCH --output=my_job.out
+#SBATCH --error=my_job.err
+#SBATCH --time=01:00:00
+#SBATCH --partition=general
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=4
+
+# Activate your virtual environment
+source /path/to/venv/bin/activate
+
+# Run the Python script with arguments
+python my_script.py input_data.csv output_results.csv
+```
+The python script should then be set up to handle command-line arguments:
+```python
+import sys
+
+input_file = sys.argv[1]  # First argument
+output_file = sys.argv[2]  # Second argument
+
+print(f"Processing {input_file} and saving results to {output_file}")
+```
+
+## Misc info
+* Can run things on the login node if they are lightweight single scripts (checking imports, printing a small output, quick debugging). Don't use for CPU/GPU-intensive scripts, training, processing large datasets, etc. To run a single script on login, use:
+```
+source /path/to/venv/bin/activate
+python my_script.py
+```
+
+* 
