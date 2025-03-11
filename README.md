@@ -15,12 +15,12 @@ The project is organized into several directories and files to help maintain mod
 ```md
 /synthetic_prompt_optimization
 │── configs/
-│   ├── base_prompt_config.json
-│   ├── prompt_variation_config.json
-│   ├── main_model_config.json
-│   ├── validator_model_config.json
-│   ├── prompt_optimization_config.json
-│   ├── fine_tuning_config.json
+│   ├── base_prompt_config.yaml
+│   ├── prompt_variation_config.yaml
+│   ├── main_model_config.yaml
+│   ├── validator_model_config.yaml
+│   ├── prompt_optimization_config.yaml
+│   ├── fine_tuning_config.yaml
 │── data/
 │   ├── raw/
 │   │   ├── base_prompts.parquet
