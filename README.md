@@ -38,13 +38,13 @@ The project is organized into several directories and files to help maintain mod
 │   ├── validator_models/
 │   ├── prompt_optimization_model/
 │── scripts/
-│   ├── 01_generate_base_prompts.py
-│   ├── 02_generate_prompt_variations.py
-│   ├── 03_main_model_inference.py
-│   ├── 04_validator_model_inference.py
-│   ├── 05_train_prompt_optimization.py
-│   ├── 06_fine_tune_main_model.py
-│   ├── 07_test_framework.py
+│   ├── generate_base_prompts.py
+│   ├── generate_prompt_variations.py
+│   ├── main_model_inference.py
+│   ├── validator_model_inference.py
+│   ├── train_prompt_optimization.py
+│   ├── fine_tune_main_model.py
+│   ├── test_framework.py
 │── utils/
 │   ├── model_loader.py
 │   ├── data_handler.py
