@@ -57,6 +57,7 @@ The project is organized into several directories and files to help maintain mod
 │   │   ├── inference.py
 │   ├── scripts/
 │   │   ├── generate_prompt_variations.py
+│   │   ├── generate_base_prompts.py
 │   │   ├── main_model_inference.py
 │   │   ├── validator_model_inference.py
 │   │   ├── train_prompt_optimization.py
