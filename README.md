@@ -23,12 +23,14 @@ The project is organized into several directories and files to help maintain mod
 │   ├── prompt_optimization_model_input.txt
 │   ├── finetuning_input.txt
 │── configs/
-│   ├── base_prompt_config.yaml
-│   ├── prompt_variation_config.yaml
-│   ├── main_model_config.yaml
-│   ├── validator_model_config.yaml
-│   ├── prompt_optimization_config.yaml
-│   ├── fine_tuning_config.yaml
+│   ├── root_paths.py
+│   ├── model_configs
+│       ├── base_prompt_config.yaml
+│       ├── prompt_variation_config.yaml
+│       ├── main_model_config.yaml
+│       ├── validator_model_config.yaml
+│       ├── prompt_optimization_config.yaml
+│       ├── fine_tuning_config.yaml
 │── slurm/
 │   ├── sbatch_files/
 │   ├── stdouts/
