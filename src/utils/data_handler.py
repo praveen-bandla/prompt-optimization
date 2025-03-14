@@ -113,8 +113,19 @@ class BasePromptDB:
         self._initialize_db()
 
 
-# if __name__ == "__main__":
-#     db = BasePromptDB()
-#     db.insert_base_prompts([('1', 'Prompt 1'), ('2', 'Prompt 2')])
-#     print(db.fetch_all_prompts())
-#     db.close_connection()
+class PromptVariationParquet:
+    '''
+    Class used to manage the Prompt Variations in Parquet format as we discussed and is in README. This class will be initialized with a bpv_idx and will have methods to access, write, read prompt variations. It will be similar to the BasePromptDB class, but will have to handle different Parquet files indexed by base prompt, as opposed to a single SQLite database.
+    '''
+
+
+class ValidationScoreParquet:
+    '''
+    Class used to manage the Validation Scores in Parquet format as we discussed and is in README. This class will be initialized with a bpv_idx and will have methods to access, write, read validation scores. It will be very very similar to the PromptVariationParquet class. The only difference will be the data stored in the Parquet files.
+    '''
+
+
+class ModelOutputParquet:
+    '''
+    Class used to manage the Model Outputs in Parquet format as we discussed and is in README. This class will be initialized with a bpv_idx and will have methods to access, write, read model outputs. It will be very very similar to the PromptVariationParquet class but will have subfolders to iterate over and custom partitioned data. The data will include the learning guide.
+    '''
