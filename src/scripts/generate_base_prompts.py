@@ -9,14 +9,20 @@ Inputs:
 - `base_prompt_config.yaml`: A YAML file with configuration settings for prompt generation.
 
 Outputs:
-- Opens and writes the generated prompts to `base_prompts.parquet` in Parquet format for efficient storage. 
+- Opens and writes the generated prompts to `base_prompts.sqlite` in SQLite/database format for efficient storage. 
   The output includes `bp_idx`, which is a tuple in the format `(index, -1)`, where `index` is an integer 
   between 1 and `n`, representing the nth entry. Each entry will also include a string `base_prompt: str`.
+  Example format:
+  | bp_idx | base_prompt |
+  |--------|-------------|
+  | (1, -1) | "Generated base prompt 1" |
+  | (2, -1) | "Generated base prompt 2" |
+  | ...    | ...         |
 
 Usage:
 - Ensure that both input files (`base_prompt_input.txt` and `base_prompt_config.yaml`) are in the same
   directory as the script before running it.
-- The generated prompts will be saved to a Parquet file named `base_prompts.parquet`.
+- The generated prompts will be saved to a SQLite file named `base_prompts.sqlite`.
 
 Dependencies:
 - [List of libraries or modules, e.g. 'pandas', 'transformers', 'torch', etc.]
