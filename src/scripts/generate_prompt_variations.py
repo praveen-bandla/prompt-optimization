@@ -8,14 +8,21 @@ Inputs:
 - `prompt_variation_config.yaml`: A YAML file with configuration settings for prompt variation generation.
 
 Outputs:
-- Opens and writes the generated prompts to `prompt_variations.parquet` in Parquet format for efficient storage. 
+- Opens and writes the generated prompts to a series of Parquet files, one per base prompt.
+- The output files will be named `prompt_variations_{n}.parquet`, where {n} is the number of the base prompt.
   The output includes `bpv_idx`, which is a tuple in the format `(bp_idx, index)`, where `index` is an integer 
   between 1 and `n`, representing the nth variation. Each entry will also include a string `prompt_variation: str`.
+  Example format:
+  | bpv_idx | prompt_variation |
+  |---------|------------------|
+  | (1, 1) | "Generated prompt variation 1" |
+  | (1, 2) | "Generated prompt variation 2" |
+  | ...     | ...              |
 
 Usage:
 - Ensure that both input files (`base_prompt_input.txt` and `base_prompt_config.yaml`) are in the same
   directory as the script before running it.
-- The generated prompts will be saved to a Parquet file named `base_prompts.parquet`.
+- The generated prompts will be saved to a Parquet file named `prompt_variations_{n}.parquet`.
 
 Dependencies:
 - [List of libraries or modules, e.g. 'pandas', 'transformers', 'torch', etc.]
