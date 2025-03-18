@@ -117,6 +117,96 @@ class PromptVariationParquet:
     '''
     Class used to manage the Prompt Variations in Parquet format as we discussed and is in README. This class will be initialized with a base prompt index and will have methods to access, write, read prompt variations. It will be similar to the BasePromptDB class, but will have to handle different Parquet files indexed by base prompt, as opposed to a single SQLite database.
     '''
+    # number of variations, base prompts should be called from a config file
+    def __init__(self, base_prompt_idx):
+        '''
+        Initializes the PromptVariationParquet class for a specific base prompt.
+        
+        Args:
+            - base_prompt_idx (int): The index of the base prompt.
+        '''
+        self.base_prompt_idx = base_prompt_idx
+        self.file_path = Path("data/base_prompts") / f"{base_prompt_idx}_pv.parquet"
+        self._initialize_parquet()
+    
+    def _initialize_parquet(self):
+        '''
+        Initializes the Parquet file if it does not exist.
+        '''
+        if not self.file_path.exists():
+            df = pd.DataFrame(columns=["bpv_idx", "prompt_variation_string"])
+            df.to_parquet(self.file_path, index=False)
+            print(f"Created new Parquet file at {self.file_path}")
+        else:
+            print(f"Using existing Parquet file at {self.file_path}")
+    
+    def insert_prompt_variations(self, variations):
+        '''
+        Inserts a batch of prompt variations into the Parquet file.
+        
+        Args:
+            - variations (list of tuples): A list of tuples where each tuple contains (bpv_idx, prompt_variation_string).
+        '''
+        df = pd.read_parquet(self.file_path)
+        new_data = pd.DataFrame(variations, columns=["bpv_idx", "prompt_variation_string"])
+        df = pd.concat([df, new_data], ignore_index=True)
+        df.to_parquet(self.file_path, index=False)
+    
+    def fetch_all_variations(self):
+        '''
+        Fetches all prompt variations for the base prompt.
+        
+        Returns:
+            - tuple: Two sets of tuples, 
+                1) (base_prompt_idx, bpv_idx)
+                2) (base_prompt_string, prompt_variation_string)
+        '''
+        df = pd.read_parquet(self.file_path)
+        index_set = set(df["bpv_idx"].apply(lambda x: (self.base_prompt_idx, x[1])))
+        string_set = set(df.itertuples(index=False, name=None))
+        return index_set, string_set
+    
+    def fetch_variation(self, prompt_variation_idx):
+        '''
+        Fetches a specific prompt variation based on the prompt variation index.
+        
+        Args:
+            - prompt_variation_idx (int): The index of the prompt variation.
+        
+        Returns:
+            - str: The prompt variation string if found, else None.
+        '''
+        df = pd.read_parquet(self.file_path)
+        result = df[df["bpv_idx"] == (self.base_prompt_idx, prompt_variation_idx)]
+        return result["prompt_variation_string"].iloc[0] if not result.empty else None
+    
+    def fetch_base_prompt(self):
+        '''
+        Fetches the base prompt string associated with the base_prompt_idx.
+        
+        Returns:
+            - str: The base prompt string if found, else None.
+        '''
+        df = pd.read_parquet(self.file_path)
+        result = df[df["bpv_idx"] == (self.base_prompt_idx, -1)]
+        return result["prompt_variation_string"].iloc[0] if not result.empty else None
+    
+    def delete_parquet(self):
+        '''
+        Deletes the Parquet file associated with the base prompt.
+        '''
+        if self.file_path.exists():
+            os.remove(self.file_path)
+            print(f"Deleted Parquet file at {self.file_path}")
+        else:
+            print(f"No Parquet file found at {self.file_path} to delete.")
+    
+    def reset_parquet(self):
+        '''
+        Resets the Parquet file by deleting and recreating it.
+        '''
+        self.delete_parquet()
+        self._initialize_parquet()
 
 
 class ValidationScoreParquet:
