@@ -118,34 +118,12 @@ class PromptVariationParquet:
     '''
     Class used to manage the Prompt Variations in Parquet format as we discussed and is in README. This class will be initialized with a base prompt index and will have methods to access, write, read prompt variations. It will be similar to the BasePromptDB class, but will have to handle different Parquet files indexed by base prompt, as opposed to a single SQLite database.
     '''
-    # number of variations, base prompts should be called from a config file
-    # def __init__(self, base_prompt_idx):
-    #     '''
-    #     Initializes the PromptVariationParquet class for a specific base prompt.
-        
-    #     Args:
-    #         - base_prompt_idx (int): The index of the base prompt.
-    #     '''
-    #     self.base_prompt_idx = base_prompt_idx
-    #     self.file_path = Path("data/base_prompts") / f"{base_prompt_idx}_pv.parquet"
-    #     self._initialize_parquet()
 
     def __init__(self, parquet_root_path = PROMPT_VARIATIONS):
         '''
         Initializes the PromptVariationParquet class. This is not base prompt specific. It will be used to manage all prompt variations in the project. When needing to access prompt variations for a specific base prompt, the bpv_idx will be passed to the methods of this class.
         '''
         self.parquet_root_path = parquet_root_path
-    
-    # def _initialize_parquet(self):
-    #     '''
-    #     Initializes the Parquet file if it does not exist.
-    #     '''
-    #     if not self.file_path.exists():
-    #         df = pd.DataFrame(columns=["bpv_idx", "prompt_variation_string"])
-    #         df.to_parquet(self.file_path, index=False)
-    #         print(f"Created new Parquet file at {self.file_path}")
-    #     else:
-    #         print(f"Using existing Parquet file at {self.file_path}")
 
     def _initialize_parquet(self, bp_idx):
         file_path = f'{self.parquet_root_path}/{bp_idx}_pv.parquet'
@@ -155,18 +133,6 @@ class PromptVariationParquet:
             print(f"Created new Parquet file at {file_path}")
         else:
             print(f"Using existing Parquet file at {file_path}")
-    
-    # def insert_prompt_variations(self, variations):
-    #     '''
-    #     Inserts a batch of prompt variations into the Parquet file.
-        
-    #     Args:
-    #         - variations (list of tuples): A list of tuples where each tuple contains (bpv_idx, prompt_variation_string).
-    #     '''
-    #     df = pd.read_parquet(self.file_path)
-    #     new_data = pd.DataFrame(variations, columns=["bpv_idx", "prompt_variation_string"])
-    #     df = pd.concat([df, new_data], ignore_index=True)
-    #     df.to_parquet(self.file_path, index=False)
 
     def _access_parquet(self, bp_idx):
         '''

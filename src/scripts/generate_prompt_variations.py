@@ -6,6 +6,7 @@ This script generates a set of prompt variations by calling the prompt variation
 Inputs:
 - `prompt_variation_input.txt`: A text file containing the base instruction for generating prompt variations.
 - `prompt_variation_config.yaml`: A YAML file with configuration settings for prompt variation generation.
+- Section of prompt SQL DB from `generate_base_prompts.py`, bp_idx from 0 to n, n defined in config file
 
 Outputs:
 - Opens and writes the generated prompts to a series of Parquet files, one per base prompt.
@@ -18,6 +19,13 @@ Outputs:
   | (1, 1) | "Generated prompt variation 1" |
   | (1, 2) | "Generated prompt variation 2" |
   | ...     | ...              |
+
+Overview:
+- Inference prompt_variation_config.yaml and prompt_variation_input.txt to generate variations for a given base prompt and write to a .parquet file using functions from data_handler.py
+- function to generate prompt variations takes one bp_idx number
+  - Creates one PV-Parquet object (handles info from one specific prompt variation)
+  - Creates 200 PV objects using strings from inferencing
+- this only needs to do for one base prompt, we will call this script in a for loop for all base prompts we're looking at
 
 Usage:
 - Ensure that both input files (`base_prompt_input.txt` and `base_prompt_config.yaml`) are in the same
