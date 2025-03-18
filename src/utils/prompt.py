@@ -72,8 +72,11 @@ class PromptVariation:
 
 class ValidationScore:
     '''
-    Class to be developed that will be used to manage Validation Scores. Will include methods to create validation score, access validation score, write validation score, read validation score, just like PromptVariation and BasePrompt. This class will also have to include methods to calculate the aggregated scores, per category score, etc.
+    Class to be developed that will be used to manage Validation Scores. 
+    Will include methods to create validation score, access validation score, write validation score, read validation score, just like PromptVariation and BasePrompt. 
+    This class will also have to include methods to calculate the aggregated scores, per category score, etc.
     '''
+
 
 
 class MainModelOutput:
