@@ -4,6 +4,7 @@ This file will contain utlity functions to handle data. It will include methods 
 import os
 import sqlite3
 from configs.root_paths import *
+import pandas as pd
 
 class BasePromptDB:
     '''
@@ -118,95 +119,165 @@ class PromptVariationParquet:
     Class used to manage the Prompt Variations in Parquet format as we discussed and is in README. This class will be initialized with a base prompt index and will have methods to access, write, read prompt variations. It will be similar to the BasePromptDB class, but will have to handle different Parquet files indexed by base prompt, as opposed to a single SQLite database.
     '''
     # number of variations, base prompts should be called from a config file
-    def __init__(self, base_prompt_idx):
-        '''
-        Initializes the PromptVariationParquet class for a specific base prompt.
+    # def __init__(self, base_prompt_idx):
+    #     '''
+    #     Initializes the PromptVariationParquet class for a specific base prompt.
         
-        Args:
-            - base_prompt_idx (int): The index of the base prompt.
+    #     Args:
+    #         - base_prompt_idx (int): The index of the base prompt.
+    #     '''
+    #     self.base_prompt_idx = base_prompt_idx
+    #     self.file_path = Path("data/base_prompts") / f"{base_prompt_idx}_pv.parquet"
+    #     self._initialize_parquet()
+
+    def __init__(self, parquet_root_path = PROMPT_VARIATIONS):
         '''
-        self.base_prompt_idx = base_prompt_idx
-        self.file_path = Path("data/base_prompts") / f"{base_prompt_idx}_pv.parquet"
-        self._initialize_parquet()
+        Initializes the PromptVariationParquet class. This is not base prompt specific. It will be used to manage all prompt variations in the project. When needing to access prompt variations for a specific base prompt, the bpv_idx will be passed to the methods of this class.
+        '''
+        self.parquet_root_path = parquet_root_path
     
-    def _initialize_parquet(self):
-        '''
-        Initializes the Parquet file if it does not exist.
-        '''
-        if not self.file_path.exists():
+    # def _initialize_parquet(self):
+    #     '''
+    #     Initializes the Parquet file if it does not exist.
+    #     '''
+    #     if not self.file_path.exists():
+    #         df = pd.DataFrame(columns=["bpv_idx", "prompt_variation_string"])
+    #         df.to_parquet(self.file_path, index=False)
+    #         print(f"Created new Parquet file at {self.file_path}")
+    #     else:
+    #         print(f"Using existing Parquet file at {self.file_path}")
+
+    def _initialize_parquet(self, bp_idx):
+        file_path = f'{self.parquet_root_path}/{bp_idx}_pv.parquet'
+        if not os.path.exists(file_path):
             df = pd.DataFrame(columns=["bpv_idx", "prompt_variation_string"])
-            df.to_parquet(self.file_path, index=False)
-            print(f"Created new Parquet file at {self.file_path}")
+            df.to_parquet(file_path, index=False)
+            print(f"Created new Parquet file at {file_path}")
         else:
-            print(f"Using existing Parquet file at {self.file_path}")
+            print(f"Using existing Parquet file at {file_path}")
     
-    def insert_prompt_variations(self, variations):
-        '''
-        Inserts a batch of prompt variations into the Parquet file.
+    # def insert_prompt_variations(self, variations):
+    #     '''
+    #     Inserts a batch of prompt variations into the Parquet file.
         
-        Args:
-            - variations (list of tuples): A list of tuples where each tuple contains (bpv_idx, prompt_variation_string).
+    #     Args:
+    #         - variations (list of tuples): A list of tuples where each tuple contains (bpv_idx, prompt_variation_string).
+    #     '''
+    #     df = pd.read_parquet(self.file_path)
+    #     new_data = pd.DataFrame(variations, columns=["bpv_idx", "prompt_variation_string"])
+    #     df = pd.concat([df, new_data], ignore_index=True)
+    #     df.to_parquet(self.file_path, index=False)
+
+    def _access_parquet(self, bp_idx):
         '''
-        df = pd.read_parquet(self.file_path)
+        An internal function that retrieves the content of the parquet file for a specific base prompt index if it exists. Otherwise, it initializes the parquet file.
+        '''
+        self._initialize_parquet(bp_idx)
+        return pd.read_parquet(f'{self.parquet_root_path}/{bp_idx}_pv.parquet')
+
+    def insert_prompt_variations(self,variations):
+        '''
+        Inserts a batch of prompt variations into the respective parquet file.
+
+        Args:
+            - variations (list of tuples): A list of tuples where each tuple contains (bpv_idx, prompt_variation_string). THESE HAVE TO BE SPECIFIC TO A BASE PROMPT INDEX. CANNOT MIX PROMPT VARIATIONS FOR DIFFERENT BASE PROMPTS.
+
+        Raises:
+            - ValueError: If the prompt variations are not specific to a single base prompt index.
+        '''
+        base_prompt_indexes = list(set([x[0] for x in variations]))
+        if len(base_prompt_indexes) > 1:
+            raise ValueError("All prompt variations must be specific to a single base prompt index.")
+        
+        df = self._access_parquet(base_prompt_indexes[0])
+
         new_data = pd.DataFrame(variations, columns=["bpv_idx", "prompt_variation_string"])
         df = pd.concat([df, new_data], ignore_index=True)
-        df.to_parquet(self.file_path, index=False)
-    
-    def fetch_all_variations(self):
+        df.to_parquet(f'{self.parquet_root_path}/{base_prompt_indexes[0]}_pv.parquet', index=False)
+
+    def fetch_all_variations(self, bp_idx):
         '''
         Fetches all prompt variations for the base prompt.
+
+        Inputs:
+            - bp_idx (int): The base prompt index.
         
         Returns:
-            - tuple: Two sets of tuples, 
-                1) (base_prompt_idx, bpv_idx)
-                2) (base_prompt_string, prompt_variation_string)
+            - List 1: all bpv_idx
+            - List 2: all prompt_variation_strings 
         '''
-        df = pd.read_parquet(self.file_path)
-        index_set = set(df["bpv_idx"].apply(lambda x: (self.base_prompt_idx, x[1])))
-        string_set = set(df.itertuples(index=False, name=None))
-        return index_set, string_set
+
+        if not os.path.exists(f'{self.parquet_root_path}/{bp_idx}_pv.parquet'):
+            return [], []
+        df = self._access_parquet(bp_idx)
+        return df["bpv_idx"], df["prompt_variation_string"]
     
-    def fetch_variation(self, prompt_variation_idx):
+    def fetch_base_prompt_str(self, bpv_idx):
         '''
-        Fetches a specific prompt variation based on the prompt variation index.
-        
-        Args:
-            - prompt_variation_idx (int): The index of the prompt variation.
-        
+        For a given bpv_idx, fetches the base prompt string associated with the base_prompt_idx.
+        '''
+        bp_idx = bpv_idx[0]
+        if not os.path.exists(f'{self.parquet_root_path}/{bp_idx}_pv.parquet'):
+            return None
+        df = self._access_parquet(bp_idx)
+        result = df[df["bpv_idx"] == (bp_idx, -1)]['prompt_variation_string']
+        return result.iloc[0] if not result.empty else None
+
+    def fetch_prompt_variation(self, bpv_idx):
+        '''
+        Returns the prompt variation string for the given bpv_idx.
+
+        Inputs:
+            - bpv_idx (tuple of ints): The base prompt variation index.
+
         Returns:
             - str: The prompt variation string if found, else None.
         '''
-        df = pd.read_parquet(self.file_path)
-        result = df[df["bpv_idx"] == (self.base_prompt_idx, prompt_variation_idx)]
-        return result["prompt_variation_string"].iloc[0] if not result.empty else None
+        bp_idx = bpv_idx[0]
+        df = self._access_parquet(bp_idx)
+        result = df[df["bpv_idx"] == bpv_idx]['prompt_variation_string']
+        return result.iloc[0] if not result.empty else None
     
-    def fetch_base_prompt(self):
+    def fetch_base_prompt_and_prompt_variation(self, bpv_idx):
         '''
-        Fetches the base prompt string associated with the base_prompt_idx.
+        Returns the base prompt string and prompt variation string for the given bpv_idx.
+
+        Inputs:
+            - bpv_idx (tuple of ints): The base prompt variation index.
         
         Returns:
             - str: The base prompt string if found, else None.
+            - str: The prompt variation string if found, else None.
         '''
-        df = pd.read_parquet(self.file_path)
-        result = df[df["bpv_idx"] == (self.base_prompt_idx, -1)]
-        return result["prompt_variation_string"].iloc[0] if not result.empty else None
-    
-    def delete_parquet(self):
+
+        bp_idx = bpv_idx[0]
+        df = self._access_parquet(bp_idx)
+        base_prompt = df[df["bpv_idx"] == (bp_idx, -1)]['prompt_variation_string']
+        prompt_variation = df[df["bpv_idx"] == bpv_idx]['prompt_variation_string']
+        return base_prompt.iloc[0] if not base_prompt.empty else None, prompt_variation.iloc[0] if not prompt_variation.empty else None
+
+
+    def delete_parquet(self, bp_idx):
         '''
         Deletes the Parquet file associated with the base prompt.
+        Inputs:
+            - bp_idx (int): The base prompt index.
         '''
-        if self.file_path.exists():
-            os.remove(self.file_path)
-            print(f"Deleted Parquet file at {self.file_path}")
+        file_path = f'{self.parquet_root_path}/{bp_idx}_pv.parquet'
+        if os.path.exists(file_path):
+            os.remove(file_path)
+            print(f"Deleted Parquet file at {file_path}")
         else:
-            print(f"No Parquet file found at {self.file_path} to delete.")
+            print(f"No Parquet file found at {file_path} to delete.")
     
-    def reset_parquet(self):
+    def reset_parquet(self, bp_idx):
         '''
-        Resets the Parquet file by deleting and recreating it.
+        Resets the Parquet file associated with the provided bp_idx by deleting and recreating it.
+        Inputs:
+            - bp_idx (int): The base prompt index.
         '''
-        self.delete_parquet()
-        self._initialize_parquet()
+        self.delete_parquet(bp_idx)
+        self._initialize_parquet(bp_idx) 
 
 
 class ValidationScoreParquet:
