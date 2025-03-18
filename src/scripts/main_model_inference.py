@@ -6,15 +6,21 @@ It reads an instruction file and a configuration file, generates the correspondi
 the results to the appropriate Parquet file.
 
 Inputs:
-- `prompt`: A string containing the input prompt to be processed.
-- `index`: An integer representing the prompt's index.
-- `instruction_file`: A text file containing instructions for inference.
-- `config_file`: A YAML file specifying model parameters and settings.
+- `bpv_idx`: An integer representing the prompt variation's index.
+- `prompt variation`: A string containing the input prompt to be processed.
+- `main_model_input.txt`: A text file containing instructions for inference.
+- `main_model_config.yaml`: A YAML file specifying model parameters and settings.
 
 Outputs:
 - Writes the generated output to a Parquet file named `model_outputs_{i}_{j}.parquet`, which contains results 
   for prompts indexed from `(1, 0)` to `(1, k)`, where `k` is the batch/partition size of the file. 
   `i` is the index of the base prompt, and `j` is the batch number.
+Example format:
+| bpv_idx | model inference |
+|---------|------------------|
+| (1, 0)  | "Model output 1" |
+| (1, 1)  | "Model output 2" |
+| ...     | ...              |
 
 Process:
 1. Reads the instruction and configuration files.
