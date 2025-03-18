@@ -16,7 +16,7 @@ Outputs:
   for prompts indexed from `(1, 0)` to `(1, k)`, where `k` is the batch/partition size of the file. 
   `i` is the index of the base prompt, and `j` is the batch number.
 Example format:
-| bpv_idx | model inference |
+| bpv_idx | main model output |
 |---------|------------------|
 | (1, 0)  | "Model output 1" |
 | (1, 1)  | "Model output 2" |
