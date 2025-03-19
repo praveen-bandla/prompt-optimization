@@ -42,8 +42,7 @@ The project is organized into several directories and files to help maintain mod
 │   ├── validator_scores/
 │   │   ├── {base_prompt_id}_vs.parquet
 │   ├── model_outputs/
-│   │   ├── bp1/
-│   │   |    ├── {ith_partition}_mo.parquet
+│   │   ├── {base_prompt_id}_mo.parquet
 │── models/
 │   ├── base_prompt_model/
 │   ├── prompt_variation_model/
@@ -124,5 +123,4 @@ This index will be used for all files below.
 3. `data/validator_scores/`: stores all information related to validator scores. Contains $n$ number of `parquet` files corresponding to $n$ base prompts. In other words, one `parquet` file here represents scores for each prompt variations of a given base prompt. Each `parquet` file would contain 6 columns (number of rubric criteria + 1): `bpv_idx`, `criteria_1`,..., `criteria_5`. The values in each of `criteria_1`,..., `criteria_5` would be a tuple of `(<val_model_1_score>, <val_model_2_score>, <val_model_3_score>)`
     - NB: here, we generate all validator model inferences for a given `bpv_idx` before writing to this file.
 
-4. `data/model_outputs`: stores all information related to main model ouputs (learning guides). Contains $n$ *subfolders* corresponding to the number of base prompts. For each subfolder, we store $k$ partitions, where each partition contains $batch = TotalNumOfPromptVariations/k$ rows corresponding batch number of prompt variations per file. Each `parquet` file would contain two columns: `bpv_idx` and `learning_guide_string`.
-
+4. `data/model_outputs`: stores all information related to model outputs. Contains $n$ number of `parquet` files corresponding to $n$ base prompts. In other words, one `parquet` file here represents all model outputs of a given prompt variation (this also includes the base prompt). Each `parquet` file would contain two columns: `bpv_idx` and `model_output_string`.
