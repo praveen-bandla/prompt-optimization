@@ -128,7 +128,6 @@ class ValidationScoreParquet:
     It will be very very similar to the PromptVariationParquet class. 
     The only difference will be the data stored in the Parquet files.
     '''
-output_dir = "../data/validator_scores"
 
     '''
     Class used to manage the Prompt Variations in Parquet format as we discussed and is in README. This class will be initialized with a base prompt index and will have methods to access, write, read prompt variations. It will be similar to the BasePromptDB class, but will have to handle different Parquet files indexed by base prompt, as opposed to a single SQLite database.
