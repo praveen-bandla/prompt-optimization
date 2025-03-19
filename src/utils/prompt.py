@@ -154,9 +154,6 @@ class ValidationScore: # instantiated for each bpv_idx
             else:
                 raise ValueError(f'Section {section} not found in average scores.')
         return total_score
-    # CHANGE FUNCTION TO ALLOW FOR WEIGHTS
-    # Add check that all weights sum to 1
-    # Add check that size of RUBRIC_WEIGHTS is equal to NUM_RUBRIC_SECTIONS
 
     def save_validation_scores(self):
         """Returns the validation scores for passing to write_parquet_file()"""
@@ -165,14 +162,12 @@ class ValidationScore: # instantiated for each bpv_idx
         if average_scores is None or total_score is None:
             return None
 
-        # Collect individual section scores
-        individual_scorees = [self.scores[f'section_{i+1}'] for i in range(NUM_RUBRIC_SECTIONS)]
-        # Flatten the list of individual scores
-        flattened_individual_scores = [score for sublist in individual_scorees for score in sublist]
+        # Collect individual section scores as tuples
+        individual_scorees = [tuple(self.scores[f'section_{i+1}']) for i in range(NUM_RUBRIC_SECTIONS)]
         # Collect average section scores
         avg_scores_list = [average_scores[f'section_{i+1}'] for i in range(NUM_RUBRIC_SECTIONS)]
         # Combine all scores into a single list
-        scores_list = flattened_individual_scores + avg_scores_list + [total_score]
+        scores_list = individual_scorees + avg_scores_list + [total_score]
         return [self.bpv_idx, scores_list]
 
 class MainModelOutput:
