@@ -80,7 +80,6 @@ class ValidationScore: # instantiated for each bpv_idx
     This class provides methods to create, access, update, save, and load validation model scores.
     It also calculates aggregated scores across rubric sections.
     '''
-    # Add function for reading prompt variation from Parquet file
 
     def __init__(self, bpv_idx):
         '''
@@ -89,7 +88,7 @@ class ValidationScore: # instantiated for each bpv_idx
         Args:
             - bp_idx (tuple of ints): The base prompt index.
         '''
-        self.bpv_index # Use this to derive the bp_idx for file name
+        self.bpv_idx # Use this to derive the bp_idx for file name
         self.scores = {f'section_{i+1}': [] for i in range(NUM_RUBRIC_SECTIONS)} # Initialize scores for each rubric section
 
     def parse_and_store_scores(self, string):
