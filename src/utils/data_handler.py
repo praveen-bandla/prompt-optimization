@@ -126,7 +126,7 @@ class PromptVariationParquet:
         self.parquet_root_path = parquet_root_path
 
     def _initialize_parquet(self, bp_idx):
-        file_path = f'{self.parquet_root_path}/{bp_idx}_pv.parquet'
+        file_path = f'{self.parquet_root_path}/{bp_idx}_prompt_variation.parquet'
         if not os.path.exists(file_path):
             df = pd.DataFrame(columns=["bpv_idx", "prompt_variation_string"])
             df.to_parquet(file_path, index=False)
