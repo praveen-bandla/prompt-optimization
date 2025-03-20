@@ -91,6 +91,8 @@ class MainModelOutput:
 
         Args:
             - bpv_idx (tuple of ints): The base prompt variation index.
+            - mo_parquet (ModelOutputParquet): The Parquet database object.
+            - model_output_str (str, optional): The main model output string
         '''
         self.bpv_idx = bpv_idx
         self.bp = bpv_idx[0]
@@ -111,7 +113,7 @@ class MainModelOutput:
             fetched_output = self.mo_parquet.fetch_model_output(self.bpv_idx)
             return fetched_output
     
-    def get_prompt_index(self):
+    def get_bpv_idx(self):
         '''
         Returns the base prompt variation index.
 
@@ -127,6 +129,13 @@ class MainModelOutput:
         if self.model_output_str is None:
             raise ValueError("Cannot save an empty model output.")
         self.mo_parquet.insert_model_outputs([(self.bpv_idx, self.model_output_str)])
+
+    def get_bpv_idx_and_model_output(self):
+        '''
+        Returns the bpv_idx and model_output_str as a tuple.
+        '''
+        full_str = self.get_output()
+        return (self.bpv_idx, full_str)
     
     def read_output(self):
         '''

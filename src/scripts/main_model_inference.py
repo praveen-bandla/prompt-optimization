@@ -43,8 +43,8 @@ def collect_prompt_variations(bp_idx):
     '''
     Collects the prompt variation strings for the bp_idx.
     '''
-    pv_data_handler = data_handler.PromptVariationDataHandler()
-    bpv_idxs, pv_strs = pv_data_handler.fetch_all_variations(bp_idx)
+    pv_data_handler = data_handler.PromptVariationParquet(bp_idx)
+    bpv_idxs, pv_strs = pv_data_handler.fetch_all_variations()
     num_pvs = len(bpv_idxs)
 
     pvs = []
@@ -72,16 +72,18 @@ def load_model():
     return model, tokenizer
 
 
-def model_input_text():
+def construct_model_input(pv_obj):
     '''
-    Reads the model input text file.
+    Reads the model input text file and place the template.
     '''
+    with open(MAIN_MODEL_INPUT, 'r') as f:
+        model_input = f.read()
 
-def construct_prompt():
-    '''
-    Generate
-    '''
-    pass
+    pv_str = pv_obj.fetch_variation_str()
+    # note to self: pv_str_template is a template string, so we need to replace the placeholder with the actual prompt variation string
+    prompt = model_input.format(pv_str_template = pv_str)
+
+    return prompt
     
 
 def model_config():
@@ -97,10 +99,17 @@ def model_config():
 
 
 
-def main_model_inference_per_prompt_variation(prompt):
+def main_model_inference_per_prompt_variation(pv_obj):
     '''
     Performs inference using the provided prompt variation.
+
+    Input:
+    - pv_obj (PromptVariation): The prompt variation object.
+
+    Returns:
+    - str: The model output string.
     '''
+    prompt = construct_model_input(pv_obj)
     model, tokenizer = load_model()
 
     configs = model_config()
@@ -109,6 +118,8 @@ def main_model_inference_per_prompt_variation(prompt):
     max_length = configs.get("max_length")
     temperature = configs.get("temperature")
     top_p = configs.get("top_p")
+    top_k = configs.get("top_k")
+    repetitive_penalty = configs.get("repetitive_penalty")
 
     inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
 
@@ -117,7 +128,9 @@ def main_model_inference_per_prompt_variation(prompt):
             **inputs,
             max_length=max_length,
             temperature=temperature,
-            top_p=top_p
+            top_p=top_p,
+            top_k=top_k,
+            repetitive_penalty=repetitive_penalty
         )
 
     return tokenizer.decode(output[0], skip_special_tokens=True)
@@ -125,9 +138,17 @@ def main_model_inference_per_prompt_variation(prompt):
 
 def main_model_inference_per_base_prompt(bp_idx):
     '''
-    Performs main model inference on all prompt variations for the given bp_idx.
+    Performs main model inference on all prompt variations for the given bp_idx. Stores all the outputs in its respective Parquet file.
+
+    Input:
+    - bp_idx (int): The base prompt index.
     '''
-    pass
+    all_pv_outputs = []
+    mo_parquet = prompt.ModelOutputParquet(bp_idx)
+    for pv_obj in collect_prompt_variations(bp_idx):
+        model_output = main_model_inference_per_prompt_variation(pv_obj)
+        all_pv_outputs.append((pv_obj.get_prompt_index(), model_output))
+    mo_parquet.insert_model_outputs(all_pv_outputs)
 
 
 if __name__ == "main":

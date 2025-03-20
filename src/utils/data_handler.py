@@ -259,25 +259,34 @@ class ModelOutputParquet:
     def __init__(self, bp_idx, parquet_root_path = MODEL_OUTPUTS):
         '''
         Initializes the ModelOutputParquet class. It will be used to manage all base prompt and base prompt variation outputs in the project. When needing to access prompt outputs for a specific prompt, the bpv_idx will be passed to the methods of this class.
+
+        Args:
+            - bp_idx (int): The base prompt index.
+            - parquet_root_path (str): The path to the root directory where the Parquet files are stored.
         '''
         self.parquet_root_path = parquet_root_path
         self.bp_idx = bp_idx
+        self.file_path = f'{self.parquet_root_path}/{self.bp_idx}_model_output.parquet'
+        self.df = self._access_parquet()
 
     def _initialize_parquet(self):
-        file_path = f'{self.parquet_root_path}/{self.bp_idx}_model_output.parquet'
-        if not os.path.exists(file_path):
+        '''
+        Initializes the Parquet file for the base prompt index if it doesn't exist. Otherwise, it does nothing.
+        '''
+        #file_path = f'{self.parquet_root_path}/{self.bp_idx}_model_output.parquet'
+        if not os.path.exists(self.file_path):
             df = pd.DataFrame(columns=["bpv_idx", "model_output_string"])
-            df.to_parquet(file_path, index=False)
-            print(f"Created new Parquet file at {file_path}")
+            df.to_parquet(self.file_path, index=False)
+            print(f"Created new Parquet file at {self.file_path}")
         else:
-            print(f"Using existing Parquet file at {file_path}")
+            print(f"Using existing Parquet file at {self.file_path}")
 
     def _access_parquet(self):
         '''
-        An internal function that retrieves the content of the parquet file for a specific base prompt index if it exists. Otherwise, it initializes the parquet file.
+        An internal function that retrieves the content of the parquet file for a specific base prompt index.
         '''
-        self._initialize_parquet(self.bp_idx)
-        return pd.read_parquet(f'{self.parquet_root_path}/{self.bp_idx}_model_output.parquet')
+        self._initialize_parquet()
+        return pd.read_parquet(self.file_path)
 
     def insert_model_outputs(self, model_outputs):
         '''
@@ -293,40 +302,30 @@ class ModelOutputParquet:
         if len(base_prompt_indexes) > 1:
             raise ValueError("All model outputs must be specific to a single base prompt index.")
         if base_prompt_indexes[0] != self.bp_idx:
-            raise ValueError("All model outputs must be specific to the base prompt index provided during initialization.")
+            raise ValueError("All model outputs must be specific to the base prompt index provided during initialization of the ModelOutputParquet Object.")
         
-        df = self._access_parquet(self.bp_idx)
+        # df = self._access_parquet(self.bp_idx)
 
         new_data = pd.DataFrame(model_outputs, columns=["bpv_idx", "model_output_string"])
-        df = pd.concat([df, new_data], ignore_index=True)
-        df.to_parquet(f'{self.parquet_root_path}/{self.bp_idx}_model_output.parquet', index=False)
+        df = pd.concat([self.df, new_data], ignore_index=True)
+        df.to_parquet(self.file_path, index=False)
 
     def fetch_all_outputs(self):
         '''
         Fetches all model outputs for a given base prompt.
 
-        Inputs:
-            - bp_idx (int): The base prompt index.
-        
         Returns:
             - List 1: all bpv_idx
             - List 2: all model_output_strings
         '''
-
-        if not os.path.exists(f'{self.parquet_root_path}/{self.bp_idx}_model_output.parquet'):
-            return [], []
         df = self._access_parquet(self.bp_idx)
         return df["bpv_idx"], df["model_output_string"]
     
     def fetch_base_prompt_str(self):
         '''
-        For a given bpv_idx, fetches the base prompt string associated with the base_prompt_idx.
+        Fetches the base prompt string associated with the base_prompt_idx.
         '''
-        bp_idx = self.fetch_all_outputsbpv_idx[0]
-        if not os.path.exists(f'{self.parquet_root_path}/{bp_idx}_model_output.parquet'):
-            return None
-        df = self._access_parquet(bp_idx)
-        result = df[df["bpv_idx"] == (bp_idx, -1)]['model_output_string']
+        result = self.df[self.df["bpv_idx"] == (self.bp_idx, -1)]['model_output_string']
         return result.iloc[0] if not result.empty else None
 
     def fetch_model_output(self, bpv_idx):
@@ -339,47 +338,42 @@ class ModelOutputParquet:
         Returns:
             - str: The model output string if found, else None.
         '''
-        bp_idx = bpv_idx[0]
-        df = self._access_parquet(bp_idx)
-        result = df[df["bpv_idx"] == bpv_idx]['model_output_string']
+        if bpv_idx[0] != self.bp_idx:
+            return ValueError("All model outputs must be specific to the base prompt index provided during initialization of the ModelOutputParquet Object.")
+        result = self.df[self.df["bpv_idx"] == bpv_idx]['model_output_string']
         return result.iloc[0] if not result.empty else None
     
-    def fetch_base_prompt_and_model_output(self, bpv_idx):
-        '''
-        Returns the base prompt string and prompt variation string for the given bpv_idx.
+    # no longer needed but praveen said leave it here so i listen like an obedient child
+    # def fetch_base_prompt_and_model_output(self, bpv_idx):
+    #     '''
+    #     Returns the base prompt string and prompt variation string for the given bpv_idx.
 
-        Inputs:
-            - bpv_idx (tuple of ints): The base prompt variation index.
+    #     Inputs:
+    #         - bpv_idx (tuple of ints): The base prompt variation index.
         
-        Returns:
-            - str: The base prompt string if found, else None.
-            - str: The model output string if found, else None.
-        '''
-
-        bp_idx = bpv_idx[0]
-        df = self._access_parquet(bp_idx)
-        base_prompt = df[df["bpv_idx"] == (bp_idx, -1)]['model_output_string']
-        model_output = df[df["bpv_idx"] == bpv_idx]['model_output_string']
-        return base_prompt.iloc[0] if not base_prompt.empty else None, model_output.iloc[0] if not model_output.empty else None
+    #     Returns:
+    #         - str: The base prompt string if found, else None.
+    #         - str: The model output string if found, else None.
+    #     '''
+    #     if bpv_idx[0] != self.bp_idx:
+    #         return ValueError("All model outputs must be specific to the base prompt index provided during initialization of the ModelOutputParquet Object.")
+    #     base_prompt = self.df[self.df["bpv_idx"] == (self.bp_idx, -1)]['model_output_string']
+    #     model_output = self.df[self.df["bpv_idx"] == bpv_idx]['model_output_string']
+    #     return base_prompt.iloc[0] if not base_prompt.empty else None, model_output.iloc[0] if not model_output.empty else None
 
     def delete_parquet(self):
         '''
         Deletes the Parquet file associated with the base prompt.
-        Inputs:
-            - bp_idx (int): The base prompt index.
         '''
-        file_path = f'{self.parquet_root_path}/{self.bp_idx}_pv.parquet'
-        if os.path.exists(file_path):
-            os.remove(file_path)
-            print(f"Deleted Parquet file at {file_path}")
+        if os.path.exists(self.file_path):
+            os.remove(self.file_path)
+            print(f"Deleted Parquet file at {self.file_path}")
         else:
-            print(f"No Parquet file found at {file_path} to delete.")
+            print(f"No Parquet file found at {self.file_path} to delete.")
     
     def reset_parquet(self):
         '''
         Resets the Parquet file associated with the provided bp_idx by deleting and recreating it.
-        Inputs:
-            - bp_idx (int): The base prompt index.
         '''
-        self.delete_parquet(self.bp_idx)
-        self._initialize_parquet(self.bp_idx) 
+        self.delete_parquet()
+        self._initialize_parquet() 
