@@ -2,7 +2,7 @@
 This class will be used to manage Prompts. It will include methods to create prompt, access prompts, write prompts, read prompts.
 '''
 
-from utils.data_handler import BasePromptDB
+from utils.data_handler import BasePromptDB, ValidationScoreParquet
 from configs.data_size_configs import NUM_RUBRIC_SECTIONS, SECTION_WEIGHTS
 import numpy as np
 import pandas as pd
@@ -75,13 +75,14 @@ class PromptVariation:
     '''
 
 class ValidationScore: # instantiated for each bpv_idx
+
     '''
     Manages the validation scores for prompt variations.
     This class provides methods to create, access, update, save, and load validation model scores.
     It also calculates aggregated scores across rubric sections.
     '''
 
-    def __init__(self, bpv_idx):
+    def __init__(self, vs_parquet: ValidationScoreParquet, full_string = None): # ADD THAT string is optional
         '''
         Initialize a validation score with a base prompt index, for all prompt variations of that base prompt.
 
@@ -89,6 +90,8 @@ class ValidationScore: # instantiated for each bpv_idx
             - bp_idx (tuple of ints): The base prompt index.
         '''
         self.bpv_idx # Use this to derive the bp_idx for file name
+        self.full_string = full_string
+        self.vs_parquet = vs_parquet
         self.scores = {f'section_{i+1}': [] for i in range(NUM_RUBRIC_SECTIONS)} # Initialize scores for each rubric section
 
     def parse_and_store_scores(self, string):
@@ -163,12 +166,13 @@ class ValidationScore: # instantiated for each bpv_idx
             return None
 
         # Collect individual section scores as tuples
-        individual_scorees = [tuple(self.scores[f'section_{i+1}']) for i in range(NUM_RUBRIC_SECTIONS)]
+        individual_scores = [tuple(self.scores[f'section_{i+1}']) for i in range(NUM_RUBRIC_SECTIONS)]
         # Collect average section scores
         avg_scores_list = [average_scores[f'section_{i+1}'] for i in range(NUM_RUBRIC_SECTIONS)]
         # Combine all scores into a single list
-        scores_list = individual_scorees + avg_scores_list + [total_score]
+        scores_list = individual_scores + avg_scores_list + [total_score]
         return [self.bpv_idx, scores_list]
+    
 
 class MainModelOutput:
     '''
