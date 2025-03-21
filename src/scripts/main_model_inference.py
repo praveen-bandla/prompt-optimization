@@ -1,33 +1,223 @@
 """
 Main Model Inference
 
-This script performs model inference on a given prompt, handling both prompt variations and base prompts.
-It reads an instruction file and a configuration file, generates the corresponding output, and writes 
-the results to the appropriate Parquet file.
+This script will contain code to automate the procedure of running main model inference on a batch of given prompts. It will take as input a start and end bp_idx, and will run inference on all prompt variations for each bp_idx that falls between the start and end. The output will be written to a Parquet file in the respective location for each bp_idx, as outlined in the README.
 
 Inputs:
-- `bpv_idx`: An integer representing the prompt variation's index.
-- `prompt variation`: A string containing the input prompt to be processed.
-- `main_model_input.txt`: A text file containing instructions for inference.
-- `main_model_config.yaml`: A YAML file specifying model parameters and settings.
+    - start_idx (int): The starting base prompt index. This is the first base prompt index for which inference will be run.
+    - end_idx (int): The ending base prompt index. The script runs on all base prompt indices up to end_idx, excluding end_idx itself.
+
+Example usage:
+    # Run inference on all prompt variations for base prompt indices 0,1,2,3,4.
+    python main_model_inference.py 0 5
+
 
 Outputs:
-- Writes the generated output to a Parquet file named `model_outputs_{i}_{j}.parquet`, which contains results 
-  for prompts indexed from `(1, 0)` to `(1, k)`, where `k` is the batch/partition size of the file. 
-  `i` is the index of the base prompt, and `j` is the batch number.
-Example format:
-| bpv_idx | main model output |
-|---------|------------------|
-| (1, 0)  | "Model output 1" |
-| (1, 1)  | "Model output 2" |
-| ...     | ...              |
+- Writes the generated output to a Parquet file named `{i]_model_outputs.parquet`, which contains results  for prompts indexed from `(i, -1)` to `(i, n)`, where `n` is the number of partitions. `i` is the index of the base prompt.
+  Example format of a single file:
+  | bpv_idx | main model output |
+  |---------|------------------|
+  | (0, -1)  | "Model output 1" |
+  | (0, 0)  | "Model output 2" |
+  | ...     | ...              |
+
+  This file would contain all model outputs for all prompt variations for bp_idx (base prompt index) 0.
 
 Process:
-1. Reads the instruction and configuration files.
-2. Performs inference using the provided prompt.
-3. Opens or creates the corresponding Parquet file.
-4. Writes the generated output along with its corresponding index.
+1. Reads the bp_idx as a script parameter
+2. Collects the prompt variations for the given bp_idx
+3. Collects the model input text file and configuration file
+4. Performs inference using the provided prompt variations
+5. Opens or creates the corresponding Parquet file
 
 Dependencies:
-- [List any required libraries, e.g., `pandas`, `pyarrow`, `transformers`]
+- `main_model_input.txt`: A text file containing instructions for inference.
+- `main_model_config.yaml`: A YAML file specifying model parameters and settings.
+- `main_model_inference.py`: The script that performs the main model inference.
 """
+
+from src.utils import prompt
+from src.utils import data_handler
+from configs.root_paths import *
+import yaml
+import json
+
+from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
+import torch
+#import argparse
+import sys
+
+# Step 2: Collect the prompt variations for the given bp_idx
+def collect_prompt_variations(bp_idx):
+    '''
+    Collects the prompt variation strings for the bp_idx.
+    '''
+    pv_data_handler = data_handler.PromptVariationParquet(bp_idx)
+    bpv_idxs, pv_strs = pv_data_handler.fetch_all_variations()
+    num_pvs = len(bpv_idxs)
+
+    pvs = []
+
+    for i in num_pvs:
+        pv_obj = prompt.PromptVariation(bpv_idxs[i], pv_strs[i])
+        pvs.append(pv_obj)
+
+    return pvs
+
+def load_model():
+    '''
+    Loads the main model and tokenizer.
+    '''
+
+    # # old generic implementation. Reworking below for PHI-3.5 specifically, based on the huggingface docs
+    # device = "cuda" if torch.cuda.is_available() else "cpu"
+    # if device != "cuda":
+    #     raise RuntimeError("CUDA (GPU) is not available. Please check your setup.")
+    # tokenizer = AutoTokenizer.from_pretrained(MAIN_MODEL)
+    # model = AutoModelForCausalLM.from_pretrained(
+    #     MAIN_MODEL,
+    #     torch_dtype=torch.float16,
+    #     device_map={"": 0} # Apparently huggingface wants us to use device_map
+    # )
+    # return model, tokenizer
+
+    model = AutoModelForCausalLM.from_pretrained(
+        MAIN_MODEL,
+        torch_dtype="auto",
+        trust_remote_code=True # have to use for huggingface models
+        )
+    
+    tokenizer = AutoTokenizer.from_pretrained(MAIN_MODEL, trust_remote_code=True)
+
+    pipe = pipeline('text-generation', model=model, tokenizer=tokenizer)
+    return pipe
+
+
+def construct_model_input(pv_obj):
+    '''
+    Reads the model input text file and place the template.
+    '''
+    with open(MAIN_MODEL_INPUT, 'r') as f:
+        prompt_structure = json.load(f)
+
+    system_role = prompt_structure["system_role"]
+    content_template = prompt_structure["content_template"]
+
+    pv_str = pv_obj.fetch_variation_str()
+    content = content_template.format(pv_str_template = pv_str)
+
+    full_prompt = [
+        {
+            "role": "system",
+            #"content": [{"type": "text", "text": system_role}]
+            "content": system_role # apparently implementation for Phi-3.5 is different to OpenAI 4o
+        },
+        {
+            "role": "user",
+            #"content": [{"type": "text", "text": content}]
+            "content": content
+        }
+    ]
+
+    return full_prompt
+    
+
+def load_configs():
+    '''
+    Reads the model configuration file.
+    '''
+    config_path = MAIN_MODEL_CONFIGS
+
+    with open(config_path, 'r') as f:
+        configs = yaml.safe_load(f)
+      
+    return configs
+
+
+
+def main_model_inference_per_prompt_variation(pv_obj):
+    '''
+    Performs inference using the provided prompt variation.
+
+    Input:
+    - pv_obj (PromptVariation): The prompt variation object.
+
+    Returns:
+    - str: The model output string.
+    '''
+    prompt = construct_model_input(pv_obj)
+    #model, tokenizer = load_model()
+    pipe = load_model()
+
+    configs = load_configs()
+
+    # old configs that are not all relevant to PHI-3.5
+    # max_length = configs.get("max_length")
+    # temperature = configs.get("temperature")
+    # top_p = configs.get("top_p")
+    # top_k = configs.get("top_k")
+    # repetitive_penalty = configs.get("repetitive_penalty")
+
+    # new configs that are relevant to PHI-3.5
+    max_new_tokens = configs.get("max_new_tokens")
+    temperature = configs.get("temperature")
+    do_sample = configs.get("do_sample") # decides whether to use sampling or greedy decoding (diverse outputs vs. best outputs)
+
+    # old implementation
+    # inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
+    # with torch.no_grad():
+    #     output = model.generate(
+    #         **inputs,
+    #         max_length=max_length,
+    #         temperature=temperature,
+    #         top_p=top_p,
+    #         top_k=top_k,
+    #         repetitive_penalty=repetitive_penalty
+    #     )
+    # return tokenizer.decode(output[0], skip_special_tokens=True)
+
+    # new implementation
+    generation_args = {
+        "max_new_tokens": max_new_tokens,
+        "temperature": temperature,
+        "do_sample": do_sample,
+        "return_full_text": False # determines whether to the prompt as part of the output.
+
+    }
+
+    output = pipe(prompt, **generation_args)
+    return output[0]['generated_text']
+
+
+def main_model_inference_per_base_prompt(bp_idx):
+    '''
+    Performs main model inference on all prompt variations for the given bp_idx. Stores all the outputs in its respective Parquet file.
+
+    Input:
+    - bp_idx (int): The base prompt index.
+    '''
+    all_pv_outputs = []
+    mo_parquet = prompt.ModelOutputParquet(bp_idx)
+    for pv_obj in collect_prompt_variations(bp_idx):
+        model_output = main_model_inference_per_prompt_variation(pv_obj)
+        all_pv_outputs.append((pv_obj.get_prompt_index(), model_output))
+    mo_parquet.insert_model_outputs(all_pv_outputs)
+
+
+if __name__ == "main":
+    if len(sys.argv) != 3:
+        raise ValueError("Please provide a list of base prompt indices.")
+
+    start_idx = int(sys.argv[1])
+    end_idx = int(sys.argv[2])
+
+    for bp_idx in range(start_idx, end_idx):
+        main_model_inference_per_base_prompt(bp_idx)
+        print(f"Finished inference for base prompt index {bp_idx}.")
+    print("All inferences have been completed.")
+
+
+
+
+    
+
