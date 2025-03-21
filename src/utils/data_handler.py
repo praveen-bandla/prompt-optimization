@@ -37,9 +37,15 @@ class BasePromptDB:
         
         if not db_exists:
             cursor = self.conn.cursor()
+            # cursor.execute('''
+            #     CREATE TABLE base_prompts (
+            #         bpv_idx TEXT PRIMARY KEY,
+            #         base_prompt_string TEXT NOT NULL
+            #     )
+            # ''')
             cursor.execute('''
                 CREATE TABLE base_prompts (
-                    bpv_idx TEXT PRIMARY KEY,
+                    bp_idx INT PRIMARY KEY,
                     base_prompt_string TEXT NOT NULL
                 )
             ''')
@@ -53,11 +59,11 @@ class BasePromptDB:
         Inserts a batch of base prompts into the database.
 
         Args:
-            - prompts (list of tuples): A list of tuples where each tuple contains (bpv_idx, base_prompt_string).
+            - prompts (list of tuples): A list of tuples where each tuple contains (bp_idx, base_prompt_string).
         '''
         cursor = self.conn.cursor()
         cursor.executemany('''
-            INSERT INTO base_prompts (bpv_idx, base_prompt_string) VALUES (?, ?)
+            INSERT INTO base_prompts (bp_idx, base_prompt_string) VALUES (?, ?)
         ''', prompts)
         self.conn.commit()
 
@@ -67,25 +73,25 @@ class BasePromptDB:
         Fetches all base prompts from the database.
 
         Returns:
-            - list of tuples: A list of tuples where each tuple contains (bpv_idx, base_prompt_string).
+            - list of tuples: A list of tuples where each tuple contains (bp_idx, base_prompt_string).
         '''
         cursor = self.conn.cursor()
         cursor.execute('SELECT * FROM base_prompts')
         return cursor.fetchall()
     
-    def fetch_prompt(self, bpv_idx):
+    def fetch_prompt(self, bp_idx):
         '''
-        Fetches a specific prompt from the database by bpv_idx.
+        Fetches a specific prompt from the database by bp_idx.
         Is called by the Prompt class.
 
         Args:
-            - bpv_idx (str): The base prompt variation index.
+            - bp_idx (int): The base prompt variation index.
 
         Returns:
             - str: The prompt string.
         '''
         cursor = self.conn.cursor()
-        cursor.execute('SELECT base_prompt_string FROM base_prompts WHERE bpv_idx = ?', (bpv_idx,))
+        cursor.execute('SELECT base_prompt_string FROM base_prompts WHERE bp_idx = ?', (bp_idx,))
         result = cursor.fetchone()
         return result[0] if result else None
 
