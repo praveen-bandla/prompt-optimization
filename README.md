@@ -24,6 +24,8 @@ The project is organized into several directories and files to help maintain mod
 │   ├── finetuning_input.txt
 │── configs/
 │   ├── root_paths.py
+│   ├── data_size_configs.py
+│   ├── settings.yaml
 │   ├── model_configs
 │       ├── base_prompt_config.yaml
 │       ├── prompt_variation_config.yaml
