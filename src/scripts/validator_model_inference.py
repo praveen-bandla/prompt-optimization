@@ -89,7 +89,7 @@ def construct_model_input(base_prompt_str, main_model_output):
 
     # Read the input file
     with open(input_file_path, 'r') as file:
-        model_input = json.load()
+        model_input = json.load(file)
 
     # Read the rubric file
     with open(rubric_file_path, 'r') as file:
@@ -123,7 +123,9 @@ def validator_model_inference_per_prompt_variation(pv_obj, model_name):
     Returns:
     - str: The model output string.
     """
-    prompt = construct_model_input(pv_obj)
+    base_prompt_str = pv_ob.get_base_prompt_str()
+    main_model_output = pv_obj.get_main_model_output()
+    prompt = construct_model_input(base_prompt_str, main_model_output)
     model, tokenizer = load_model(model_name)
 
     configs = model_config()
@@ -177,22 +179,19 @@ def validator_model_inference_per_prompt_variation(pv_obj, model_name):
 #     mo_parquet.insert_model_outputs(all_pv_outputs)
 
 
-
-
 # will call script on list of base prompts
 # needs main function to do so
 
-# ensure below is correct
 def main(bpv_idx):
     # Collect base prompt strings and main model inputs
     base_prompt_str = collect_base_prompt_str(bpv_idx)
-    main_model_output =  MainModelOutput.model_output_str(bpv_idx)
+    main_model_output = MainModelOutput.model_output_str(bpv_idx)
 
     # Prepare the model input
     model_input = construct_model_input(base_prompt_str, main_model_output)
 
     # Load the model and tokenizer
-    model_names = ['falcon-mamba', 'opt', 'mistral'] # this could be implemented better/in a different file but its here for now
+    model_names = ['falcon-mamba', 'opt', 'mistral']  # this could be implemented better/in a different file but its here for now
     models_tokenizers = {model_name: load_model(model_name) for model_name in model_names}
 
     # Perform inference for each model and collect outputs
