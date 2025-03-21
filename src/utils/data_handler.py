@@ -276,17 +276,35 @@ class ValidationScoreParquet:
         '''
         self.bp_idx = bp_idx
         self.parquet_root_path = parquet_root_path
-        self.df =  pd.DataFrame(columns = ['bpv_idx'] + [f'section_{i+1}' for i in range(NUM_RUBRIC_SECTIONS)] + ['total_score'])
-        self._initialize_parquet()
+        self.file_path = f'{self.parquet_root_path}/{self.bp_idx}_validation_score.parquet'
+        # self.df =  pd.DataFrame(columns = ['bpv_idx'] + [f'section_{i+1}' for i in range(NUM_RUBRIC_SECTIONS)] + ['total_score'])
+        self.df = self._access_parquet()
+        #self._initialize_parquet()
 
     def _initialize_parquet(self):
-        file_path = f'{self.parquet_root_path}/{self.bp_idx}_validation_score.parquet'
-        if not os.path.exists(file_path):
-            self.df.to_parquet(file_path, index=False)
-            print(f"Created new ValidationScoreParquet file at {file_path}")
+        # file_path = f'{self.parquet_root_path}/{self.bp_idx}_validation_score.parquet'
+        # if not os.path.exists(file_path):
+        #     self.df.to_parquet(file_path, index=False)
+        #     print(f"Created new ValidationScoreParquet file at {file_path}")
+        # else:
+        #     self.df = pd.read_parquet(file_path)
+        #     print(f"Using existing ValidationScoreParquet file at {file_path}")
+
+        if not os.path.exists(self.file_path):
+            df = pd.DataFrame(columns = ['bpv_idx'] + [f'section_{i+1}' for i in range(NUM_RUBRIC_SECTIONS)] + [f'section_{i+1}_avg' for i in range(NUM_RUBRIC_SECTIONS)] + ['total_score'])
+            df.to_parquet(self.file_path, index=False)
+            print(f"Created new ValidationScoreParquet file at {self.file_path}")
+
         else:
-            self.df = pd.read_parquet(file_path)
-            print(f"Using existing ValidationScoreParquet file at {file_path}")
+            print(f"Using existing ValidationScoreParquet file at {self.file_path}")
+
+    def _access_parquet(self):
+        '''
+        An internal function that retrieves the content of the parquet file for a specific base prompt's prompt variation scores if it exists. Otherwise, it initializes the parquet file.
+        '''
+        self._initialize_parquet()
+        #return self.df
+        return pd.read_parquet(self.file_path)
 
     def save_scores_to_parquet(self, scores_data):
         '''
@@ -298,17 +316,9 @@ class ValidationScoreParquet:
         if scores_data:
             self.insert_validation_scores([scores_data])
 
-
-    def _access_parquet(self):
-        '''
-        An internal function that retrieves the content of the parquet file for a specific base prompt's prompt variation scores if it exists. Otherwise, it initializes the parquet file.
-        '''
-        self._initialize_parquet()
-        return self.df
-
     def insert_validation_scores(self, scores_list):
         '''
-        Inserts ALL validation scores into the respective parquet file - no batched writing.
+        Inserts ALL validation scores into the respective parquet file.
 
         Args:
             - scores_list (list of integers): A list that contains the scores, average section scores, and total score.
