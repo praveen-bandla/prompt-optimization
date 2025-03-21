@@ -18,17 +18,18 @@ class BasePrompt:
     It will include methods to create base prompt, access base prompt, write base prompt, read base prompt. Every component of the project that needs to access base prompts will use this class exclusively.
     '''
 
-    def __init__(self, bpv_idx):
+    def __init__(self, bp_idx, bp_db, prompt_str = None):
         '''
-        Initialize a base prompt with a base prompt variation index (given -1 for the second index of the tuple). Whether to create a new base prompt, or access an existing base prompt, this base prompt class will be used.
+        Initialize a base prompt with a base prompt index. Whether to create a new base prompt, or access an existing base prompt, this base prompt class will be used.
 
         Args:
-            - bpv_idx (tuple of ints): The base prompt variation index.
+            - bp_idx (int): The base prompt index.
         '''
-        self.bpv_idx = bpv_idx
-        self.prompt = None
+        self.bp_idx = bp_idx
+        self.prompt_str = prompt_str
+        self.bp_db = bp_db
 
-    def get_prompt_str(self, db = None):
+    def get_base_prompt(self):
         '''
         Fetches the prompt from the database.
         If a database connection is not provided, a new connection is created and closed. If it is provided, it is used and not closed.
@@ -39,14 +40,22 @@ class BasePrompt:
         Returns:
             - str: The prompt string.
         '''
-        if db is None:
-            db = BasePromptDB()
-            self.prompt = db.fetch_prompt(self.bpv_idx)
-            db.close_connection()
-        else:
-            self.prompt = db.fetch_prompt(self.bpv_idx)
 
-        return self.prompt
+        # this if statement would never AND BELLA MEANS NEVER get triggered
+        # if self.bp_db is None:
+
+        #     self.bp_db = BasePromptDB()
+        #     self.prompt = db.fetch_prompt(self.bpv_idx)
+        #     db.close_connection()
+        # else:
+        #     self.prompt = db.fetch_prompt(self.bpv_idx)
+
+        # return self.prompt
+
+        if self.prompt_str is not None:
+            return self.prompt_str
+        else:
+            return self.bp_db.fetch_prompt(self.bp_idx)
 
     def get_prompt_index(self):
         '''
@@ -55,22 +64,23 @@ class BasePrompt:
         Returns:
             - tuple of ints: The base prompt variation index.
         '''
-        return self.bpv_idx
+        return self.bp_idx
 
-    def save_base_prompt(self, db = None):
-        '''
-        Saves the base prompt to the database.
-        If a database connection is not provided, a new connection is created and closed. If it is provided, it is used and not closed.
+    # def save_base_prompt(self):
+    #     This function is not be used right now.
+    #     '''
+    #     Saves the base prompt to the database.
+    #     If a database connection is not provided, a new connection is created and closed. If it is provided, it is used and not closed.
 
-        Args:
-            - db (BasePromptDB, optional): An existing database connection object.
-        '''
-        if db is None:
-            db = BasePromptDB()
-            db.insert_base_prompts([(self.bpv_idx, self.prompt)])
-            db.close_connection()
-        else:
-            db.insert_base_prompts([(self.bpv_idx, self.prompt)])
+    #     Args:
+    #         - db (BasePromptDB, optional): An existing database connection object.
+    #     '''
+    #     if db is None:
+    #         db = BasePromptDB()
+    #         db.insert_base_prompts([(self.bpv_idx, self.prompt)])
+    #         db.close_connection()
+    #     else:
+    #         db.insert_base_prompts([(self.bpv_idx, self.prompt)])
 
 
 class PromptVariation:

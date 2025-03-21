@@ -150,7 +150,7 @@ class PromptVariationParquet:
         An internal function that retrieves the content of the parquet file for a specific base prompt index if it exists. Otherwise, it initializes the parquet file.
         '''
         self._initialize_parquet()
-        return pd.read_parquet(self.file_path)
+        return pd.read_parquet()
 
     def insert_prompt_variations(self,variations):
         '''
@@ -237,8 +237,8 @@ class PromptVariationParquet:
         '''
         Resets the Parquet file associated with the provided bp_idx by deleting and recreating it.
         '''
-        self.delete_parquet(self.bp_idx)
-        self._initialize_parquet(self.bp_idx) 
+        self.delete_parquet()
+        self._initialize_parquet() 
 
 
 class ValidationScoreParquet:
