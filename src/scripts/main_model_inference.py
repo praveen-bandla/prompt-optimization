@@ -42,7 +42,7 @@ from configs.root_paths import *
 import yaml
 import json
 
-from transformers import AutoModelForCausalLM, AutoTokenizer
+from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
 import torch
 #import argparse
 import sys
@@ -69,16 +69,28 @@ def load_model():
     Loads the main model and tokenizer.
     '''
 
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    if device != "cuda":
-        raise RuntimeError("CUDA (GPU) is not available. Please check your setup.")
-    tokenizer = AutoTokenizer.from_pretrained(MAIN_MODEL)
+    # # old generic implementation. Reworking below for PHI-3.5 specifically, based on the huggingface docs
+    # device = "cuda" if torch.cuda.is_available() else "cpu"
+    # if device != "cuda":
+    #     raise RuntimeError("CUDA (GPU) is not available. Please check your setup.")
+    # tokenizer = AutoTokenizer.from_pretrained(MAIN_MODEL)
+    # model = AutoModelForCausalLM.from_pretrained(
+    #     MAIN_MODEL,
+    #     torch_dtype=torch.float16,
+    #     device_map={"": 0} # Apparently huggingface wants us to use device_map
+    # )
+    # return model, tokenizer
+
     model = AutoModelForCausalLM.from_pretrained(
         MAIN_MODEL,
-        torch_dtype=torch.float16,
-        device_map={"": 0} # Apparently huggingface wants us to use device_map
-    )
-    return model, tokenizer
+        torch_dtype="auto",
+        trust_remote_code=True # have to use for huggingface models
+        )
+    
+    tokenizer = AutoTokenizer.from_pretrained(MAIN_MODEL, trust_remote_code=True)
+
+    pipe = pipeline('text-generation', model=model, tokenizer=tokenizer)
+    return pipe
 
 
 def construct_model_input(pv_obj):
@@ -92,25 +104,25 @@ def construct_model_input(pv_obj):
     content_template = prompt_structure["content_template"]
 
     pv_str = pv_obj.fetch_variation_str()
-    # note to self: pv_str_template is a template string, so we need to replace the placeholder with the actual prompt variation string
-    #prompt = model_input.format(pv_str_template = pv_str)
     content = content_template.format(pv_str_template = pv_str)
 
-    prompt = [
+    full_prompt = [
         {
             "role": "system",
-            "content": [{"type": "text", "text": system_role}]
+            #"content": [{"type": "text", "text": system_role}]
+            "content": system_role # apparently implementation for Phi-3.5 is different to OpenAI 4o
         },
         {
             "role": "user",
-            "content": [{"type": "text", "text": content}]
+            #"content": [{"type": "text", "text": content}]
+            "content": content
         }
     ]
 
-    return prompt
+    return full_prompt
     
 
-def model_config():
+def load_configs():
     '''
     Reads the model configuration file.
     '''
@@ -134,30 +146,47 @@ def main_model_inference_per_prompt_variation(pv_obj):
     - str: The model output string.
     '''
     prompt = construct_model_input(pv_obj)
-    model, tokenizer = load_model()
+    #model, tokenizer = load_model()
+    pipe = load_model()
 
-    configs = model_config()
+    configs = load_configs()
 
-    # reading all relevant configs
-    max_length = configs.get("max_length")
+    # old configs that are not all relevant to PHI-3.5
+    # max_length = configs.get("max_length")
+    # temperature = configs.get("temperature")
+    # top_p = configs.get("top_p")
+    # top_k = configs.get("top_k")
+    # repetitive_penalty = configs.get("repetitive_penalty")
+
+    # new configs that are relevant to PHI-3.5
+    max_new_tokens = configs.get("max_new_tokens")
     temperature = configs.get("temperature")
-    top_p = configs.get("top_p")
-    top_k = configs.get("top_k")
-    repetitive_penalty = configs.get("repetitive_penalty")
+    do_sample = configs.get("do_sample") # decides whether to use sampling or greedy decoding (diverse outputs vs. best outputs)
 
-    inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
+    # old implementation
+    # inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
+    # with torch.no_grad():
+    #     output = model.generate(
+    #         **inputs,
+    #         max_length=max_length,
+    #         temperature=temperature,
+    #         top_p=top_p,
+    #         top_k=top_k,
+    #         repetitive_penalty=repetitive_penalty
+    #     )
+    # return tokenizer.decode(output[0], skip_special_tokens=True)
 
-    with torch.no_grad():
-        output = model.generate(
-            **inputs,
-            max_length=max_length,
-            temperature=temperature,
-            top_p=top_p,
-            top_k=top_k,
-            repetitive_penalty=repetitive_penalty
-        )
+    # new implementation
+    generation_args = {
+        "max_new_tokens": max_new_tokens,
+        "temperature": temperature,
+        "do_sample": do_sample,
+        "return_full_text": False # determines whether to the prompt as part of the output.
 
-    return tokenizer.decode(output[0], skip_special_tokens=True)
+    }
+
+    output = pipe(prompt, **generation_args)
+    return output[0]['generated_text']
 
 
 def main_model_inference_per_base_prompt(bp_idx):
@@ -178,7 +207,6 @@ def main_model_inference_per_base_prompt(bp_idx):
 if __name__ == "main":
     if len(sys.argv) != 3:
         raise ValueError("Please provide a list of base prompt indices.")
-        sys.exit(1)
 
     start_idx = int(sys.argv[1])
     end_idx = int(sys.argv[2])
@@ -190,9 +218,20 @@ if __name__ == "main":
 
 
 
-    
+# download the model using:
+'''    
+from transformers import AutoModelForCausalLM, AutoTokenizer
 
+# Define the local directory to store the model
+local_model_dir = "/Users/praveenbandla/Desktop/Spring 2025/NLU/Project/prompt-optimization/models/microsoft-Phi-3.5-mini-instruct/"
 
+# Download the model and tokenizer
+model = AutoModelForCausalLM.from_pretrained("microsoft/Phi-3.5-mini-instruct", cache_dir=local_model_dir, trust_remote_code=True)
+tokenizer = AutoTokenizer.from_pretrained("microsoft/Phi-3.5-mini-instruct", cache_dir=local_model_dir, trust_remote_code=True)
+
+print("Model and tokenizer downloaded and saved locally.")
+'
+'''
 
     
 
