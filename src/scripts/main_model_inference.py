@@ -218,20 +218,6 @@ if __name__ == "main":
 
 
 
-# download the model using:
-'''    
-from transformers import AutoModelForCausalLM, AutoTokenizer
-
-# Define the local directory to store the model
-local_model_dir = "/Users/praveenbandla/Desktop/Spring 2025/NLU/Project/prompt-optimization/models/microsoft-Phi-3.5-mini-instruct/"
-
-# Download the model and tokenizer
-model = AutoModelForCausalLM.from_pretrained("microsoft/Phi-3.5-mini-instruct", cache_dir=local_model_dir, trust_remote_code=True)
-tokenizer = AutoTokenizer.from_pretrained("microsoft/Phi-3.5-mini-instruct", cache_dir=local_model_dir, trust_remote_code=True)
-
-print("Model and tokenizer downloaded and saved locally.")
-'
-'''
 
     
 
