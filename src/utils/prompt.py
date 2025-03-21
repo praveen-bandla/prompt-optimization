@@ -2,15 +2,20 @@
 This class will be used to manage Prompts. It will include methods to create prompt, access prompts, write prompts, read prompts.
 '''
 
-from utils.data_handler import BasePromptDB
+#from utils.data_handler import BasePromptDB, ValidationScoreParquet
+#from configs.data_size_configs import NUM_RUBRIC_SECTIONS, SECTION_WEIGHTS
+from configs.data_size_configs import *
+import numpy as np
+import os
 from configs.root_paths import *
 from utils.data_handler import * 
 import pandas as pd
 
+
 class BasePrompt:
     '''
     This class will be used to manage Base Prompts.
-    It will include methods to create base prompt, access base prompt, write base prompt, read base prompt. Every component of the project that needs to access base prompts will use this class exclusively. 
+    It will include methods to create base prompt, access base prompt, write base prompt, read base prompt. Every component of the project that needs to access base prompts will use this class exclusively.
     '''
 
     def __init__(self, bpv_idx):
@@ -40,9 +45,9 @@ class BasePrompt:
             db.close_connection()
         else:
             self.prompt = db.fetch_prompt(self.bpv_idx)
-        
+
         return self.prompt
-    
+
     def get_prompt_index(self):
         '''
         Returns the base prompt variation index.
@@ -51,7 +56,7 @@ class BasePrompt:
             - tuple of ints: The base prompt variation index.
         '''
         return self.bpv_idx
-    
+
     def save_base_prompt(self, db = None):
         '''
         Saves the base prompt to the database.
@@ -161,11 +166,104 @@ class PromptVariation:
     #     self.full_string = None
 
 
-class ValidationScore:
-    '''
-    Class to be developed that will be used to manage Validation Scores. Will include methods to create validation score, access validation score, write validation score, read validation score, just like PromptVariation and BasePrompt. This class will also have to include methods to calculate the aggregated scores, per category score, etc.
-    '''
+class ValidationScore: # instantiated for each bpv_idx
 
+    '''
+    Manages the validation scores for prompt variations.
+    This class provides methods to create, access, update, save, and load validation model scores.
+    It also calculates aggregated scores across rubric sections.
+    '''
+    def __init__(self, vs_parquet: ValidationScoreParquet, full_string = None): # ADD THAT string is optional
+        '''
+        Initialize a validation score with a base prompt index, for all prompt variations of that base prompt.
+
+        Args:
+            - bp_idx (tuple of ints): The base prompt index.
+        '''
+        self.bpv_idx # Use this to derive the bp_idx for file name
+        self.full_string = full_string
+        self.vs_parquet = vs_parquet
+        self.scores = {f'section_{i+1}': [] for i in range(NUM_RUBRIC_SECTIONS)} # Initialize scores for each rubric section
+
+    def parse_and_store_scores(self, string):
+        """Parses the model scores from a string and stores them.
+        Validator model output is a string of int scores in a tuple."""
+        try:
+            scores = list(map(int, string.split(',')))
+            if len(scores != NUM_RUBRIC_SECTIONS):
+                raise ValueError(f'The input string must contain exactly {NUM_RUBRIC_SECTIONS} scores.')
+            for i in range(NUM_RUBRIC_SECTIONS):
+                self.scores[f'section{i+1}'].append(scores[i])
+        except ValueError as e:
+            print(f'Error parsing the input string: {e}')
+
+    def get_scores(self):
+        """Returns the validation scores."""
+        return self.scores
+
+    def update_score(self, section, new_score):
+        """Updates the validation score for a specific rubric section."""
+        section_key = f'section_{section}'
+        if section_key in self.scores:
+            self.scores[section_key] = new_score
+        else:
+            raise ValueError(f"Section {section} not found in validation score.")
+
+    # def get_validator_average_score(self):
+    #     """Returns the average scores assigned by the validator models."""
+    #     if not self.score:
+    #         return None
+    #     # avg_scores = {}
+    #     scores_matrix = list(self.score.values()) # List of (x, y, z) tuples
+    #     avg_scores = tuple(np.mean(scores_matrix, axis=0)) # Average per validator
+    #     return avg_scores
+
+    def calculate_average_section_scores(self):
+        """Calculates the average score for each rubric section across all validator models."""
+        if not self.scores:
+            return None
+        average_scores = {}
+        for section in range(1, NUM_RUBRIC_SECTIONS + 1):
+            section_key = f'section_{section}'
+            if section_key in self.scores:
+                average_scores[section_key] = np.mean(self.scores[section_key])
+            else:
+                raise ValueError(f"Section {section} not found in validation score.")
+        return average_scores
+
+    def calculate_total_score(self):
+        """Calculates the total score across all rubric sections, considering weights from data_size_configs.RUBRIC_WEIGHTS."""
+        if len(SECTION_WEIGHTS) != NUM_RUBRIC_SECTIONS:
+            raise ValueError('The number of rubric sections does not match the number of weights.')
+        if not np.isclose(sum(SECTION_WEIGHTS.values()), 1):
+            raise ValueError('The rubric weights in SECTION_WEIGHTS must sum to 1.')
+        
+        average_scores = self.calculate_average_section_scores()
+        if average_scores is None:
+            return None
+        total_score = 0
+        for section, weight in SECTION_WEIGHTS.items():
+            if section in average_scores:
+                total_score += average_scores[section] * weight
+            else:
+                raise ValueError(f'Section {section} not found in average scores.')
+        return total_score
+
+    def save_validation_scores(self):
+        """Returns the validation scores for passing to write_parquet_file()"""
+        average_scores = self.calculate_average_section_scores()
+        total_score = self.calculate_total_score()
+        if average_scores is None or total_score is None:
+            return None
+
+        # Collect individual section scores as tuples
+        individual_scores = [tuple(self.scores[f'section_{i+1}']) for i in range(NUM_RUBRIC_SECTIONS)]
+        # Collect average section scores
+        avg_scores_list = [average_scores[f'section_{i+1}_avg'] for i in range(NUM_RUBRIC_SECTIONS)]
+        # Combine all scores into a single list
+        scores_list = individual_scores + avg_scores_list + [total_score]
+        return [self.bpv_idx, scores_list]
+    
 class MainModelOutput:
     '''
     Class to be developed that will be used to manage the main model outputs. Will include methods to create main model output, access main model output, write main model output, read main model output, just like PromptVariation and BasePrompt. This class will be most similar to PromptVariation.

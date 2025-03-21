@@ -2,9 +2,12 @@
 This file will contain utlity functions to handle data. It will include methods to read and write files.
 '''
 import os
+import pandas as pd
 import sqlite3
 from configs.root_paths import *
-import pandas as pd
+from configs.data_size_configs import *
+#NUM_RUBRIC_SECTIONS
+from prompt import ValidationScore
 
 class BasePromptDB:
     '''
@@ -116,7 +119,7 @@ class BasePromptDB:
 
 class PromptVariationParquet:
     '''
-    Class used to manage the Prompt Variations in Parquet format as we discussed and is in README. This class will be initialized with a base prompt index and will have methods to access, write, read prompt variations. It will be similar to the BasePromptDB class, but will have to handle different Parquet files indexed by base prompt, as opposed to a single SQLite database.
+    Class used to manage the Prompt Variations in Parquet format as we discussed and is in README. This class will be initialized with a bpv_idx and will have methods to access, write, read prompt variations. It will be similar to the BasePromptDB class, but will have to handle different Parquet files indexed by base prompt, as opposed to a single SQLite database.
     '''
 
     def __init__(self, parquet_root_path = PROMPT_VARIATIONS):
@@ -249,9 +252,135 @@ class PromptVariationParquet:
 
 class ValidationScoreParquet:
     '''
-    Class used to manage the Validation Scores in Parquet format as we discussed and is in README. This class will be initialized with a base prompt index and will have methods to access, write, read validation scores. It will be very very similar to the PromptVariationParquet class. The only difference will be the data stored in the Parquet files.
+    Class used to manage the Validation Scores in Parquet format as we discussed and is in README. 
+    This class will be initialized with a bp_idx and will have methods to access, write, read validation scores. 
+    It will be very very similar to the PromptVariationParquet class. 
+    The only difference will be the data stored in the Parquet files.
     '''
 
+    '''
+    Class used to manage the Prompt Variations in Parquet format as we discussed and is in README. This class will be initialized with a base prompt index and will have methods to access, write, read prompt variations. It will be similar to the BasePromptDB class, but will have to handle different Parquet files indexed by base prompt, as opposed to a single SQLite database.
+    '''
+
+    def __init__(self, bp_idx, parquet_root_path = VALIDATION_SCORES): 
+        '''
+        Initializes the ValidationScoreParquet class. This is not base prompt specific. 
+        It will be used to manage all validation scores in the project. 
+        When needing to access validation scores for a specific base prompt, the bpv_idx will be passed to the methods of this class.
+        '''
+        self.bp_idx = bp_idx
+        self.parquet_root_path = parquet_root_path
+        self.df =  pd.DataFrame(columns = ['bpv_idx'] + [f'section_{i+1}' for i in range(NUM_RUBRIC_SECTIONS)] + ['total_score'])
+        self._initialize_parquet()
+
+    def _initialize_parquet(self):
+        file_path = f'{self.parquet_root_path}/{self.bp_idx}_validation_score.parquet'
+        if not os.path.exists(file_path):
+            self.df.to_parquet(file_path, index=False)
+            print(f"Created new ValidationScoreParquet file at {file_path}")
+        else:
+            self.df = pd.read_parquet(file_path)
+            print(f"Using existing ValidationScoreParquet file at {file_path}")
+
+    def save_scores_to_parquet(self, scores_data):
+        '''
+        Saves the validation scores to the Parquet file for the base prompt.
+
+        Args:
+            - scores_list (list of tuples): A list of tuples where each tuple contains the bpv_idx and the scores for each rubric section and total score.
+        '''
+        if scores_data:
+            self.insert_validation_scores([scores_data])
+
+
+    def _access_parquet(self):
+        '''
+        An internal function that retrieves the content of the parquet file for a specific base prompt's prompt variation scores if it exists. Otherwise, it initializes the parquet file.
+        '''
+        self._initialize_parquet()
+        return self.df
+
+    def insert_validation_scores(self, scores_list):
+        '''
+        Inserts ALL validation scores into the respective parquet file - no batched writing.
+
+        Args:
+            - scores_list (list of integers): A list that contains the scores, average section scores, and total score.
+        '''
+
+        new_data = pd.DataFrame(scores_list, columns=["bpv_idx"] + [f'section_{i+1}' for i in range(NUM_RUBRIC_SECTIONS)] + ["total_score"])
+        self.df = pd.concat([self.df, new_data], ignore_index=True)
+        self.df.to_parquet(f'{self.parquet_root_path}/{self.bp_idx}_validation_score.parquet', index=False)
+
+    def fetch_all_validation_scores(self):
+        '''
+        Fetches all validation scores for the base prompt.
+
+        Returns:
+            - pd.DataFrame: A DataFrame containing all bpv_idx and their associated validation scores
+        '''
+
+        if not os.path.exists(f'{self.parquet_root_path}/{self.bp_idx}_validation_score.parquet'):
+            return pd.DataFrame(columns = ['bpv_idx'] + [f'section_{i+1}' for i in range(NUM_RUBRIC_SECTIONS)] + ['total_score'])
+        self._access_parquet()
+        return self.df
+
+    def fetch_prompt_variation_str(self, bpv_idx):
+        '''
+        Returns the prompt variation string for the given bpv_idx.
+
+        Inputs:
+            - bpv_idx (tuple of ints): The base prompt variation index.
+
+        Returns:
+            - str: The prompt variation string if found, else None.
+        '''
+        prompt_variation_parquet = PromptVariationParquet()
+        df = prompt_variation_parquet._access_parquet(self.bp_idx)
+        result = df[df["bpv_idx"] == bpv_idx]['prompt_variation_string']
+        return result.iloc[0] if not result.empty else None
+    
+    def fetch_validation_scores(self, bpv_idx):
+        """For a given bpv_idx, fetches the validation scores associated with it."""
+        if not os.path.exists(f'{self.parquet_root_path}/{self.bp_idx}_validation_score.parquet'):
+            return None
+        self._access_parquet()
+        result = self.df[self.df["bpv_idx"] == bpv_idx]
+        return result if not result.empty else None
+    
+    def fetch_prompt_variation_and_validation_scores(self, bpv_idx):
+        '''
+        Returns the prompt variation string and validation scores for the given bpv_idx.
+
+        Inputs:
+            - bpv_idx (tuple of ints): The base prompt variation index.
+        
+        Returns:
+            - dict: A dictionary containing the prompt variation string and validation scores.
+        '''
+        prompt_variation = self.fetch_prompt_variation_str(bpv_idx)
+        validation_scores = self.fetch_validation_scores(bpv_idx)
+        return {"prompt_variation": prompt_variation, "validation_scores": validation_scores}
+
+    def delete_parquet(self):
+        '''
+        Deletes the Parquet file associated with the base prompt.
+        '''
+        file_path = f'{self.parquet_root_path}/{self.bp_idx}_validation_score.parquet'
+        if os.path.exists(file_path):
+            os.remove(file_path)
+            print(f"Deleted ValidationScoreParquet file at {file_path}")
+        else:
+            print(f"No ValidationScoreParquet file found at {file_path} to delete.")
+    
+    def reset_parquet(self):
+        '''
+        Resets the Parquet file associated with the object's bp_idx by deleting and recreating it.
+        Inputs:
+            - bp_idx (int): The base prompt index.
+        '''
+        self.delete_parquet()
+        self._initialize_parquet() 
 
 class ModelOutputParquet:
     '''
@@ -377,4 +506,4 @@ class ModelOutputParquet:
         Resets the Parquet file associated with the provided bp_idx by deleting and recreating it.
         '''
         self.delete_parquet()
-        self._initialize_parquet() 
+        self._initialize_parquet()
