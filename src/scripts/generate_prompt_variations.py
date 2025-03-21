@@ -36,3 +36,100 @@ Dependencies:
 - [List of libraries or modules, e.g. 'pandas', 'transformers', 'torch', etc.]
 - Needs the index of the base prompt
 """
+import sys
+import os
+import yaml
+import random
+from transformers import AutoTokenizer, AutoModelForCausalLM
+import torch
+
+# Add project root to sys.path
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+sys.path.insert(0, project_root)
+
+from utils.data_handler import BasePromptDB, PromptVariationParquet
+from utils.prompt import PromptVariation
+from configs.root_paths import *
+
+# Load configuration
+def load_config(path):
+    with open(path, 'r') as f:
+        return yaml.safe_load(f)
+
+def load_instruction(path):
+    with open(path, 'r') as f:
+        return f.read()
+
+def call_llm_variation_generator(full_prompt, config):
+    model_path = config.get("model_path", "DEEPSEEK-R1") # edit this to the model path
+    tokenizer = AutoTokenizer.from_pretrained(model_path)
+    model = AutoModelForCausalLM.from_pretrained(model_path, device_map="auto")
+
+    inputs = tokenizer(full_prompt, return_tensors="pt").to("cuda")
+
+    outputs = model.generate(
+        inputs["input_ids"],
+        max_length=config.get("max_length", 2048),
+        num_return_sequences=1,
+        temperature=config.get("temperature", 0.7),
+        top_p=config.get("top_p", 0.9),
+        do_sample=True
+    )
+
+    decoded = tokenizer.decode(outputs[0], skip_special_tokens=True)
+    return [line.strip() for line in decoded.split('\n') if line.strip()]
+
+def main():
+    # Ensure the user provides a base prompt index as a command-line argument
+    if len(sys.argv) < 2:
+        print("Usage: python generate_prompt_variations.py <bp_idx>")
+        sys.exit(1)
+
+    # Parse and prepare the base prompt index
+    bp_idx = int(sys.argv[1])
+    bpv_base = (bp_idx, -1)  # The base prompt uses a -1 variation index
+
+    # Load the base prompt string from the SQLite database
+    db = BasePromptDB()
+    base_prompt = db.fetch_prompt(bpv_base)
+    db.close_connection()
+
+    if base_prompt is None:
+        raise ValueError(f"No base prompt found for index {bp_idx}")
+
+    # Load the model input instruction and YAML config
+    instruction_path = os.path.join(MODEL_INPUT_PATH, "prompt_variation_input.txt")
+    config_path = os.path.join(CONFIGS_PATH, "model_configs/prompt_variation_config.yaml")
+
+    instruction = load_instruction(instruction_path)
+    config = load_config(config_path)
+
+    # Combine instruction and base prompt into a single LLM input
+    full_prompt = instruction + "\n" + base_prompt
+
+    # Call the LLM to generate candidate variations
+    generated_variations = call_llm_variation_generator(full_prompt, config)
+
+    # Validate the count of generated variations
+    n = config.get("num_prompt_variations", 200)
+    if len(generated_variations) < n:
+        raise ValueError(f"Model returned fewer variations ({len(generated_variations)}) than requested ({n}).")
+
+    # Truncate to exactly n if more are returned
+    generated_variations = generated_variations[:n]
+
+    # Use PromptVariationParquet to write variations to disk
+    pv_handler = PromptVariationParquet()
+    pv_data = []
+
+    for i, variation in enumerate(generated_variations):
+        bpv_idx = (bp_idx, i)
+        pv = PromptVariation(bpv_idx, pv_handler, variation)
+        pv_data.append((pv.bpv_idx, pv.full_string))
+
+    pv_handler.insert_prompt_variations(pv_data)
+    print(f"Successfully saved {n} variations for base prompt {bp_idx}.")
+
+if __name__ == "__main__":
+    main()
