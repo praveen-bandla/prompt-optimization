@@ -168,7 +168,7 @@ class ValidationScore: # instantiated for each bpv_idx
         # Collect individual section scores as tuples
         individual_scores = [tuple(self.scores[f'section_{i+1}']) for i in range(NUM_RUBRIC_SECTIONS)]
         # Collect average section scores
-        avg_scores_list = [average_scores[f'section_{i+1}'] for i in range(NUM_RUBRIC_SECTIONS)]
+        avg_scores_list = [average_scores[f'section_{i+1}_avg'] for i in range(NUM_RUBRIC_SECTIONS)]
         # Combine all scores into a single list
         scores_list = individual_scores + avg_scores_list + [total_score]
         return [self.bpv_idx, scores_list]
