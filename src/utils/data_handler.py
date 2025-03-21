@@ -139,7 +139,7 @@ class PromptVariationParquet:
 
     def _initialize_parquet(self): 
         if not os.path.exists(self.file_path):
-            df = pd.DataFrame(columns=["bpv_idx", "prompt_variation_string"])
+            df = pd.DataFrame(columns=["bpv_idx", "prompt_variation_string"], ignore_index=False)
             df.to_parquet(self.file_path, index=False)
             print(f"Created new Parquet file at {self.file_path}")
         else:
@@ -170,7 +170,7 @@ class PromptVariationParquet:
         
         # df = self._access_parquet(base_prompt_indexes[0])
 
-        new_data = pd.DataFrame(variations, columns=["bpv_idx", "prompt_variation_string"])
+        new_data = pd.DataFrame(variations, columns=["bpv_idx", "prompt_variation_string"], ignore_index=False)
         df = pd.concat([self.df, new_data], ignore_index=True)
         df.to_parquet(self.file_path, index=False)
 
@@ -261,7 +261,7 @@ class ValidationScoreParquet:
         '''
         self.bp_idx = bp_idx
         self.parquet_root_path = parquet_root_path
-        self.df =  pd.DataFrame(columns = ['bpv_idx'] + [f'section_{i+1}' for i in range(NUM_RUBRIC_SECTIONS)] + ['total_score'])
+        self.df =  pd.DataFrame(columns = ['bpv_idx'] + [f'section_{i+1}' for i in range(NUM_RUBRIC_SECTIONS)] + ['total_score'], ignore_index=False)
         self._initialize_parquet()
 
     def _initialize_parquet(self):
@@ -299,7 +299,7 @@ class ValidationScoreParquet:
             - scores_list (list of integers): A list that contains the scores, average section scores, and total score.
         '''
 
-        new_data = pd.DataFrame(scores_list, columns=["bpv_idx"] + [f'section_{i+1}' for i in range(NUM_RUBRIC_SECTIONS)] + ["total_score"])
+        new_data = pd.DataFrame(scores_list, columns=["bpv_idx"] + [f'section_{i+1}' for i in range(NUM_RUBRIC_SECTIONS)] + ["total_score"], ignore_index=False)
         self.df = pd.concat([self.df, new_data], ignore_index=True)
         self.df.to_parquet(f'{self.parquet_root_path}/{self.bp_idx}_validation_score.parquet', index=False)
 
@@ -312,7 +312,7 @@ class ValidationScoreParquet:
         '''
 
         if not os.path.exists(f'{self.parquet_root_path}/{self.bp_idx}_validation_score.parquet'):
-            return pd.DataFrame(columns = ['bpv_idx'] + [f'section_{i+1}' for i in range(NUM_RUBRIC_SECTIONS)] + ['total_score'])
+            return pd.DataFrame(columns = ['bpv_idx'] + [f'section_{i+1}' for i in range(NUM_RUBRIC_SECTIONS)] + ['total_score'], ignore_index=False)
         self._access_parquet()
         return self.df
 
@@ -396,7 +396,7 @@ class ModelOutputParquet:
         '''
         #file_path = f'{self.parquet_root_path}/{self.bp_idx}_model_output.parquet'
         if not os.path.exists(self.file_path):
-            df = pd.DataFrame(columns=["bpv_idx", "model_output_string"])
+            df = pd.DataFrame(columns=["bpv_idx", "model_output_string"], ignore_index=False)
             df.to_parquet(self.file_path, index=False)
             print(f"Created new Parquet file at {self.file_path}")
         else:
@@ -427,7 +427,7 @@ class ModelOutputParquet:
         
         # df = self._access_parquet(self.bp_idx)
 
-        new_data = pd.DataFrame(model_outputs, columns=["bpv_idx", "model_output_string"])
+        new_data = pd.DataFrame(model_outputs, columns=["bpv_idx", "model_output_string"], ignore_index=False)
         df = pd.concat([self.df, new_data], ignore_index=True)
         df.to_parquet(self.file_path, index=False)
 
