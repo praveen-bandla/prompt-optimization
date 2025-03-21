@@ -1,10 +1,16 @@
 """
 Main Model Inference
 
-This script will contain code to automate the procedure of running main model inference on a batch of given prompts. It will take as input a list of bpv_idx, generate main model output accordingly, and store into corresponding Parquet file. 
+This script will contain code to automate the procedure of running main model inference on a batch of given prompts. It will take as input a start and end bp_idx, and will run inference on all prompt variations for each bp_idx that falls between the start and end. The output will be written to a Parquet file in the respective location for each bp_idx, as outlined in the README.
 
 Inputs:
-- List of bpv_idx: A list of integers representing multiple prompt variations' indices.
+    - start_idx (int): The starting base prompt index. This is the first base prompt index for which inference will be run.
+    - end_idx (int): The ending base prompt index. The script runs on all base prompt indices up to end_idx, excluding end_idx itself.
+
+Example usage:
+    # Run inference on all prompt variations for base prompt indices 0,1,2,3,4.
+    python main_model_inference.py 0 5
+
 
 Outputs:
 - Writes the generated output to a Parquet file named `{i]_model_outputs.parquet`, which contains results  for prompts indexed from `(i, -1)` to `(i, n)`, where `n` is the number of partitions. `i` is the index of the base prompt.
@@ -37,6 +43,8 @@ import yaml
 
 from transformers import AutoModelForCausalLM, AutoTokenizer
 import torch
+#import argparse
+import sys
 
 # Step 2: Collect the prompt variations for the given bp_idx
 def collect_prompt_variations(bp_idx):
@@ -152,9 +160,22 @@ def main_model_inference_per_base_prompt(bp_idx):
 
 
 if __name__ == "main":
-    # when this script is called, it is expected to be called with a list of bp_idxs
+    if len(sys.argv) != 3:
+        raise ValueError("Please provide a list of base prompt indices.")
+        sys.exit(1)
 
-    pass
+    start_idx = int(sys.argv[1])
+    end_idx = int(sys.argv[2])
+
+    for bp_idx in range(start_idx, end_idx):
+        main_model_inference_per_base_prompt(bp_idx)
+        print(f"Finished inference for base prompt index {bp_idx}.")
+    print("All inferences have been completed.")
+
+
+
+    
+
 
 
     
