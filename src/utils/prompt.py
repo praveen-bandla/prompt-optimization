@@ -78,7 +78,7 @@ class PromptVariation:
     Class to be developed that will be used to manage Prompt Variations in a similar way BasePrompt manages base prompts. Will be initialized with a bpv_idx and will have methods to access, write, read prompt variations, just like above.
     We assume a a PromptVariationParquet object will be instantiated beforehand.
     '''
-    def __init__(self, bpv_idx, pv_parquet, full_string = None):
+    def __init__(self, bpv_idx, pv_parquet, variation_str=None):
         '''
         Initialize a prompt variation with a base prompt variation index.
 
@@ -86,24 +86,24 @@ class PromptVariation:
             - bpv_idx (tuple of ints): The base prompt variation index.
         '''
         self.bpv_idx = bpv_idx
-        self.full_string = full_string
+        self.variation_str = variation_str
         self.pv_parquet = pv_parquet
         # Add optional parameter that defaults to none called full_string
 
-    def fetch_variation_str(self):
+    def get_variation(self):
         '''
         Fetches the variation string from the corresponding prompt variation parquet file.
 
         Returns:
             - str: The prompt variation string.
         '''
-        if self.full_string is not None:
-            return self.full_string
+        if self.variation_str is not None:
+            return self.variation_str
         else:
             return self.pv_parquet.fetch_prompt_variation(self.bpv_idx)
 
     
-    def get_prompt_index(self):
+    def get_bpv_idx(self):
         '''
         Returns the variation index from the corresponding prompt variation parquet file.
 
@@ -112,6 +112,13 @@ class PromptVariation:
         '''
         return self.bpv_idx
     
+    def write_variation(self):
+        '''
+        Insert a single new variation string to the corresponding prompt variation parquet file.
+        '''
+        if self.variation_str is None:
+            raise ValueError("Cannot insert an empty variation.")
+        self.pv_parquet.insert_prompt_variations([(self.bpv_idx, self.variation_str)])
 
     def fetch_base_prompt(self):
         '''
@@ -123,7 +130,7 @@ class PromptVariation:
         return self.pv_parquet.fetch_base_prompt_str(self.bpv_idx)
     
 
-    def fetch_base_and_variation(self):
+    def get_base_prompt_and_variation(self):
         '''
         Fetches both the base prompt and the prompt variation string for this variation.
 
@@ -132,38 +139,11 @@ class PromptVariation:
         '''
         return self.pv_parquet.fetch_base_prompt_and_prompt_variation(self.bpv_idx)
     
-
-    # def update_variation(self, new_pv_string):
-    #     '''
-    #     Updates the stored prompt variations with a new prompt variation string.
-
-    #     Args:
-    #         - new_string (str): The new variation string.
-    #     '''
-    #     df = self.pv_parquet._access_parquet(self.bpv_idx[0])
-    #     df.loc[df["bpv_idx"] == self.bpv_idx, "prompt_variation_string"] = new_pv_string
-    #     df.to_parquet(f'{self.pv_parquet.parquet_root_path}/{self.bpv_idx[0]}_pv.parquet', index=False)
-    #     self.full_string = new_pv_string
-
-    
-    def insert_variation(self, new_variation_str):
+    def read_variation(self):
         '''
-        Insert a single new variation string to the corresponding prompt variation parquet file.
+        Reads the prompt variation from the stored Parquet database.
         '''
-        if new_variation_str is None:
-            raise ValueError("Cannot insert an empty variation.")
-        self.full_string = new_variation_str
-        self.pv_parquet.insert_prompt_variations([(self.bpv_idx, self.full_string)])
-
-
-    # def delete_variation(self):
-    #     '''
-    #     Deletes this prompt variation from the corresponding prompt variation parquet file.
-    #     '''
-    #     df = self.pv_parquet._access_parquet(self.bpv_idx[0])
-    #     df = df[df["bpv_idx"] != self.bpv_idx]
-    #     df.to_parquet(f'{self.pv_parquet.parquet_root_path}/{self.bpv_idx[0]}_pv.parquet', index=False)
-    #     self.full_string = None
+        self.variation_str = self.pv_parquet.fetch_prompt_variation(self.bpv_idx)
 
 
 class ValidationScore: # instantiated for each bpv_idx
