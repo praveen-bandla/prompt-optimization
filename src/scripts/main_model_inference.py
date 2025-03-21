@@ -40,6 +40,7 @@ from src.utils import prompt
 from src.utils import data_handler
 from configs.root_paths import *
 import yaml
+import json
 
 from transformers import AutoModelForCausalLM, AutoTokenizer
 import torch
@@ -85,11 +86,26 @@ def construct_model_input(pv_obj):
     Reads the model input text file and place the template.
     '''
     with open(MAIN_MODEL_INPUT, 'r') as f:
-        model_input = f.read()
+        prompt_structure = json.load(f)
+
+    system_role = prompt_structure["system_role"]
+    content_template = prompt_structure["content_template"]
 
     pv_str = pv_obj.fetch_variation_str()
     # note to self: pv_str_template is a template string, so we need to replace the placeholder with the actual prompt variation string
-    prompt = model_input.format(pv_str_template = pv_str)
+    #prompt = model_input.format(pv_str_template = pv_str)
+    content = content_template.format(pv_str_template = pv_str)
+
+    prompt = [
+        {
+            "role": "system",
+            "content": [{"type": "text", "text": system_role}]
+        },
+        {
+            "role": "user",
+            "content": [{"type": "text", "text": content}]
+        }
+    ]
 
     return prompt
     
