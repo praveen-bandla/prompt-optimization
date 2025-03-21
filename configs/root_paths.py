@@ -14,3 +14,5 @@ MODEL_INPUT_PATH = os.path.join(ROOT_PATH, 'model_input')
 SQL_DB = os.path.join(DATA_PATH, 'base_prompts', 'base_prompts.db')
 PROMPT_VARIATIONS = os.path.join(DATA_PATH, 'prompt_variations')
 VALIDATION_SCORES = os.path.join(DATA_PATH, 'validation_scores')
+
+VALIDATOR_MODEL_CONFIGS = os.path.join(CONFIGS_PATH, 'validator_model_config.yaml')
