@@ -36,8 +36,8 @@ Dependencies:
 - `main_model_inference.py`: The script that performs the main model inference.
 """
 
-from src.utils import prompt
-from src.utils import data_handler
+from src.utils.prompt import *
+from src.utils.data_handler import *
 from configs.root_paths import *
 import yaml
 import json
@@ -52,14 +52,14 @@ def collect_prompt_variations(bp_idx):
     '''
     Collects the prompt variation strings for the bp_idx.
     '''
-    pv_data_handler = data_handler.PromptVariationParquet(bp_idx)
+    pv_data_handler = PromptVariationParquet(bp_idx)
     bpv_idxs, pv_strs = pv_data_handler.fetch_all_variations()
     num_pvs = len(bpv_idxs)
 
     pvs = []
 
     for i in num_pvs:
-        pv_obj = prompt.PromptVariation(bpv_idxs[i], pv_strs[i])
+        pv_obj = PromptVariation(bpv_idxs[i], pv_strs[i])
         pvs.append(pv_obj)
 
     return pvs
@@ -197,7 +197,7 @@ def main_model_inference_per_base_prompt(bp_idx):
     - bp_idx (int): The base prompt index.
     '''
     all_pv_outputs = []
-    mo_parquet = prompt.ModelOutputParquet(bp_idx)
+    mo_parquet = ModelOutputParquet(bp_idx)
     for pv_obj in collect_prompt_variations(bp_idx):
         model_output = main_model_inference_per_prompt_variation(pv_obj)
         all_pv_outputs.append((pv_obj.get_prompt_index(), model_output))

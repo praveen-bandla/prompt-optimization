@@ -23,3 +23,7 @@ MODEL_OUTPUTS = os.path.join(DATA_PATH, 'model_outputs')
 MAIN_MODEL_INPUT = os.path.join(MODEL_INPUTS, 'main_model_input.json')
 MAIN_MODEL = os.path.join(MODELS_PATH, 'microsoft-Phi-3.5-mini-instruct/')
 MAIN_MODEL_CONFIGS = os.path.join(CONFIGS_PATH, 'main_model_config.yaml')
+
+
+BASE_PROMPT_MODEL_INPUT = os.path.join(MODEL_INPUT_PATH, 'base_prompt_input.txt')
+BASE_PROMPT_MODEL_CONFIG = os.path.join(CONFIGS_PATH, 'model_configs/base_prompt_config.yaml')

@@ -53,10 +53,6 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 sys.path.insert(0, project_root)
 
-from utils.data_handler import BasePromptDB
-from utils.prompt import BasePrompt
-from configs.root_paths import *
-
 # Load configuration
 def load_config(config_path):
     if not os.path.exists(config_path):
