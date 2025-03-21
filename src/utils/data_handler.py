@@ -149,7 +149,7 @@ class PromptVariationParquet:
         '''
         An internal function that retrieves the content of the parquet file for a specific base prompt index if it exists. Otherwise, it initializes the parquet file.
         '''
-        self._initialize_parquet(self.bp_idx)
+        self._initialize_parquet()
         return pd.read_parquet(self.file_path)
 
     def insert_prompt_variations(self,variations):
@@ -170,7 +170,7 @@ class PromptVariationParquet:
         
         # df = self._access_parquet(base_prompt_indexes[0])
 
-        new_data = pd.DataFrame(variations, columns=["bpv_idx", "prompt_variation_string"])
+        new_data = pd.DataFrame(variations, columns=["bpv_idx", "prompt_variation_string"], ignore_index = True)
         df = pd.concat([self.df, new_data], ignore_index=True)
         df.to_parquet(self.file_path, index=False)
 
@@ -182,7 +182,7 @@ class PromptVariationParquet:
             - List 1: all bpv_idx
             - List 2: all prompt_variation_strings 
         '''
-        df = self._access_parquet(self.bp_idx)
+        df = self._access_parquet()
         return df["bpv_idx"], df["prompt_variation_string"]
     
     def fetch_base_prompt_str(self):
@@ -289,7 +289,7 @@ class ValidationScoreParquet:
         '''
         self._initialize_parquet()
         #return self.df
-        return pd.read_parquet(self.file_path)
+        return pd.read_parquet()
 
     def save_scores_to_parquet(self, scores_data):
         '''
@@ -417,7 +417,7 @@ class ModelOutputParquet:
         An internal function that retrieves the content of the parquet file for a specific base prompt index.
         '''
         self._initialize_parquet()
-        return pd.read_parquet(self.file_path)
+        return pd.read_parquet()
 
     def insert_model_outputs(self, model_outputs):
         '''
@@ -449,7 +449,7 @@ class ModelOutputParquet:
             - List 1: all bpv_idx
             - List 2: all model_output_strings
         '''
-        df = self._access_parquet(self.bp_idx)
+        df = self._access_parquet()
         return df["bpv_idx"], df["model_output_string"]
     
     def fetch_base_prompt_str(self):
