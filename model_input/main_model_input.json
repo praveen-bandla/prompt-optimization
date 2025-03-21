@@ -1,0 +1,5 @@
+{
+    "system_role": "You are generating learning guides for third graders. Make sure to keep the response between 200-400 words.",
+    "content_template": "{pv_str_template}"
+
+}
