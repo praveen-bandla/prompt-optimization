@@ -34,9 +34,6 @@ class BasePrompt:
         Fetches the prompt from the database.
         If a database connection is not provided, a new connection is created and closed. If it is provided, it is used and not closed.
 
-        Args:
-            - db (BasePromptDB, optional): An existing database connection object.
-
         Returns:
             - str: The prompt string.
         '''

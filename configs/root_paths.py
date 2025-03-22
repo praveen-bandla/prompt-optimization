@@ -19,11 +19,11 @@ VALIDATOR_MODEL_CONFIGS = os.path.join(CONFIGS_PATH, 'validator_model_config.yam
 SQL_DB = os.path.join(DATA_PATH, 'base_prompts', 'base_prompts.db')
 PROMPT_VARIATIONS = os.path.join(DATA_PATH, 'prompt_variations')
 
-MODEL_OUTPUTS = os.path.join(DATA_PATH, 'model_outputs')
-MAIN_MODEL_INPUT = os.path.join(MODEL_INPUTS, 'main_model_input.json')
-MAIN_MODEL = os.path.join(MODELS_PATH, 'microsoft-Phi-3.5-mini-instruct/')
-MAIN_MODEL_CONFIGS = os.path.join(CONFIGS_PATH, 'main_model_config.yaml')
-
-
-BASE_PROMPT_MODEL_INPUT = os.path.join(MODEL_INPUT_PATH, 'base_prompt_input.txt')
+BASE_PROMPT_MODEL_INPUT = os.path.join(MODEL_INPUT_PATH, 'base_prompt_input.json')
 BASE_PROMPT_MODEL_CONFIG = os.path.join(CONFIGS_PATH, 'model_configs/base_prompt_config.yaml')
+BASE_PROMPT_MODEL = os.path.join(MODELS_PATH, 'meta-llama/Meta-Llama-3-8B/')
+
+MODEL_OUTPUTS = os.path.join(DATA_PATH, 'model_outputs')
+MAIN_MODEL_INPUT = os.path.join(MODEL_INPUT_PATH, 'main_model_input.json')
+MAIN_MODEL_CONFIGS = os.path.join(CONFIGS_PATH, 'main_model_config.yaml')
+MAIN_MODEL = os.path.join(MODELS_PATH, 'microsoft-Phi-3.5-mini-instruct/')   

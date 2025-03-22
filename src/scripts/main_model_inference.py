@@ -31,7 +31,7 @@ Process:
 5. Opens or creates the corresponding Parquet file
 
 Dependencies:
-- `main_model_input.txt`: A text file containing instructions for inference.
+- `main_model_input.json`: A JSON file containing instructions for inference.
 - `main_model_config.yaml`: A YAML file specifying model parameters and settings.
 - `main_model_inference.py`: The script that performs the main model inference.
 """
