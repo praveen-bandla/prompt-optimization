@@ -8,7 +8,7 @@ from configs.data_size_configs import *
 import numpy as np
 import os
 from configs.root_paths import *
-from utils.data_handler import * 
+from src.utils.data_handler import * 
 import pandas as pd
 
 

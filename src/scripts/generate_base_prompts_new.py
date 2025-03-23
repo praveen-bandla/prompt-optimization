@@ -170,10 +170,16 @@ def write_to_db(formatted_base_prompts, bp_db):
 def main():
     # creates the BasePromptDB object
     bp_db = BasePromptDB()
-    # generates model output by inferencing
-    model_output = base_prompt_inference()
-    # formats the model output as a list of tuples in random order
-    formatted_base_prompts = parse_model_output_as_bp_objects(model_output)
+
+    # # generates model output by inferencing
+    # model_output = base_prompt_inference()
+    
+    # # formats the model output as a list of tuples in random order
+    # formatted_base_prompts = parse_model_output_as_bp_objects(model_output)
+
+    formatted_base_prompts = [(1, 'test1'), (2, 'test2'), (3, 'test3'), (4, 'test4'), (5, 'test5')]
+    
+    
     # writes the base prompts to the SQLite database
     write_to_db(formatted_base_prompts, bp_db)
     # closes the connection to the database
@@ -193,7 +199,8 @@ def main():
 #     db.write_base_prompts(all_bps)
 #     db.close()
 
-if __name__ == "Main":
-    main()
+if __name__ == "main":
+    #main()
+    pass
     
     
