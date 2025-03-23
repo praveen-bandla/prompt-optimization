@@ -23,6 +23,10 @@ Process:
 5. Writes the base prompts to a SQLite database
 
 '''
+import sys
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
+
 from src.utils.prompt import *
 from src.utils.data_handler import *
 from configs.root_paths import *
@@ -31,8 +35,6 @@ import json
 import random
 
 from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
-import torch
-import sys
 
 # Step 1: Collect the instruction for generating base prompts
 def collect_instruction():
@@ -187,20 +189,8 @@ def main():
     print("Base prompts generated and written to SQLite database.")
 
 
-    
-
-# # Step 3: Write the base prompts to a SQLite database
-# def base_prompt_inference_to_db():
-#     '''
-#     Runs the base prompt inference and writes the base prompts to a SQLite database.
-#     '''
-#     all_bps = base_prompt_inference()
-#     db = BasePromptDB(SQL_DB)
-#     db.write_base_prompts(all_bps)
-#     db.close()
-
-if __name__ == "main":
-    #main()
-    pass
+if __name__ == "__main__":
+    main()
+    # pass
     
     
