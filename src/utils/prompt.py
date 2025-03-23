@@ -8,7 +8,7 @@ from configs.data_size_configs import *
 import numpy as np
 import os
 from configs.root_paths import *
-from utils.data_handler import * 
+from src.utils.data_handler import * 
 import pandas as pd
 
 
@@ -33,9 +33,6 @@ class BasePrompt:
         '''
         Fetches the prompt from the database.
         If a database connection is not provided, a new connection is created and closed. If it is provided, it is used and not closed.
-
-        Args:
-            - db (BasePromptDB, optional): An existing database connection object.
 
         Returns:
             - str: The prompt string.

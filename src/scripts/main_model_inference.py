@@ -31,7 +31,7 @@ Process:
 5. Opens or creates the corresponding Parquet file
 
 Dependencies:
-- `main_model_input.txt`: A text file containing instructions for inference.
+- `main_model_input.json`: A JSON file containing instructions for inference.
 - `main_model_config.yaml`: A YAML file specifying model parameters and settings.
 - `main_model_inference.py`: The script that performs the main model inference.
 """
@@ -89,7 +89,12 @@ def load_model():
     
     tokenizer = AutoTokenizer.from_pretrained(MAIN_MODEL, trust_remote_code=True)
 
-    pipe = pipeline('text-generation', model=model, tokenizer=tokenizer)
+    pipe = pipeline(
+        'text-generation', 
+        model=model, 
+        tokenizer=tokenizer
+        )
+
     return pipe
 
 
@@ -97,6 +102,9 @@ def construct_model_input(pv_obj):
     '''
     Reads the model input text file and place the template.
     '''
+
+    if not os.path.exists(MAIN_MODEL_INPUT):
+        raise FileNotFoundError(f'Main Model input instruction json file not found at {MAIN_MODEL_INPUT}')
     with open(MAIN_MODEL_INPUT, 'r') as f:
         prompt_structure = json.load(f)
 
