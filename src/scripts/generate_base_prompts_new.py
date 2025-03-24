@@ -23,6 +23,7 @@ Process:
 5. Writes the base prompts to a SQLite database
 
 '''
+
 from src.utils.prompt import *
 from src.utils.data_handler import *
 from configs.root_paths import *
@@ -189,5 +190,6 @@ def main():
 if __name__ == "__main__":
     main()
     # pass
-    
+    # bp_db = BasePromptDB()
+    # bp_db.reset_database()
     
