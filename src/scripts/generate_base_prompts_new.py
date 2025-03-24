@@ -31,8 +31,6 @@ import json
 import random
 
 from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
-import torch
-import sys
 
 # Step 1: Collect the instruction for generating base prompts
 def collect_instruction():
@@ -168,6 +166,8 @@ def write_to_db(formatted_base_prompts, bp_db):
 
 
 def main():
+    if os.path.exists(SQL_DB): #ensures that we do not have a pre-existing database
+        os.remove(SQL_DB)
     # creates the BasePromptDB object
     bp_db = BasePromptDB()
 
@@ -179,7 +179,6 @@ def main():
 
     formatted_base_prompts = [(1, 'test1'), (2, 'test2'), (3, 'test3'), (4, 'test4'), (5, 'test5')]
     
-    
     # writes the base prompts to the SQLite database
     write_to_db(formatted_base_prompts, bp_db)
     # closes the connection to the database
@@ -187,20 +186,8 @@ def main():
     print("Base prompts generated and written to SQLite database.")
 
 
-    
-
-# # Step 3: Write the base prompts to a SQLite database
-# def base_prompt_inference_to_db():
-#     '''
-#     Runs the base prompt inference and writes the base prompts to a SQLite database.
-#     '''
-#     all_bps = base_prompt_inference()
-#     db = BasePromptDB(SQL_DB)
-#     db.write_base_prompts(all_bps)
-#     db.close()
-
-if __name__ == "main":
-    #main()
-    pass
+if __name__ == "__main__":
+    main()
+    # pass
     
     
