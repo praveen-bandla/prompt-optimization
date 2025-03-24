@@ -23,10 +23,6 @@ Process:
 5. Writes the base prompts to a SQLite database
 
 '''
-import sys
-import os
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
-
 from src.utils.prompt import *
 from src.utils.data_handler import *
 from configs.root_paths import *
@@ -170,6 +166,8 @@ def write_to_db(formatted_base_prompts, bp_db):
 
 
 def main():
+    if os.path.exists(SQL_DB): #ensures that we do not have a pre-existing database
+        os.remove(SQL_DB)
     # creates the BasePromptDB object
     bp_db = BasePromptDB()
 
@@ -180,7 +178,6 @@ def main():
     # formatted_base_prompts = parse_model_output_as_bp_objects(model_output)
 
     formatted_base_prompts = [(1, 'test1'), (2, 'test2'), (3, 'test3'), (4, 'test4'), (5, 'test5')]
-    
     
     # writes the base prompts to the SQLite database
     write_to_db(formatted_base_prompts, bp_db)
