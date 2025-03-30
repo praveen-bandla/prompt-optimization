@@ -6,3 +6,6 @@ venv-bella/
 venv-darren/.DS_Store
 .DS_Store
 models/microsoft-Phi-3.5-mini-instruct
+models/Llama-3.1-8B
+__pycache__/
+*.pyc
