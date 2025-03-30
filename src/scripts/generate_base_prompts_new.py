@@ -23,16 +23,16 @@ Process:
 5. Writes the base prompts to a SQLite database
 
 '''
+
 from src.utils.prompt import *
 from src.utils.data_handler import *
 from configs.root_paths import *
 import yaml
 import json
 import random
-
-from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
 import torch
-import sys
+import transformers
+from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
 
 # Step 1: Collect the instruction for generating base prompts
 def collect_instruction():
@@ -96,7 +96,8 @@ def load_model():
         BASE_PROMPT_MODEL,
         torch_dtype=torch.bfloat16,
         device_map="auto",
-        trust_remote_code=True
+        trust_remote_code=True,
+        local_files_only=True
     )
 
     tokenizer = AutoTokenizer.from_pretrained(BASE_PROMPT_MODEL, trust_remote_code=True)
@@ -107,7 +108,23 @@ def load_model():
         tokenizer=tokenizer, 
         device_map="auto"
         )
+
     return pipe
+
+    # model_id = "meta-llama/Llama-3.1-8B"
+    # tokenizer = AutoTokenizer.from_pretrained(model_id)
+    # tokenizer.chat_template = "<s>[INST] {instruction} [/INST] {response}</s>"  # Example template
+
+    # pipeline = transformers.pipeline(
+    #     "text-generation",
+    #     model=model_id,
+    #     tokenizer=tokenizer,
+    #     model_kwargs={"torch_dtype": torch.bfloat16},
+    #     device_map="auto",
+    # )
+
+    # return pipeline
+    
 
 # Step 2: Run inference to collect all the base prompts
 
@@ -131,7 +148,12 @@ def base_prompt_inference():
         "do_sample": do_sample
     }
 
-    outputs = pipe(instruction, **generation_args)
+    print("Successfully loaded model and configs.")
+    print("Running inference to generate base prompts...")
+    #outputs = pipe(instruction, **generation_args)
+    outputs = pipe(instruction)
+    print("Inference complete.")
+    print("Outputs: ", outputs[0]["generated_text"])
     return outputs[0]["generated_text"]
 
 def parse_model_output_as_bp_objects(model_output):
@@ -168,17 +190,18 @@ def write_to_db(formatted_base_prompts, bp_db):
 
 
 def main():
+    if os.path.exists(SQL_DB): #ensures that we do not have a pre-existing database
+        os.remove(SQL_DB)
     # creates the BasePromptDB object
     bp_db = BasePromptDB()
 
     # # generates model output by inferencing
-    # model_output = base_prompt_inference()
+    model_output = base_prompt_inference()
     
     # # formats the model output as a list of tuples in random order
-    # formatted_base_prompts = parse_model_output_as_bp_objects(model_output)
+    formatted_base_prompts = parse_model_output_as_bp_objects(model_output)
 
-    formatted_base_prompts = [(1, 'test1'), (2, 'test2'), (3, 'test3'), (4, 'test4'), (5, 'test5')]
-    
+    #formatted_base_prompts = [(1, 'testing1'), (2, 'testing2'), (3, 'tesingt3'), (4, 'test4'), (5, 'test5')]
     
     # writes the base prompts to the SQLite database
     write_to_db(formatted_base_prompts, bp_db)
@@ -187,20 +210,9 @@ def main():
     print("Base prompts generated and written to SQLite database.")
 
 
-    
-
-# # Step 3: Write the base prompts to a SQLite database
-# def base_prompt_inference_to_db():
-#     '''
-#     Runs the base prompt inference and writes the base prompts to a SQLite database.
-#     '''
-#     all_bps = base_prompt_inference()
-#     db = BasePromptDB(SQL_DB)
-#     db.write_base_prompts(all_bps)
-#     db.close()
-
-if __name__ == "main":
-    #main()
-    pass
-    
+if __name__ == "__main__":
+    main()
+    # pass
+    # bp_db = BasePromptDB()
+    # bp_db.reset_database()
     

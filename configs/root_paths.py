@@ -23,7 +23,8 @@ SQL_DB = os.path.join(DATA_PATH, 'base_prompts', 'base_prompts.db')
 PROMPT_VARIATIONS = os.path.join(DATA_PATH, 'prompt_variations')
 BASE_PROMPT_MODEL_INPUT = os.path.join(MODEL_INPUT_PATH, 'base_prompt_input.json')
 BASE_PROMPT_MODEL_CONFIG = os.path.join(CONFIGS_PATH, 'model_configs/base_prompt_config.yaml')
-BASE_PROMPT_MODEL = os.path.join(MODELS_PATH, 'meta-llama/Meta-Llama-3-8B/')
+#BASE_PROMPT_MODEL = os.path.join(MODELS_PATH, 'Llama-3.1-8B/original/')
+BASE_PROMPT_MODEL = os.path.join(MODELS_PATH, 'microsoft-Phi-3.5-mini-instruct/')
 
 # main model related data paths
 MODEL_OUTPUTS = os.path.join(DATA_PATH, 'model_outputs')
