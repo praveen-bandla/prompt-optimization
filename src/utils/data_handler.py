@@ -139,7 +139,7 @@ class PromptVariationParquet:
 
     def _initialize_parquet(self): 
         if not os.path.exists(self.file_path):
-            df = pd.DataFrame(columns=["bpv_idx", "prompt_variation_string"], ignore_index=True)
+            df = pd.DataFrame(columns=["bpv_idx", "prompt_variation_string"])
             df.to_parquet(self.file_path, index=False)
             print(f"Created new Parquet file at {self.file_path}")
         else:
@@ -150,27 +150,19 @@ class PromptVariationParquet:
         An internal function that retrieves the content of the parquet file for a specific base prompt index if it exists. Otherwise, it initializes the parquet file.
         '''
         self._initialize_parquet()
-        return pd.read_parquet()
+        return pd.read_parquet(self.file_path)
 
     def insert_prompt_variations(self,variations):
         '''
-        Inserts a batch of prompt variations into the respective parquet file.
+        Inserts a batch of prompt variations into the respective parquet file. If prompt variations already exist, this function resets the parquet file and inserts the new prompt variations.
 
         Args:
             - variations (list of tuples): A list of tuples where each tuple contains (bpv_idx, prompt_variation_string). THESE HAVE TO BE SPECIFIC TO A BASE PROMPT INDEX. CANNOT MIX PROMPT VARIATIONS FOR DIFFERENT BASE PROMPTS.
-
-        Raises:
-            - ValueError: If the prompt variations are not specific to a single base prompt index.
         '''
-        base_prompt_indexes = list(set([x[0] for x in variations]))
-        if len(base_prompt_indexes) > 1:
-            raise ValueError("All prompt variations must be specific to a single base prompt index.")
-        if base_prompt_indexes[0] != self.bp_idx:
-            raise ValueError("All model outputs must be specific to the base prompt index provided during initialization of the PromptVariationParquet Object.")
         
         # df = self._access_parquet(base_prompt_indexes[0])
-
-        new_data = pd.DataFrame(variations, columns=["bpv_idx", "prompt_variation_string"], ignore_index = True)
+        self.reset_parquet()
+        new_data = pd.DataFrame(variations, columns=["bpv_idx", "prompt_variation_string"])
         df = pd.concat([self.df, new_data], ignore_index=True)
         df.to_parquet(self.file_path, index=False)
 
@@ -238,7 +230,8 @@ class PromptVariationParquet:
         Resets the Parquet file associated with the provided bp_idx by deleting and recreating it.
         '''
         self.delete_parquet()
-        self._initialize_parquet() 
+        self._initialize_parquet()
+        self.df = self._access_parquet() 
 
 
 class ValidationScoreParquet:

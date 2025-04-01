@@ -4,7 +4,7 @@ Generate Prompt Varitions (New)
 This updated script generates a set of prompt variations by calling the prompt variation model to produce prompt variations based on the stored base prompts. It runs inferences and generates 'NUM_PROMPT_VARIATIONS' prompt variations for further use.
 
 Inputs:
-    bp_idx: The index of the base prompt to generate prompt variations for.
+    bp_idx: A list of integers representing the indices of the base prompts to generate prompt variations for.
 
 Dependencies:
     - prompt_variation_model_input.json: A JSON file containing instructions for generating base prompts.
@@ -32,18 +32,42 @@ import random
 import torch
 import transformers
 from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
+import argparse
+
+# PRAVEEN:
+'''
+to my dearest barren:
+open terminal in prompt-optimization directory. run using: PYTHONPATH=$(pwd) python src/scripts/generate_prompt_variations_new.py "[0,1,2]" to avoid import errors
+everything barring model inference should work as needed. had to make some changes to data_handler.py's PromptVariationParquet class.
+
+[DONE] 0. (edit) documentation to make it based on a list instead
+[WORKS] 1. (edit) Collect instruction -> make it based on bp_idx
+[LOOKS GOOD] 2. (review) load_model
+[LOOKS GOOD] 3. (review) prompt_variation_inference
+[WORKS] 4. (edit) parse_model_output_as_pv_objects -> parse correctly the model output
+[WORKS] 5. (create) write_parquet -> write the prompt variations to a parquet file
+[WORKS] 6. (create) main () -> call everything based on the input parse
+[WORKS] 7. Create if_name__ == "__main__" to run the script with list of bp_idx
+'''
 
 # Step 1: Collect the instruction for generating prompt variations
-def collect_instruction():
+def collect_instruction(bp_idx):
     '''
-    Creates instructions for generating prompt variations. Uses the prompt_variation_model_input.json file as the model input, along with NUM_PROMPT_VARIATIONS from the data_size_configs file.
+    Creates instructions for generating prompt variations based on a base prompt index. Uses the prompt_variation_model_input.json file as the model input, along with NUM_PROMPT_VARIATIONS from the data_size_configs file.
 
-    Inputs: None
+    Inputs:
+        - bp_idx: A given integer representing the index of the base prompt to generate prompt variations for.
 
     Outputs:
         - full_prompt: A list containing the system role and content template for generating prompt variations, stored as two dictionaries.
     
     '''
+
+    # collecting base_prompt_str from the database based on the given index
+    bp_db = BasePromptDB()
+    bp = BasePrompt(bp_idx, bp_db)
+    bp_str = bp.get_base_prompt()
+
     if not os.path.exists(PROMPT_VARIATION_MODEL_INPUT):
         raise FileNotFoundError(f"Instruction file not found at {PROMPT_VARIATION_MODEL_INPUT}")
     with open(PROMPT_VARIATION_MODEL_INPUT, 'r') as f:
@@ -52,12 +76,13 @@ def collect_instruction():
     system_role = prompt_structure["system_role"]
     content_template = prompt_structure["content_template"]
 
+    # PRAVEEN EDITS: replacing this replace method with format (not sure if replace works but know for a fact format works.)
     # Replace placeholders with actual values
-    content_template = content_template.replace("{bp_str}", #BP_STR)
-    content_template = content_template.replace("{num_prompt_variations}", str(NUM_PROMPT_VARIATIONS / 2))
+    # content_template = content_template.replace("{bp_str}", #BP_STR)
+    # content_template = content_template.replace("{num_prompt_variations}", str(NUM_PROMPT_VARIATIONS / 2))
     #instruction = system_role + " " + content_template
 
-    content = content_template.format(num_prompt = NUM_PROMPT_VARIATIONS)
+    content = content_template.format(num_prompt_variations=str(NUM_PROMPT_VARIATIONS // 2), bp_str=bp_str)
 
     full_prompt = [
         {
@@ -143,7 +168,7 @@ def prompt_variation_inference():
     print("Outputs: ", outputs[0]["generated_text"])
     return outputs[0]["generated_text"]
 
-def parse_model_output_as_pv_objects(model_output):
+def parse_model_output(model_output):
     '''
     This function parses the model output to extract the prompt variations as tuples of (bpv_idx, prompt_variation_string).
 
@@ -153,10 +178,86 @@ def parse_model_output_as_pv_objects(model_output):
     Outputs:
         - list: A list of tuples, each containing the base prompt variation index and the prompt variation string. Stored as a list of (bpv_idx, bpv_str)
     '''
-    base_prompts = json.loads(model_output)
+    prompt_variations = json.loads(model_output)
 
     # # creating random order of prompts stored as int indices
     # random_indices = random.sample(range(NUM_BASE_PROMPTS), NUM_BASE_PROMPTS)
 
     # returning a list of tuples in the desired format of the random order of prompts
-    return [(new_idx, base_prompts[random_idx]) for new_idx, random_idx in enumerate(random_indices)]
+
+    # PRAVEEN: Commented out this code to return correctly below
+    #return [(new_idx, base_prompts[random_idx]) for new_idx, random_idx in enumerate(random_indices)]
+    return [(idx, prompt_variation) for idx, prompt_variation in enumerate(prompt_variations)]
+
+def write_parquet(bp_idx, prompt_variations):
+    '''
+    Writes the prompt variations to the corresponding parquet file associated with the given base prompt index.
+
+    Inputs:
+        - bp_idx: An integer representing the index of the base prompt for which the prompt variations are generated.
+        - prompt_variations: A list of tuples containing the prompt variations in the format (bpv_idx, bpv_str).
+
+    Outputs:
+        None
+    '''
+
+    pv_parquet = PromptVariationParquet(bp_idx)
+    pv_parquet.insert_prompt_variations(prompt_variations)
+
+
+#collect_instruction(0)
+
+# tester = parse_model_output()
+# print(tester)
+
+def main(bp_idx):
+    '''
+    Runs the entire process of generating prompt variations. It collects the instruction, loads the model, runs inference, and writes the prompt variations to a parquet file.
+    '''
+
+    # Step 1: Collect instruction
+    instruction = collect_instruction(bp_idx)
+
+    # # Step 2: Load model
+    # pipe = load_model()
+
+    # # Step 3: Load model configuration
+    # configs = load_configs()
+
+    # # Step 4: Run inference to collect prompt variations
+    # model_output = pipe(instruction)
+
+    # tester code
+
+    model_output = "[\"prompt_variation1\", \"prompt_variation2\", \"prompt_variation3\"]"
+
+    # Step 5: Parse the model output to extract prompt variations
+    prompt_variations = parse_model_output(model_output)
+    # Step 6: Write the prompt variations to a parquet file
+    write_parquet(bp_idx, prompt_variations)
+
+
+
+if __name__ == "__main__":
+    '''
+    Parses the input argument of list of base prompt indices and runs the main function for each index.
+    '''
+    parser = argparse.ArgumentParser(description="Generate prompt variations for a list of base prompt indices.")
+    parser.add_argument(
+        "bp_indices",
+        type=str,
+        help="A list of base prompt indices in the format: [0, 1, 2]"
+    )
+
+    args = parser.parse_args()
+
+    try:
+        bp_indices = eval(args.bp_indices)
+        if not isinstance(bp_indices, list) or not all(isinstance(idx, int) for idx in bp_indices):
+            raise ValueError("Invalid format. The argument must be a list of integers in the format: [0, 1, 2]")
+    except:
+        raise ValueError("The argument must be a list of integers in the format: [0, 1, 2]")
+
+    for bp_idx in bp_indices:
+        print(f"Processing base prompt index: {bp_idx}")
+        main(bp_idx)
