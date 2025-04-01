@@ -123,7 +123,7 @@ def validator_model_inference_per_prompt_variation(pv_obj, model_name):
     Returns:
     - str: The model output string.
     """
-    base_prompt_str = pv_ob.get_base_prompt_str()
+    base_prompt_str = pv_obj.get_base_prompt_str()
     main_model_output = pv_obj.get_main_model_output()
     prompt = construct_model_input(base_prompt_str, main_model_output)
     model, tokenizer = load_model(model_name)
