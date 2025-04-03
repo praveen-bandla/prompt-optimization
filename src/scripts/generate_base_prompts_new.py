@@ -107,7 +107,7 @@ def load_model():
     '''
 
     # testing using model_id
-    base_prompt_model_id = "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B"
+    base_prompt_model_id = "meta-llama/Llama-3.1-8B-Instruct"
     model = AutoModelForCausalLM.from_pretrained(
         pretrained_model_name_or_path = base_prompt_model_id,
         torch_dtype=torch.bfloat16,
@@ -189,17 +189,20 @@ def base_prompt_inference():
     #outputs = pipe(instruction, **generation_args)
     outputs = model.generate(input_tensor, **generation_args)
     generated_text = tokenizer.decode(outputs[0][input_tensor.shape[1]:], skip_special_tokens=True)
-    print("Outputs: ", generated_text)
+    print("Raw Model Output:", generated_text)
+    generated_text = re.search(r"\[(.|\n)*?\]", generated_text, re.DOTALL).group(0)  # Extract the JSON object
+    print("Formatted Output:", generated_text)
+    return generated_text
     
-    # Extract the portion after </think>
-    try:
-        if "</think>" in generated_text:
-            generated_text = generated_text.split("</think>", 1)[1].strip()  # Get everything after </think>
-            generated_text = re.search(r"\[(.|\n)*?\]", generated_text, re.DOTALL).group(0)  # Extract the JSON object
-            print("Generated text: ", generated_text)
-            return generated_text
-    except Exception as e:
-        raise ValueError("Error processing the model output: ", e)
+    # # Extract the portion after </think>
+    # try:
+    #     if "</think>" in generated_text:
+    #         generated_text = generated_text.split("</think>", 1)[1].strip()  # Get everything after </think>
+    #         generated_text = re.search(r"\[(.|\n)*?\]", generated_text, re.DOTALL).group(0)  # Extract the JSON object
+    #         print("Generated text: ", generated_text)
+    #         return generated_text
+    # except Exception as e:
+    #     raise ValueError("Error processing the model output: ", e)
     
     #     # Use regex to extract the JSON object containing the prompts
     #     json_match = re.search(r"{(.|\n)*?}", generated_text, re.DOTALL)
@@ -218,30 +221,30 @@ def base_prompt_inference():
     #     raise
 
     # Convert the instruction (list of dictionaries) into a formatted string
-    system_prompt = instruction[0]["content"]
-    user_prompt = instruction[1]["content"]
-    input_text = tokenizer.apply_chat_template(system_prompt, user_prompt)
+    # system_prompt = instruction[0]["content"]
+    # user_prompt = instruction[1]["content"]
+    # input_text = tokenizer.apply_chat_template(system_prompt, user_prompt)
 
-    generation_args = {
-        "max_new_tokens": max_new_tokens,
-        "temperature": temperature,
-        "top_p": top_p,
-        "top_k": top_k,
-        "repetition_penalty": repetition_penalty,
-        "do_sample": do_sample
-    }
+    # generation_args = {
+    #     "max_new_tokens": max_new_tokens,
+    #     "temperature": temperature,
+    #     "top_p": top_p,
+    #     "top_k": top_k,
+    #     "repetition_penalty": repetition_penalty,
+    #     "do_sample": do_sample
+    # }
 
-    print("Successfully loaded model and configs.")
-    print("Running inference to generate base prompts...")
-    # Run inference with the formatted chat input
-    outputs = pipe(input_text, **generation_args)
+    # print("Successfully loaded model and configs.")
+    # print("Running inference to generate base prompts...")
+    # # Run inference with the formatted chat input
+    # outputs = pipe(input_text, **generation_args)
 
-    print("Raw Model Output:", outputs)
-    generated_text = outputs[0]["generated_text"]
+    # print("Raw Model Output:", outputs)
+    # generated_text = outputs[0]["generated_text"]
     
-    print("Inference complete.")
-    print("Outputs: ", generated_text)
-    return generated_text
+    # print("Inference complete.")
+    # print("Outputs: ", generated_text)
+    # return generated_text
 
     # # Extract the assistant's response from the generated text
     # assistant_response = None
