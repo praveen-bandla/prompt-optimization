@@ -32,8 +32,8 @@ import yaml
 import json
 import random
 import torch
-# import transformers
-# import re
+import transformers
+import re
 from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
 
 from huggingface_hub import login
@@ -62,18 +62,18 @@ def collect_instruction():
 
     content = content_template.format(num_prompt = NUM_BASE_PROMPTS)
 
-    # full_prompt = [
-    #     {
-    #         "role": "system",
-    #         "content": system_role
-    #     },
-    #     {
-    #         "role": "user",
-    #         "content": content
-    #     }
-    # ]
+    full_prompt = [
+        {
+            "role": "system",
+            "content": system_role
+        },
+        {
+            "role": "user",
+            "content": content
+        }
+    ]
 
-    return system_role, content
+    return full_prompt
     # bp_data_handler = BasePromptDB(SQL_DB)
     # bp = BasePrompt(bp_idx, bp_data_handler, instruction)
     # return bp
@@ -94,12 +94,12 @@ def load_configs():
       
     return configs
 
-# Define manual formatting function
-def format_chat(system_prompt, user_prompt):
-    """
-    Manually format the chat if `chat_template` is missing.
-    """
-    return f"<|system|>\n{system_prompt}\n\n<|user|>\n{user_prompt}\n\n<|assistant|>\n"
+# # Define manual formatting function
+# def format_chat(system_prompt, user_prompt):
+#     """
+#     Manually format the chat if `chat_template` is missing.
+#     """
+#     return f"<|system|>\n{system_prompt}\n\n<|user|>\n{user_prompt}\n\n<|assistant|>\n"
 
 def load_model():
     '''
@@ -107,7 +107,7 @@ def load_model():
     '''
 
     # testing using model_id
-    base_prompt_model_id = "meta-llama/Llama-3.1-8B"
+    base_prompt_model_id = "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B"
     model = AutoModelForCausalLM.from_pretrained(
         pretrained_model_name_or_path = base_prompt_model_id,
         torch_dtype=torch.bfloat16,
@@ -123,11 +123,11 @@ def load_model():
     # with open(BASE_PROMPT_MODEL_INPUT, "r") as file:
     #     input_data = json.load(file)
 
-    system_role, content = collect_instruction()
+    # system_role, content = collect_instruction()
 
-    formatted_chat = format_chat(system_role, content)
+    # formatted_chat = format_chat(system_role, content)
 
-    print("Formatted Chat Input:\n", formatted_chat)
+    # print("Formatted Chat Input:\n", formatted_chat)
 
     pipe = pipeline(
         'text-generation', 
@@ -136,7 +136,7 @@ def load_model():
         device_map="auto"
     )
 
-    return pipe, formatted_chat
+    return model, tokenizer
 
     # model_id = "meta-llama/Llama-3.1-8B"
     # tokenizer = AutoTokenizer.from_pretrained(model_id)
@@ -158,9 +158,9 @@ def load_model():
 def base_prompt_inference(): 
     '''
     This runs inference on the base_prompt_model to generate the desired output. It solely retrieves the response as a string and does not process it further.
-    '''# current understanding: this will generate the x (i.e. 100) base prompts needed
-    # instruction = collect_instruction()
-    pipe, formatted_chat = load_model()
+    '''
+    instruction = collect_instruction()
+    model, tokenizer = load_model()
     configs = load_configs()
 
     max_new_tokens = configs.get("max_new_tokens")
@@ -169,6 +169,58 @@ def base_prompt_inference():
     top_k = configs.get("top_k")
     do_sample = configs.get("do_sample")
     repetition_penalty = configs.get("repetition_penalty")
+    print("instruction :", instruction)
+
+    input_tensor = tokenizer.apply_chat_template(instruction, add_generation_prompt = True, return_tensors='pt')
+
+    input_tensor = input_tensor.to(model.device)
+
+    generation_args = {
+        "max_new_tokens": max_new_tokens,
+        "temperature": temperature,
+        "top_p": top_p,
+        "top_k": top_k,
+        "repetition_penalty": repetition_penalty,
+        "do_sample": do_sample
+    }
+
+    print("Successfully loaded model and configs.")
+    print("Running inference to generate prompt variations...")
+    #outputs = pipe(instruction, **generation_args)
+    outputs = model.generate(input_tensor, **generation_args)
+    generated_text = tokenizer.decode(outputs[0][input_tensor.shape[1]:], skip_special_tokens=True)
+    print("Outputs: ", generated_text)
+    
+    # Extract the portion after </think>
+    try:
+        if "</think>" in generated_text:
+            generated_text = generated_text.split("</think>", 1)[1].strip()  # Get everything after </think>
+            generated_text = re.search(r"\[(.|\n)*?\]", generated_text, re.DOTALL).group(0)  # Extract the JSON object
+            print("Generated text: ", generated_text)
+            return generated_text
+    except Exception as e:
+        raise ValueError("Error processing the model output: ", e)
+    
+    #     # Use regex to extract the JSON object containing the prompts
+    #     json_match = re.search(r"{(.|\n)*?}", generated_text, re.DOTALL)
+    #     if not json_match:
+    #         raise ValueError("No JSON object found in the model output.")
+        
+    #     json_object = json.loads(json_match.group(0))  # Parse the JSON object
+    #     prompts = json_object.get("prompt")  # Extract the 'prompts' key
+    #     if not prompts:
+    #         raise ValueError("No 'prompt' key found in the JSON object.")
+        
+    #     print("Extracted Prompts:", prompts)
+    #     return prompts
+    # except Exception as e:
+    #     print("Error extracting prompt:", e)
+    #     raise
+
+    # Convert the instruction (list of dictionaries) into a formatted string
+    system_prompt = instruction[0]["content"]
+    user_prompt = instruction[1]["content"]
+    input_text = tokenizer.apply_chat_template(system_prompt, user_prompt)
 
     generation_args = {
         "max_new_tokens": max_new_tokens,
@@ -182,31 +234,36 @@ def base_prompt_inference():
     print("Successfully loaded model and configs.")
     print("Running inference to generate base prompts...")
     # Run inference with the formatted chat input
-    outputs = pipe(formatted_chat, **generation_args)
+    outputs = pipe(input_text, **generation_args)
 
     print("Raw Model Output:", outputs)
-
-    # Extract the assistant's response from the generated text
-    assistant_response = None
-    if isinstance(outputs, list) and "generated_text" in outputs[0]:
-        generated_text = outputs[0]["generated_text"]
-
-        # If the model outputs a list of responses, extract the assistant's part
-        if isinstance(generated_text, str):  # Handle direct string outputs
-            assistant_response = generated_text.split("<|assistant|>\n")[-1].strip()
-        elif isinstance(generated_text, list):  # Handle list outputs
-            for item in generated_text:
-                if item.get("role") == "assistant":
-                    assistant_response = item.get("content")
-                    break
-
-    if not assistant_response:
-        raise ValueError("No assistant response found in the model output.")
-
-    print("Inference complete.")
-    print("Assistant Response:\n", assistant_response)
+    generated_text = outputs[0]["generated_text"]
     
-    return assistant_response
+    print("Inference complete.")
+    print("Outputs: ", generated_text)
+    return generated_text
+
+    # # Extract the assistant's response from the generated text
+    # assistant_response = None
+    # if isinstance(outputs, list) and "generated_text" in outputs[0]:
+    #     generated_text = outputs[0]["generated_text"]
+
+    #     # If the model outputs a list of responses, extract the assistant's part
+    #     if isinstance(generated_text, str):  # Handle direct string outputs
+    #         assistant_response = generated_text.split("<|assistant|>\n")[-1].strip()
+    #     elif isinstance(generated_text, list):  # Handle list outputs
+    #         for item in generated_text:
+    #             if item.get("role") == "assistant":
+    #                 assistant_response = item.get("content")
+    #                 break
+
+    # if not assistant_response:
+    #     raise ValueError("No assistant response found in the model output.")
+
+    # print("Inference complete.")
+    # print("Assistant Response:\n", assistant_response)
+    
+    # return assistant_response
 
 def parse_model_output_as_bp_objects(model_output):
     '''
