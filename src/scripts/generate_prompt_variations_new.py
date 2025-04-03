@@ -28,11 +28,15 @@ from src.utils.data_handler import *
 from configs.root_paths import *
 import yaml
 import json
-import random
 import torch
 import transformers
 from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
 import argparse
+import re
+
+from huggingface_hub import login
+
+login(token='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')
 
 # PRAVEEN:
 '''
@@ -51,6 +55,7 @@ everything barring model inference should work as needed. had to make some chang
 '''
 
 # Step 1: Collect the instruction for generating prompt variations
+# Define manual formatting function
 def collect_instruction(bp_idx):
     '''
     Creates instructions for generating prompt variations based on a base prompt index. Uses the prompt_variation_model_input.json file as the model input, along with NUM_PROMPT_VARIATIONS from the data_size_configs file.
@@ -65,8 +70,9 @@ def collect_instruction(bp_idx):
 
     # collecting base_prompt_str from the database based on the given index
     bp_db = BasePromptDB()
-    bp = BasePrompt(bp_idx, bp_db)
-    bp_str = bp.get_base_prompt()
+    bp = BasePrompt(bp_idx)
+    bp_str = bp.get_prompt_str()
+    
 
     if not os.path.exists(PROMPT_VARIATION_MODEL_INPUT):
         raise FileNotFoundError(f"Instruction file not found at {PROMPT_VARIATION_MODEL_INPUT}")
@@ -121,42 +127,48 @@ def load_model():
     Loads the prompt variation model for inference. 
     '''
     model = AutoModelForCausalLM.from_pretrained(
-        PROMPT_VARIATION_MODEL,
+        PROMPT_VARIATION_MODEL_ID,
         torch_dtype=torch.bfloat16,
         device_map="auto",
         trust_remote_code=True,
-        local_files_only=True,
-        cache_dir = RR_HUGGINGFACE_CACHE
+        # cache_dir = RR_HUGGINGFACE_CACHE
     )
 
-    tokenizer = AutoTokenizer.from_pretrained(PROMPT_VARIATION_MODEL, trust_remote_code=True)
+    tokenizer = AutoTokenizer.from_pretrained(
+        PROMPT_VARIATION_MODEL_ID, 
+        trust_remote_code=True)
 
-    pipe = pipeline(
-        'text-generation', 
-        model=model, 
-        tokenizer=tokenizer, 
-        device_map="auto",
-        cache_dir = RR_HUGGINGFACE_CACHE
-        )
+    # BECCA: Deepseek needs specifically structured chats so pipeline is not the best choice here
+    # pipe = pipeline(
+    #     'text-generation', 
+    #     model=model, 
+    #     tokenizer=tokenizer, 
+    #     device_map="auto",
+    #     # cache_dir = RR_HUGGINGFACE_CACHE
+    #     )
 
-    return pipe
+    return model, tokenizer
 
 # Step 2: Run inference to collect all the prompt variations
 def prompt_variation_inference():
     '''
     Runs inference on the prompt_variation_model to generate the desired output. It solely retrievers the response as a string and does not process it further.
     '''
-    instruction = collect_instruction()
-    pipe = load_model()
+    instruction = collect_instruction(bp_idx)
+    model, tokenizer = load_model()
     configs = load_configs()
 
-    max_tokens = configs.get("max_tokens")
+    max_new_tokens = configs.get("max_new_tokens")
     temperature = configs.get("temperature")
     top_p = configs.get("top_p")
     do_sample = configs.get("do_sample") # check this exists
 
+    input_tensor = tokenizer.apply_chat_template(instruction, add_generation_prompt = True, return_tensors='pt')
+
+    input_tensor = input_tensor.to(model.device)
+
     generation_args = {
-        "max_tokens": max_tokens,
+        "max_new_tokens": max_new_tokens,
         "temperature": temperature,
         "top_p": top_p,
         "do_sample": do_sample
@@ -165,10 +177,13 @@ def prompt_variation_inference():
     print("Successfully loaded model and configs.")
     print("Running inference to generate prompt variations...")
     #outputs = pipe(instruction, **generation_args)
-    outputs = pipe(instruction)
+    outputs = model.generate(input_tensor, **generation_args)
+    
+    generated_text = tokenizer.decode(outputs[0][input_tensor.shape[1]:], skip_special_tokens=True)
+    
     print("Inference complete.")
-    print("Outputs: ", outputs[0]["generated_text"])
-    return outputs[0]["generated_text"]
+    print("Outputs: ", generated_text)
+    return generated_text
 
 def parse_model_output(model_output):
     '''
@@ -180,16 +195,27 @@ def parse_model_output(model_output):
     Outputs:
         - list: A list of tuples, each containing the base prompt variation index and the prompt variation string. Stored as a list of (bpv_idx, bpv_str)
     '''
-    prompt_variations = json.loads(model_output)
+    print('Model Output:', model_output)
 
-    # # creating random order of prompts stored as int indices
-    # random_indices = random.sample(range(NUM_BASE_PROMPTS), NUM_BASE_PROMPTS)
-
-    # returning a list of tuples in the desired format of the random order of prompts
-
-    # PRAVEEN: Commented out this code to return correctly below
+    # PREV CODE USED
     #return [(new_idx, base_prompts[random_idx]) for new_idx, random_idx in enumerate(random_indices)]
-    return [(idx, prompt_variation) for idx, prompt_variation in enumerate(prompt_variations)]
+    
+    if not model_output or model_output.strip() == "":
+        raise ValueError("Model output is empty. Check model inference.")
+
+    if isinstance(model_output, dict) and "generated_text" in model_output:
+        model_output = model_output["generated_text"]
+
+    json_text = re.search(r"\[.*\]", model_output, re.DOTALL)
+    if json_text:
+        model_output = json_text.group(0)
+    else:
+        raise ValueError("No JSON-like output found in model response.")
+
+    return [(idx, pv) for idx, pv in enumerate(json.loads(model_output))]
+
+    # prompt_variations = json.loads(model_output)
+    # return [(idx, prompt_variation) for idx, prompt_variation in enumerate(prompt_variations)]
 
 def write_parquet(bp_idx, prompt_variations):
     '''
@@ -220,22 +246,24 @@ def main(bp_idx):
     # Step 1: Collect instruction
     instruction = collect_instruction(bp_idx)
 
+    # BECCA: removing bc not needed anymore
     # # Step 2: Load model
     # pipe = load_model()
 
-    # # Step 3: Load model configuration
-    # configs = load_configs()
+    # # Step 2: Load model configuration
+    configs = load_configs()
 
-    # # Step 4: Run inference to collect prompt variations
-    # model_output = pipe(instruction)
+    # # Step 3: Run inference to collect prompt variations
+    model_output = prompt_variation_inference()
 
     # tester code
 
-    model_output = "[\"prompt_variation1\", \"prompt_variation2\", \"prompt_variation3\"]"
+    # model_output = "[\"prompt_variation1\", \"prompt_variation2\", \"prompt_variation3\"]"
 
-    # Step 5: Parse the model output to extract prompt variations
+    # Step 4: Parse the model output to extract prompt variations
     prompt_variations = parse_model_output(model_output)
-    # Step 6: Write the prompt variations to a parquet file
+
+    # Step 5: Write the prompt variations to a parquet file
     write_parquet(bp_idx, prompt_variations)
 
 
