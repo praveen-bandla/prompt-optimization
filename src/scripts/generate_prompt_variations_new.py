@@ -125,7 +125,8 @@ def load_model():
         torch_dtype=torch.bfloat16,
         device_map="auto",
         trust_remote_code=True,
-        local_files_only=True
+        local_files_only=True,
+        cache_dir = RR_HUGGINGFACE_CACHE
     )
 
     tokenizer = AutoTokenizer.from_pretrained(PROMPT_VARIATION_MODEL, trust_remote_code=True)
@@ -134,7 +135,8 @@ def load_model():
         'text-generation', 
         model=model, 
         tokenizer=tokenizer, 
-        device_map="auto"
+        device_map="auto",
+        cache_dir = RR_HUGGINGFACE_CACHE
         )
 
     return pipe
