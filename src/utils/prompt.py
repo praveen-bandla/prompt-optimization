@@ -2,7 +2,7 @@
 This class will be used to manage Prompts. It will include methods to create prompt, access prompts, write prompts, read prompts.
 '''
 
-from utils.data_handler import BasePromptDB, ValidationScoreParquet
+from src.utils.data_handler import BasePromptDB, ValidationScoreParquet
 from configs.data_size_configs import NUM_RUBRIC_SECTIONS, SECTION_WEIGHTS
 import numpy as np
 import pandas as pd
