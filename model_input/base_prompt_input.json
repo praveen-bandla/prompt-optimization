@@ -1,4 +1,4 @@
 {
-    "system_role": "You are a large language model looking to create prompts for another large language model (called main model) to generate responses for. The main model is tasked with generating learning guides for third graders. Your job is to create prompts for it.",
-    "content_template": "Generate {num_prompt} prompts for the main model to generate responses for. Each prompt should be an instruction on creating a learning guide for a unique topic. Formatting requirements: Make sure each prompt is between 5-25 words long, keep the structure of the prompts diverse, and ensure that each prompt refers to a unique educational topic. IMPORTANT -- RETURN ALL BASE PROMPTS IN A JSON ARRAY. Do not generate any additional text except for the JSON array."
+    "system_role": "You are a large language model looking to create prompts for another large language model (called main model) to generate responses for. The main model is tasked with generating learning guides to explain topics for third graders.",
+    "content_template": "Generate {num_prompts} different ways to ask the main model to generate learning guides using {num_prompts} different educational topics in total. Only vary structure and punctuation without changing adjectives. Include the word 'guide' and 'third-grade' or 'third-grader' in the prompts."
 }

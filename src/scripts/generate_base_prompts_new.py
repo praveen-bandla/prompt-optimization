@@ -32,7 +32,8 @@ import yaml
 import json
 import random
 import torch
-import transformers
+# import transformers
+# import re
 from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
 
 from huggingface_hub import login
@@ -61,18 +62,18 @@ def collect_instruction():
 
     content = content_template.format(num_prompt = NUM_BASE_PROMPTS)
 
-    full_prompt = [
-        {
-            "role": "system",
-            "content": system_role
-        },
-        {
-            "role": "user",
-            "content": content
-        }
-    ]
+    # full_prompt = [
+    #     {
+    #         "role": "system",
+    #         "content": system_role
+    #     },
+    #     {
+    #         "role": "user",
+    #         "content": content
+    #     }
+    # ]
 
-    return full_prompt
+    return system_role, content
     # bp_data_handler = BasePromptDB(SQL_DB)
     # bp = BasePrompt(bp_idx, bp_data_handler, instruction)
     # return bp
@@ -119,10 +120,12 @@ def load_model():
     tokenizer = AutoTokenizer.from_pretrained(base_prompt_model_id, torch_dtype=torch.bfloat16, device_map="auto", trust_remote_code=True)
     
     # Load Configuration JSON
-    with open(BASE_PROMPT_MODEL_INPUT, "r") as file:
-        input_data = json.load(file)
+    # with open(BASE_PROMPT_MODEL_INPUT, "r") as file:
+    #     input_data = json.load(file)
 
-    formatted_chat = format_chat(input_data["system_role"], input_data["content_template"])
+    system_role, content = collect_instruction()
+
+    formatted_chat = format_chat(system_role, content)
 
     print("Formatted Chat Input:\n", formatted_chat)
 
@@ -156,7 +159,7 @@ def base_prompt_inference():
     '''
     This runs inference on the base_prompt_model to generate the desired output. It solely retrieves the response as a string and does not process it further.
     '''# current understanding: this will generate the x (i.e. 100) base prompts needed
-    instruction = collect_instruction()
+    # instruction = collect_instruction()
     pipe, formatted_chat = load_model()
     configs = load_configs()
 
