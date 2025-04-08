@@ -91,10 +91,10 @@ def collect_instruction(bp_idx):
     content = content_template.format(num_prompt_variations=str(NUM_PROMPT_VARIATIONS // 2), bp_str=bp_str)
 
     full_prompt = [
-        {
-            "role": "system",
-            "content": system_role
-        },
+        # {
+        #     "role": "system",
+        #     "content": system_role
+        # },
         {
             "role": "user",
             "content": content
@@ -161,7 +161,27 @@ def prompt_variation_inference():
     max_new_tokens = configs.get("max_new_tokens")
     temperature = configs.get("temperature")
     top_p = configs.get("top_p")
-    do_sample = configs.get("do_sample") # check this exists
+    do_sample = configs.get("do_sample")
+    repetition_penalty = configs.get("repetition_penalty")
+
+    # Ensure tokenizer has a pad_token and set pad_token_id
+    if tokenizer.pad_token is None:
+        tokenizer.add_special_tokens({'pad_token': '[PAD]'}) # Add a pad token if it doesn't exist
+    tokenizer.pad_token_id = tokenizer.convert_tokens_to_ids(tokenizer.pad_token) # Set pad_token_id correctly
+    
+    # early_stopping = configs.get("early_stopping")
+    # eos_token_id = tokenizer.eos_token_id
+    # eos_token_id = configs.get("eos_token_id")
+
+    # # Section to ensure EOS and PAD tokens are set correctly - not working as of 040325 5:40
+    # if tokenizer.eos_token is None:
+    #     tokenizer.eos_token = "</s>"
+    # if tokenizer.pad_token is None:
+    #     tokenizer.add_special_tokens({'pad_token': '[PAD]'})
+
+
+    # eos_token_id = tokenizer.convert_tokens_to_ids(tokenizer.eos_token)
+    # pad_token_id = tokenizer.convert_tokens_to_ids(tokenizer.pad_token)
 
     input_tensor = tokenizer.apply_chat_template(instruction, add_generation_prompt = True, return_tensors='pt')
 
@@ -171,16 +191,24 @@ def prompt_variation_inference():
         "max_new_tokens": max_new_tokens,
         "temperature": temperature,
         "top_p": top_p,
-        "do_sample": do_sample
+        "do_sample": do_sample,
+        "repetition_penalty": repetition_penalty
+        # "early_stopping": early_stopping,
+        # "eos_token_id": eos_token_id,
+        # "pad_token_id": pad_token_id
     }
 
     print("Successfully loaded model and configs.")
     print("Running inference to generate prompt variations...")
-    #outputs = pipe(instruction, **generation_args)
     outputs = model.generate(input_tensor, **generation_args)
     
+    # Decode the generated text
     generated_text = tokenizer.decode(outputs[0][input_tensor.shape[1]:], skip_special_tokens=True)
     
+    # Enforce the model to start its response with "<think>\n"
+    if not generated_text.startswith("<think>\n"):
+        generated_text = f"<think>\n{generated_text}"
+        
     print("Inference complete.")
     print("Outputs: ", generated_text)
     return generated_text
