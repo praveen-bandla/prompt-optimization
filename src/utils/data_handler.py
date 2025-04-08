@@ -420,7 +420,8 @@ class ModelOutputParquet:
         Raises:
             - ValueError: If the prompt variations are not specific to a single base prompt index.
         '''
-        base_prompt_indexes = list(set([x[0] for x in model_outputs]))
+        # Check if all model outputs are specific to a single base prompt index
+        base_prompt_indexes = list(set([x[0][0] for x in model_outputs]))
         if len(base_prompt_indexes) > 1:
             raise ValueError("All model outputs must be specific to a single base prompt index.")
         if base_prompt_indexes[0] != self.bp_idx:
@@ -428,8 +429,10 @@ class ModelOutputParquet:
         
         # df = self._access_parquet(self.bp_idx)
 
-        new_data = pd.DataFrame(model_outputs, columns=["bpv_idx", "model_output_string"], ignore_index=True)
-        df = pd.concat([self.df, new_data], ignore_index=True)
+        # new_data = pd.DataFrame(model_outputs, columns=["bpv_idx", "model_output_string"])
+        # df = pd.concat([self.df, new_data], ignore_index=True)
+        df = pd.DataFrame(model_outputs, columns=["bpv_idx", "model_output_string"])
+        self.reset_parquet()
         df.to_parquet(self.file_path, index=False)
 
     def fetch_all_outputs(self):
@@ -464,6 +467,12 @@ class ModelOutputParquet:
             return ValueError("All model outputs must be specific to the base prompt index provided during initialization of the ModelOutputParquet Object.")
         result = self.df[self.df["bpv_idx"] == bpv_idx]['model_output_string']
         return result.iloc[0] if not result.empty else None
+    
+    def get_bp_idx(self):
+        '''
+        Returns the base prompt index associated with this object.
+        '''
+        return self.bp_idx
     
     # no longer needed but praveen said leave it here so i listen like an obedient child
     # def fetch_base_prompt_and_model_output(self, bpv_idx):

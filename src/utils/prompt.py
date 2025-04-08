@@ -106,7 +106,6 @@ class PromptVariation:
         Returns:
             - tuple of ints: The base prompt variation index.
         '''
-        print(self.bpv_idx)
         return self.bpv_idx
     
     def write_variation(self):

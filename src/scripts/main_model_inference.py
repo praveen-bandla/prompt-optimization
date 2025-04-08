@@ -210,7 +210,8 @@ def main_model_inference_per_base_prompt(bp_idx):
     mo_parquet = ModelOutputParquet(bp_idx)
     for pv_obj in collect_prompt_variations(bp_idx):
         model_output = main_model_inference_per_prompt_variation(pv_obj)
-        all_pv_outputs.append((pv_obj.get_bpv_idx(), model_output))
+        full_bpv_idx = (mo_parquet.get_bp_idx(), pv_obj.get_bpv_idx())
+        all_pv_outputs.append((full_bpv_idx, model_output))
     mo_parquet.insert_model_outputs(all_pv_outputs)
 
 
