@@ -59,7 +59,7 @@ def collect_prompt_variations(bp_idx):
     pvs = []
 
     for i in range(num_pvs):
-        pv_obj = PromptVariation(bpv_idxs[i], pv_strs[i])
+        pv_obj = PromptVariation(bpv_idx = bpv_idxs[i], pv_parquet = pv_data_handler, variation_str = pv_strs[i])
         pvs.append(pv_obj)
 
     return pvs
@@ -82,12 +82,13 @@ def load_model():
     # return model, tokenizer
 
     model = AutoModelForCausalLM.from_pretrained(
-        MAIN_MODEL,
+        MAIN_MODEL_ID,
         torch_dtype="auto",
-        trust_remote_code=True # have to use for huggingface models
+        trust_remote_code=True, # have to use for huggingface models
+        device_map = "auto"
         )
     
-    tokenizer = AutoTokenizer.from_pretrained(MAIN_MODEL, trust_remote_code=True)
+    tokenizer = AutoTokenizer.from_pretrained(MAIN_MODEL_ID)
 
     pipe = pipeline(
         'text-generation', 
@@ -111,7 +112,12 @@ def construct_model_input(pv_obj):
     system_role = prompt_structure["system_role"]
     content_template = prompt_structure["content_template"]
 
-    pv_str = pv_obj.fetch_variation_str()
+    print(type(pv_obj))
+
+    pv_str = pv_obj.get_prompt_variation_str()
+
+    print(f"Prompt variation string: {pv_str}")
+    print(f'Pv str type: {type(pv_str)}')
     content = content_template.format(pv_str_template = pv_str)
 
     full_prompt = [
@@ -154,7 +160,7 @@ def main_model_inference_per_prompt_variation(pv_obj):
     - str: The model output string.
     '''
 
-    return "Sample model output"
+    #return "Sample model output"
     prompt = construct_model_input(pv_obj)
     #model, tokenizer = load_model()
     pipe = load_model()
