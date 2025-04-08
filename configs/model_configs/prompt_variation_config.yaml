@@ -3,4 +3,4 @@ top_p: 0.9
 max_new_tokens: 4000
 do_sample: True
 repetition_penalty: 1
-early_stopping: True
+# early_stopping: True
