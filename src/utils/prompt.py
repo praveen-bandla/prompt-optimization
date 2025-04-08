@@ -72,7 +72,76 @@ class BasePrompt:
 class PromptVariation:
     '''
     Class to be developed that will be used to manage Prompt Variations in a similar way BasePrompt manages base prompts. Will be initialized with a bpv_idx and will have methods to access, write, read prompt variations, just like above.
+    We assume a a PromptVariationParquet object will be instantiated beforehand.
     '''
+    def __init__(self, bpv_idx, pv_parquet, variation_str=None):
+        '''
+        Initialize a prompt variation with a base prompt variation index.
+
+        Args:
+            - bpv_idx (tuple of ints): The base prompt variation index.
+        '''
+        self.bpv_idx = bpv_idx
+        self.variation_str = variation_str
+        self.pv_parquet = pv_parquet
+        # Add optional parameter that defaults to none called full_string
+
+    def get_variation(self):
+        '''
+        Fetches the variation string from the corresponding prompt variation parquet file.
+
+        Returns:
+            - str: The prompt variation string.
+        '''
+        if self.variation_str is not None:
+            return self.variation_str
+        else:
+            return self.pv_parquet.fetch_prompt_variation(self.bpv_idx)
+
+    
+    def get_bpv_idx(self):
+        '''
+        Returns the variation index from the corresponding prompt variation parquet file.
+
+        Returns:
+            - tuple of ints: The base prompt variation index.
+        '''
+        print(self.bpv_idx)
+        return self.bpv_idx
+    
+    def write_variation(self):
+        '''
+        Insert a single new variation string to the corresponding prompt variation parquet file.
+        '''
+        if self.variation_str is None:
+            raise ValueError("Cannot insert an empty variation.")
+        self.pv_parquet.insert_prompt_variations([(self.bpv_idx, self.variation_str)])
+
+    def fetch_base_prompt(self):
+        '''
+        Fetches the base prompt string associated with this prompt variation.
+
+        Returns:
+            - str: The base prompt string if found, else None.
+        '''
+        return self.pv_parquet.fetch_base_prompt_str(self.bpv_idx)
+    
+
+    def get_base_prompt_and_variation(self):
+        '''
+        Fetches both the base prompt and the prompt variation string for this variation.
+
+        Returns:
+            - tuple: (base_prompt_string, prompt_variation_string)
+        '''
+        return self.pv_parquet.fetch_base_prompt_and_prompt_variation(self.bpv_idx)
+    
+    def read_variation(self):
+        '''
+        Reads the prompt variation from the stored Parquet database.
+        '''
+        self.variation_str = self.pv_parquet.fetch_prompt_variation(self.bpv_idx)
+
 
 class ValidationScore: # instantiated for each bpv_idx
 

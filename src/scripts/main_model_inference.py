@@ -58,7 +58,7 @@ def collect_prompt_variations(bp_idx):
 
     pvs = []
 
-    for i in num_pvs:
+    for i in range(num_pvs):
         pv_obj = PromptVariation(bpv_idxs[i], pv_strs[i])
         pvs.append(pv_obj)
 
@@ -153,6 +153,8 @@ def main_model_inference_per_prompt_variation(pv_obj):
     Returns:
     - str: The model output string.
     '''
+
+    return "Sample model output"
     prompt = construct_model_input(pv_obj)
     #model, tokenizer = load_model()
     pipe = load_model()
@@ -208,11 +210,11 @@ def main_model_inference_per_base_prompt(bp_idx):
     mo_parquet = ModelOutputParquet(bp_idx)
     for pv_obj in collect_prompt_variations(bp_idx):
         model_output = main_model_inference_per_prompt_variation(pv_obj)
-        all_pv_outputs.append((pv_obj.get_prompt_index(), model_output))
+        all_pv_outputs.append((pv_obj.get_bpv_idx(), model_output))
     mo_parquet.insert_model_outputs(all_pv_outputs)
 
 
-if __name__ == "main":
+if __name__ == "__main__":
     if len(sys.argv) != 3:
         raise ValueError("Please provide a list of base prompt indices.")
 

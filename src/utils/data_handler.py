@@ -397,7 +397,7 @@ class ModelOutputParquet:
         '''
         #file_path = f'{self.parquet_root_path}/{self.bp_idx}_model_output.parquet'
         if not os.path.exists(self.file_path):
-            df = pd.DataFrame(columns=["bpv_idx", "model_output_string"], ignore_index=True)
+            df = pd.DataFrame(columns=["bpv_idx", "model_output_string"])
             df.to_parquet(self.file_path, index=False)
             print(f"Created new Parquet file at {self.file_path}")
         else:
@@ -408,7 +408,7 @@ class ModelOutputParquet:
         An internal function that retrieves the content of the parquet file for a specific base prompt index.
         '''
         self._initialize_parquet()
-        return pd.read_parquet()
+        return pd.read_parquet(self.file_path)
 
     def insert_model_outputs(self, model_outputs):
         '''
