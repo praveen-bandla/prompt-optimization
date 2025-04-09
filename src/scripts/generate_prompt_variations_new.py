@@ -88,7 +88,7 @@ def collect_instruction(bp_idx):
     # content_template = content_template.replace("{num_prompt_variations}", str(NUM_PROMPT_VARIATIONS / 2))
     #instruction = system_role + " " + content_template
 
-    content = content_template.format(num_prompt_variations=str(NUM_PROMPT_VARIATIONS // 2), bp_str=bp_str)
+    content = content_template.format(num_prompt_variations=str(NUM_PROMPT_VARIATIONS), bp_str=bp_str)
 
     full_prompt = [
         # {
@@ -215,7 +215,7 @@ def prompt_variation_inference():
 
 def parse_model_output(model_output):
     '''
-    This function parses the model output to extract the prompt variations as tuples of (bpv_idx, prompt_variation_string).
+    This function parses the model output to extract the prompt variations from two JSON arrays.
 
     Inputs:
         - model_output: The model output string from prompt_variation_inference()
@@ -225,25 +225,36 @@ def parse_model_output(model_output):
     '''
     print('Model Output:', model_output)
 
-    # PREV CODE USED
-    #return [(new_idx, base_prompts[random_idx]) for new_idx, random_idx in enumerate(random_indices)]
-    
     if not model_output or model_output.strip() == "":
         raise ValueError("Model output is empty. Check model inference.")
 
     if isinstance(model_output, dict) and "generated_text" in model_output:
         model_output = model_output["generated_text"]
-
+    
+    # FOR ONE ARRAY - PREVIOUS CODE
     json_text = re.search(r"\[.*\]", model_output, re.DOTALL)
     if json_text:
         model_output = json_text.group(0)
     else:
         raise ValueError("No JSON-like output found in model response.")
-
     return [(idx, pv) for idx, pv in enumerate(json.loads(model_output))]
 
-    # prompt_variations = json.loads(model_output)
-    # return [(idx, prompt_variation) for idx, prompt_variation in enumerate(prompt_variations)]
+    # FOR TWO ARRAYS
+    # Extract JSON arrays form the model output
+    # json_arrays = re.findall(r"\[.*?\]", model_output, re.DOTALL)
+    # if len(json_arrays) < 2:
+    #     raise ValueError("Model output does not contain two JSON arrays.")
+
+    # try:
+    #     array1 = json.loads(json_arrays[0])
+    #     array2 = json.loads(json_arrays[1])
+    # except json.JSONDecodeError as e:
+    #     raise ValueError(f"Failed to decode JSON arrays: {e}")
+
+    # Combine the two arrays into a single list of tuples
+    combined_variations = [(idx, pv) for idx, pv in enumerate(array1 + array2)]
+
+    return combined_variations
 
 def write_parquet(bp_idx, prompt_variations):
     '''
