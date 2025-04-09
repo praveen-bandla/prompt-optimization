@@ -58,8 +58,8 @@ def collect_prompt_variations(bp_idx):
 
     pvs = []
 
-    for i in num_pvs:
-        pv_obj = PromptVariation(bpv_idxs[i], pv_strs[i])
+    for i in range(num_pvs):
+        pv_obj = PromptVariation(bpv_idx = bpv_idxs[i], pv_parquet = pv_data_handler, variation_str = pv_strs[i])
         pvs.append(pv_obj)
 
     return pvs
@@ -82,12 +82,13 @@ def load_model():
     # return model, tokenizer
 
     model = AutoModelForCausalLM.from_pretrained(
-        MAIN_MODEL,
+        MAIN_MODEL_ID,
         torch_dtype="auto",
-        trust_remote_code=True # have to use for huggingface models
+        trust_remote_code=True, # have to use for huggingface models
+        device_map = "auto"
         )
     
-    tokenizer = AutoTokenizer.from_pretrained(MAIN_MODEL, trust_remote_code=True)
+    tokenizer = AutoTokenizer.from_pretrained(MAIN_MODEL_ID)
 
     pipe = pipeline(
         'text-generation', 
@@ -111,7 +112,12 @@ def construct_model_input(pv_obj):
     system_role = prompt_structure["system_role"]
     content_template = prompt_structure["content_template"]
 
-    pv_str = pv_obj.fetch_variation_str()
+    print(type(pv_obj))
+
+    pv_str = pv_obj.get_prompt_variation_str()
+
+    print(f"Prompt variation string: {pv_str}")
+    print(f'Pv str type: {type(pv_str)}')
     content = content_template.format(pv_str_template = pv_str)
 
     full_prompt = [
@@ -153,6 +159,8 @@ def main_model_inference_per_prompt_variation(pv_obj):
     Returns:
     - str: The model output string.
     '''
+
+    #return "Sample model output"
     prompt = construct_model_input(pv_obj)
     #model, tokenizer = load_model()
     pipe = load_model()
@@ -208,11 +216,12 @@ def main_model_inference_per_base_prompt(bp_idx):
     mo_parquet = ModelOutputParquet(bp_idx)
     for pv_obj in collect_prompt_variations(bp_idx):
         model_output = main_model_inference_per_prompt_variation(pv_obj)
-        all_pv_outputs.append((pv_obj.get_prompt_index(), model_output))
+        full_bpv_idx = (mo_parquet.get_bp_idx(), pv_obj.get_bpv_idx())
+        all_pv_outputs.append((full_bpv_idx, model_output))
     mo_parquet.insert_model_outputs(all_pv_outputs)
 
 
-if __name__ == "main":
+if __name__ == "__main__":
     if len(sys.argv) != 3:
         raise ValueError("Please provide a list of base prompt indices.")
 
