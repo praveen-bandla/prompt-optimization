@@ -124,6 +124,18 @@ class PromptVariation:
             - str: The base prompt string if found, else None.
         '''
         return self.pv_parquet.fetch_base_prompt_str(self.bpv_idx)
+
+    def get_prompt_variation_str(self):
+        '''
+        Returns the prompt variation string.
+
+        Returns:
+            - str: The prompt variation string.
+        '''
+        if self.variation_str is not None:
+            return self.variation_str
+        else:
+            return self.pv_parquet.fetch_prompt_variation(self.bpv_idx)
     
 
     def get_base_prompt_and_variation(self):

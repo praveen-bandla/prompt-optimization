@@ -268,6 +268,17 @@ def write_parquet(bp_idx, prompt_variations):
         None
     '''
 
+    # # Code to add the base prompt to the list of prompt variations
+
+    # # first, create a BasePromptDB object to get the base prompt string
+    # bp_db = BasePromptDB()
+    # # then, get the base prompt string using the index
+    # bp_str = bp_db.fetch_base_prompt(bp_idx)
+    # formatted_bp = [((bp_idx, -1), bp_str)]
+    # # then, add the base prompt to the start of the list of prompt variations
+    # prompt_variations = formatted_bp + prompt_variations
+
+
     pv_parquet = PromptVariationParquet(bp_idx)
     pv_parquet.insert_prompt_variations(prompt_variations)
 
