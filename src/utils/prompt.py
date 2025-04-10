@@ -3,7 +3,7 @@ This class will be used to manage Prompts. It will include methods to create pro
 '''
 
 from src.utils.data_handler import BasePromptDB, ValidationScoreParquet
-from configs.data_size_configs import NUM_RUBRIC_SECTIONS, SECTION_WEIGHTS
+from configs.data_size_configs import *
 import numpy as np
 import pandas as pd
 import os
@@ -162,42 +162,91 @@ class ValidationScore: # instantiated for each bpv_idx
     It also calculates aggregated scores across rubric sections.
     '''
 
-    def __init__(self, vs_parquet: ValidationScoreParquet, full_string = None): # ADD THAT string is optional
+    def __init__(self, bpv_idx, vs_parquet: ValidationScoreParquet, score_string = None):
         '''
         Initialize a validation score with a base prompt index, for all prompt variations of that base prompt.
 
         Args:
-            - bp_idx (tuple of ints): The base prompt index.
+            - bpv_idx (tuple of ints): The base prompt variation index.
         '''
-        self.bpv_idx # Use this to derive the bp_idx for file name
-        self.full_string = full_string
+        self.bpv_idx = bpv_idx # Use this to derive the bp_idx for file name
+        self.score_string = score_string
         self.vs_parquet = vs_parquet
-        self.scores = {f'section_{i+1}': [] for i in range(NUM_RUBRIC_SECTIONS)} # Initialize scores for each rubric section
-
-    def parse_and_store_scores(self, string):
-        """Parses the model scores from a string and stores them.
-        Validator model output is a string of int scores in a tuple."""
-        try:
-            scores = list(map(int, string.split(',')))
-            if len(scores != NUM_RUBRIC_SECTIONS):
-                raise ValueError(f'The input string must contain exactly {NUM_RUBRIC_SECTIONS} scores.')
-            for i in range(NUM_RUBRIC_SECTIONS):
-                self.scores[f'section{i+1}'].append(scores[i])
-        except ValueError as e:
-            print(f'Error parsing the input string: {e}')
+        self.scores = None # Initialize scores to None
+        # self.scores = {f'section_{i+1}': [] for i in range(NUM_RUBRIC_SECTIONS)} # Initialize scores for each rubric section
 
     def get_scores(self):
-        """Returns the validation scores."""
+        """Returns the validation scores if they exist, or intiializes the dictionary for storing scores if not."""
+        if self.scores is not None:
+            return self.scores
+        else:
+            self.scores = {f'section_{i+1}': [] for i in range(NUM_RUBRIC_SECTIONS)} # Initialize dict for storing scores
+            return self.scores
+
+    def parse_model_output(self, model_output : str):
+        ''' Converts model output string into a list of integers.'''
+        parsed_list = model_output.strip('()').split(', ')
+        parsed_list = [int(x) for x in parsed_list]
+        return parsed_list
+    
+    def append_model_scores(self, parsed_list):
+        '''Returns a list of appended scores that has as many elements as NUM_VALIDATOR_MODELS.'''
+        all_val_model_scores = []
+        all_val_model_scores.append(parsed_list)
+        return all_val_model_scores
+    
+    def store_scores_by_section(self, all_val_model_scores):
+        '''Sorts the scores by rubric section and stores as a list into a dictionary with keys as section names and values as lists of scores.'''
+        
+        # Check that length of all_val_model_scores matches NUM_VALIDATOR_MODELS
+        if len(all_val_model_scores) != NUM_VALIDATOR_MODELS:
+            raise ValueError(f'The number of validator models must be {NUM_VALIDATOR_MODELS}.')
+
+        # Check that length of each element in all_val_model_scores matches NUM_RUBRIC_SECTIONS
+        for scores in all_val_model_scores:
+            if len(scores) != NUM_RUBRIC_SECTIONS:
+                raise ValueError(f'The number of sections must be {NUM_RUBRIC_SECTIONS}.')
+
+        # Initialize a dictionary to hold scores for each section
+        scores_dict = {f'section_{i+1}': [] for i in range(NUM_RUBRIC_SECTIONS)}
+
+        for section_i in range(NUM_RUBRIC_SECTIONS):
+            section_scores = []
+            for val_model_scores in all_val_model_scores:
+                section_scores.append(val_model_scores[section_i])
+            scores_dict[f'section_{section_i+1}'] = section_scores
+        
+        self.scores = scores_dict
         return self.scores
 
-    def update_score(self, section, new_score):
-        """Updates the validation score for a specific rubric section."""
-        section_key = f'section_{section}'
-        if section_key in self.scores:
-            self.scores[section_key] = new_score
-        else:
-            raise ValueError(f"Section {section} not found in validation score.")
+    
+    def get_bpv_idx(self):
+        '''
+        Returns the variation index from the corresponding prompt variation parquet file.
 
+        Returns:
+            - tuple of ints: The base prompt variation index.
+        '''
+        return self.bpv_idx
+    
+    def fetch_base_prompt(self):
+        '''
+        Fetches the base prompt string associated with this validator score.
+        Returns: 
+            - str: the base prompt string if found, else None.
+        '''
+        return self.vs_parquet.fetch_base_prompt_str(self.bpv_idx)
+
+    # BECCA: I don't think we need this function anymore
+    # def update_score(self, section, new_score):
+    #     """Updates the validation score for a specific rubric section."""
+    #     section_key = f'section_{section}'
+    #     if section_key in self.scores:
+    #         self.scores[section_key] = new_score
+    #     else:
+    #         raise ValueError(f"Section {section} not found in validation score.")
+
+    # BECCA: I don't think we need this function anymore
     # def get_validator_average_score(self):
     #     """Returns the average scores assigned by the validator models."""
     #     if not self.score:
@@ -237,24 +286,89 @@ class ValidationScore: # instantiated for each bpv_idx
             else:
                 raise ValueError(f'Section {section} not found in average scores.')
         return total_score
+    
 
-    def save_validation_scores(self):
-        """Returns the validation scores for passing to write_parquet_file()"""
+    def store_aggregated_scores(self):
+        """Calculates and stores the aggregated validation scores"""
         average_scores = self.calculate_average_section_scores()
         total_score = self.calculate_total_score()
+
         if average_scores is None or total_score is None:
             return None
+        
+        # Store average scores in self.scores 
+        for section, avg_score in average_scores.items():
+            self.scores[f'{section}_avg'] = avg_score
 
-        # Collect individual section scores as tuples
-        individual_scores = [tuple(self.scores[f'section_{i+1}']) for i in range(NUM_RUBRIC_SECTIONS)]
-        # Collect average section scores
-        avg_scores_list = [average_scores[f'section_{i+1}_avg'] for i in range(NUM_RUBRIC_SECTIONS)]
-        # Combine all scores into a single list
-        scores_list = individual_scores + avg_scores_list + [total_score]
-        return [self.bpv_idx, scores_list]
-    
+        # Store total score in self.scores
+        self.scores['total_score'] = total_score
+
+    def write_output(self):
+        '''Writes the validation scores to the stored Parquet database.'''
+        if self.scores is None:
+            raise ValueError("Cannot save empty scores.")
+        self.vs_parquet.insert_validation_scores([(self.bpv_idx, self.scores)])
 
 class MainModelOutput:
     '''
     Class to be developed that will be used to manage the main model outputs. Will include methods to create main model output, access main model output, write main model output, read main model output, just like PromptVariation and BasePrompt. This class will be most similar to PromptVariation.
+    We are assuming that a ModelOutputParquet object has been created before an instantiation of this class is created.
     '''
+
+    def __init__(self, bpv_idx, mo_parquet, model_output_str=None):
+        '''
+        Initialize a main model output with a base prompt variation index.
+
+        Args:
+            - bpv_idx (tuple of ints): The base prompt variation index.
+            - mo_parquet (ModelOutputParquet): The Parquet database object.
+            - model_output_str (str, optional): The main model output string
+        '''
+        self.bpv_idx = bpv_idx
+        self.bp = bpv_idx[0]
+        self.model_output_str = model_output_str
+        self.mo_parquet = mo_parquet
+    
+    def get_output(self):
+        '''
+        Fetches the main model output from the stored Parquet database. 
+
+        Returns:
+            - str: The main model output.
+        '''
+        
+        if self.model_output_str is not None:
+            return self.model_output_str
+        else:
+            fetched_output = self.mo_parquet.fetch_model_output(self.bpv_idx)
+            return fetched_output
+    
+    def get_bpv_idx(self):
+        '''
+        Returns the base prompt variation index.
+
+        Returns:
+            - tuple of ints: The base prompt variation index.
+        '''
+        return self.bpv_idx
+    
+    def write_output(self):
+        '''
+        Writes the main model output to the stored Parquet database.
+        '''
+        if self.model_output_str is None:
+            raise ValueError("Cannot save an empty model output.")
+        self.mo_parquet.insert_model_outputs([(self.bpv_idx, self.model_output_str)])
+
+    def get_bpv_idx_and_model_output(self):
+        '''
+        Returns the bpv_idx and model_output_str as a tuple.
+        '''
+        full_str = self.get_output()
+        return (self.bpv_idx, full_str)
+    
+    def read_output(self):
+        '''
+        Reads the main model output from the stored Parquet database.
+        '''
+        self.model_output_str = self.mo_parquet.fetch_model_output(self.bpv_idx)
