@@ -14,7 +14,7 @@ class BasePrompt:
     It will include methods to create base prompt, access base prompt, write base prompt, read base prompt. Every component of the project that needs to access base prompts will use this class exclusively.
     '''
 
-    def __init__(self, bpv_idx):
+    def __init__(self, bpv_idx, bp_db = None):
         '''
         Initialize a base prompt with a base prompt variation index (given -1 for the second index of the tuple). Whether to create a new base prompt, or access an existing base prompt, this base prompt class will be used.
 
@@ -23,8 +23,9 @@ class BasePrompt:
         '''
         self.bpv_idx = bpv_idx
         self.prompt = None
+        self.bp_db = bp_db
 
-    def get_prompt_str(self, db = None):
+    def get_prompt_str(self):
         '''
         Fetches the prompt from the database.
         If a database connection is not provided, a new connection is created and closed. If it is provided, it is used and not closed.
@@ -35,12 +36,13 @@ class BasePrompt:
         Returns:
             - str: The prompt string.
         '''
-        if db is None:
+        if self.db is None:
             db = BasePromptDB()
-            self.prompt = db.fetch_prompt(self.bpv_idx)
-            db.close_connection()
+            self.db = db
+            self.prompt = self.db.fetch_prompt(self.bpv_idx)
+            self.db.close_connection()
         else:
-            self.prompt = db.fetch_prompt(self.bpv_idx)
+            self.prompt = self.db.fetch_prompt(self.bpv_idx)
 
         return self.prompt
 
@@ -53,7 +55,7 @@ class BasePrompt:
         '''
         return self.bpv_idx
 
-    def save_base_prompt(self, db = None):
+    def save_base_prompt(self):
         '''
         Saves the base prompt to the database.
         If a database connection is not provided, a new connection is created and closed. If it is provided, it is used and not closed.
@@ -61,12 +63,13 @@ class BasePrompt:
         Args:
             - db (BasePromptDB, optional): An existing database connection object.
         '''
-        if db is None:
+        if self.db is None:
             db = BasePromptDB()
-            db.insert_base_prompts([(self.bpv_idx, self.prompt)])
-            db.close_connection()
+            self.db = db
+            self.db.insert_base_prompts([(self.bpv_idx, self.prompt)])
+            self.db.close_connection()
         else:
-            db.insert_base_prompts([(self.bpv_idx, self.prompt)])
+            self.db.insert_base_prompts([(self.bpv_idx, self.prompt)])
 
 
 class PromptVariation:

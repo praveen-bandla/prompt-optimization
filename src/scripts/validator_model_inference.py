@@ -45,6 +45,7 @@ import yaml
 import json
 import os
 import torch
+import sys
 
 # adding
 from copy import deepcopy
@@ -145,16 +146,14 @@ def load_models():
     # }
 
 
-def construct_model_input(bpv_idx, base_prompt_data_handler, mo_parquet):
+def construct_model_input(base_prompt_str, main_model_output_str):
     '''
     Constructs the model input by replacing placeholders in the val_model_input.json template.
-    '''
-    # Fetch prompt-variation specific strings
-    base_prompt_str = base_prompt_data_handler.get_prompt_str()
-    main_model_output_str = mo_parquet.fetch_model_output(bpv_idx)
 
-    if not main_model_output_str:
-        raise ValueError(f"No main model output found for bpv_idx {bpv_idx}")
+    Args:
+    - base_prompt_str (str): The base prompt string.
+    - main_model_output_str (str): The main model output string for the given bpv_idx.
+    '''
 
     # Load the rubric text from the rubric.txt file
     if not os.path.exists(RUBRIC_PATH):
@@ -288,13 +287,13 @@ def construct_prompt(prompt_structure, system_role, content):
 #     return validation_scores.scores
 
 
-def validator_model_inference_per_prompt_variation(bpv_idx):
+def validator_model_inference_per_prompt_variation(base_prompt_str, main_model_output_str):
     '''
     Runs inference on all three validator models to generate the validation scores for a single bpv_idx.
     '''
     
     # Step 1: Retrieve global prompt information
-    system_role, content = construct_model_input(bpv_idx)
+    system_role, content = construct_model_input(base_prompt_str, main_model_output_str)
 
     # Step 2a: Load models_dict and configs
     models_dict = load_models()
@@ -362,6 +361,48 @@ def validator_model_inference_per_base_prompt(bp_idx):
     Args:
     - bp_idx (int): The base prompt index
     '''
+    all_vs_objs = []
+    
+    # Load the base prompt data handler
+    bp_db = BasePromptDB()
+
+    # Load the base prompt obj
+    bp_obj = BasePrompt(bp_idx, bp_db)
+    # Load the base_prompt_str
+    base_prompt_str = bp_obj.get_base_prompt_string()
+
+    mo_parquet = ModelOutputParquet(bp_idx)
+
+    for idx in range(NUM_PROMPT_VARIATIONS):
+        # Load the main model output string for the given bpv_idx
+        model_output_obj = MainModelOutput((bp_idx, id), mo_parquet)
+        main_model_output_str = model_output_obj.get_main_model_output_string()
+
+        # Run inference
+        scores = validator_model_inference_per_prompt_variation(base_prompt_str, main_model_output_str)
+
+        # Create a new ValidationScore object
+        vs_obj = ValidationScore((bp_idx, idx), scores)
+        all_vs_objs.append(vs_obj)
+
+    return all_vs_objs
+
+
+def write_validation_scores_to_parquet(vs_objs, bp_idx):
+    '''
+    Writes the validation scores to a Parquet file.
+
+    Args:
+    - vs_objs (list): List of ValidationScore objects.
+    - bp_idx (int): The base prompt index.
+    '''
+    # Create a new Parquet file for the validation scores
+    vs_parquet = ValidationScoreParquet(bp_idx)
+
+    vs_parquet.insert_validation_scores(vs_objs)
+
+
+
     
 
 
@@ -385,59 +426,75 @@ def validator_model_inference_per_base_prompt(bp_idx):
 #     mo_parquet.insert_model_outputs(all_pv_outputs)
 
 
-def main(start_idx, end_idx):
-    '''
-    Main function to process all prompt variations for a given range of indices.
+# def main(start_idx, end_idx):
+#     '''
+#     Main function to process all prompt variations for a given range of indices.
 
-    Args:
-    - start_idx (tuple): The starting base prompt variation index (e.g., (1, 0)).
-    - end_idx (tuple): The ending base prompt variation index (e.g., (1, 4)).
-    '''
-    # Load model configurations
-    configs = load_configs()
+#     Args:
+#     - start_idx (tuple): The starting base prompt variation index (e.g., (1, 0)).
+#     - end_idx (tuple): The ending base prompt variation index (e.g., (1, 4)).
+#     '''
+#     # Load model configurations
+#     configs = load_configs()
 
-    # Load all models
-    models = load_models()
+#     # Load all models
+#     models = load_models()
 
-    # Collect base prompt string from bpv_idx
-    bp_idx = (bpv_idx[0])
-    base_prompt_data_handler = BasePrompt(bp_idx)
+#     # Collect base prompt string from bpv_idx
+#     bp_idx = (bpv_idx[0])
+#     base_prompt_data_handler = BasePrompt(bp_idx)
 
-    # Fetch the main model output string for the given bpv_idx
-    mo_parquet = ModelOutputParquet(bp_idx[0])
+#     # Fetch the main model output string for the given bpv_idx
+#     mo_parquet = ModelOutputParquet(bp_idx[0])
 
-    construct_model_input(bpv_idx, base_prompt_data_handler, mo_parquet)
+#     construct_model_input(bpv_idx, base_prompt_data_handler, mo_parquet)
 
-    # Collect all scores for all prompt variations
-    all_scores = []
-    for bpv_idx in range(start_idx[1], end_idx[1]):
-        bpv_idx_tuple = (start_idx[0], bpv_idx)
-        print(f"Processing bpv_idx: {bpv_idx_tuple}")
-        scores = validator_model_inference(bpv_idx_tuple, models)
-        all_scores.append(scores)
-        # Create function for runnign inference per prompt variaiton
-        # inside function for running inference per base prompt, loop through first function
-        # Refer to main_model_inference.py for example
+#     # Collect all scores for all prompt variations
+#     all_scores = []
+#     for bpv_idx in range(start_idx[1], end_idx[1]):
+#         bpv_idx_tuple = (start_idx[0], bpv_idx)
+#         print(f"Processing bpv_idx: {bpv_idx_tuple}")
+#         scores = validator_model_inference(bpv_idx_tuple, models)
+#         all_scores.append(scores)
+#         # Create function for runnign inference per prompt variaiton
+#         # inside function for running inference per base prompt, loop through first function
+#         # Refer to main_model_inference.py for example
 
-    # Write all scores to Parquet
-    vs_parquet = ValidationScoreParquet(start_idx[0])
-    vs_parquet.insert_validation_scores(all_scores)
+#     # Write all scores to Parquet
+#     vs_parquet = ValidationScoreParquet(start_idx[0])
+#     vs_parquet.insert_validation_scores(all_scores)
 
-    print(f"Validation scores for base prompt {start_idx[0]} have been saved to the Parquet file.")
+#     print(f"Validation scores for base prompt {start_idx[0]} have been saved to the Parquet file.")
 
 
 if __name__ == "__main__":
-    import sys
+    # import sys
 
-    # Parse command-line arguments
+    # # Parse command-line arguments
+    # if len(sys.argv) != 3:
+    #     print("Usage: python validator_model_inference.py <start_idx> <end_idx>")
+    #     print("Example: python validator_model_inference.py '(1, 0)' '(1, 4)'")
+    #     sys.exit(1)
+
+    # # Convert string arguments to tuples
+    # start_idx = eval(sys.argv[1])  # Example: (1, 0)
+    # end_idx = eval(sys.argv[2])    # Example: (1, 4)
+
+    # # Run the main function
+    # main(start_idx, end_idx)
     if len(sys.argv) != 3:
-        print("Usage: python validator_model_inference.py <start_idx> <end_idx>")
-        print("Example: python validator_model_inference.py '(1, 0)' '(1, 4)'")
-        sys.exit(1)
+        raise ValueError("Please provide a list of base prompt indices.")
+    
+    start_idx = int(sys.argv[1])
+    end_idx = int(sys.argv[2])
+    for bp_idx in range(start_idx, end_idx):
+        # Run inference for the given base prompt index
+        vs_objs = validator_model_inference_per_base_prompt(bp_idx)
+        
+        # Write the validation scores to Parquet
+        write_validation_scores_to_parquet(vs_objs, bp_idx)
+        
+        print(f"Finished inference for base prompt index {bp_idx}.")
 
-    # Convert string arguments to tuples
-    start_idx = eval(sys.argv[1])  # Example: (1, 0)
-    end_idx = eval(sys.argv[2])    # Example: (1, 4)
+    print("All inferences have been completed.")
 
-    # Run the main function
-    main(start_idx, end_idx)
