@@ -51,12 +51,12 @@ import sys
 from copy import deepcopy
 
 from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
-from mistral_inference.transformer import Transformer
-from mistral_inference.generate import generate
+# from mistral_inference.transformer import Transformer
+# from mistral_inference.generate import generate
 
-from mistral_common.tokens.tokenizers.mistral import MistralTokenizer
-from mistral_common.protocol.instruct.messages import UserMessage
-from mistral_common.protocol.instruct.request import ChatCompletionRequest
+# from mistral_common.tokens.tokenizers.mistral import MistralTokenizer
+# from mistral_common.protocol.instruct.messages import UserMessage
+# from mistral_common.protocol.instruct.request import ChatCompletionRequest
 
 
 # PRAVEEN: helper function to generate empty scores dict
@@ -369,17 +369,19 @@ def validator_model_inference_per_base_prompt(bp_idx):
     # Load the base prompt obj
     bp_obj = BasePrompt(bp_idx, bp_db)
     # Load the base_prompt_str
-    base_prompt_str = bp_obj.get_base_prompt_string()
+    base_prompt_str = bp_obj.get_prompt_str()
 
     mo_parquet = ModelOutputParquet(bp_idx)
 
     for idx in range(NUM_PROMPT_VARIATIONS):
         # Load the main model output string for the given bpv_idx
-        model_output_obj = MainModelOutput((bp_idx, id), mo_parquet)
-        main_model_output_str = model_output_obj.get_main_model_output_string()
+        model_output_obj = MainModelOutput((bp_idx, idx), mo_parquet)
+        main_model_output_str = model_output_obj.get_output_str()
 
         # Run inference
-        scores = validator_model_inference_per_prompt_variation(base_prompt_str, main_model_output_str)
+        # PRAVEEN: COMMENTING OUT FOR NOW
+        # scores = validator_model_inference_per_prompt_variation(base_prompt_str, main_model_output_str)
+        scores = generate_empty_scores_dict()
 
         # Create a new ValidationScore object
         vs_obj = ValidationScore((bp_idx, idx), scores)

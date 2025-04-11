@@ -23,7 +23,7 @@ class BasePrompt:
         '''
         self.bpv_idx = bpv_idx
         self.prompt = None
-        self.bp_db = bp_db
+        self.db = bp_db
 
     def get_prompt_str(self):
         '''
@@ -331,7 +331,7 @@ class MainModelOutput:
         self.model_output_str = model_output_str
         self.mo_parquet = mo_parquet
     
-    def get_output(self):
+    def get_output_str(self):
         '''
         Fetches the main model output from the stored Parquet database. 
 
@@ -366,7 +366,7 @@ class MainModelOutput:
         '''
         Returns the bpv_idx and model_output_str as a tuple.
         '''
-        full_str = self.get_output()
+        full_str = self.get_output_str()
         return (self.bpv_idx, full_str)
     
     def read_output(self):
