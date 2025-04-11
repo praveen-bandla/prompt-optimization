@@ -116,8 +116,10 @@ def load_models():
     models_dict = deepcopy(VAL_MODEL_DICT)
 
     for key, model_info in models_dict.items():
+        print('Starting to load model:', model_info['model_name'])
         model_id = model_info['huggingface_model_id']
 
+        print(f'model_id: {model_id}')
         # Load tokenizer and model
         tokenizer = AutoTokenizer.from_pretrained(model_id)
         model = AutoModelForCausalLM.from_pretrained(model_id).to(device)
@@ -127,6 +129,7 @@ def load_models():
             'model': model,
             'tokenizer': tokenizer
         }
+        print('Finished loading model:', model_info['model_name'])
     
     return models_dict
 
