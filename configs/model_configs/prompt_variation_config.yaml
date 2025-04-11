@@ -1,6 +1,6 @@
-temperature: 0.6
+temperature: 0.1
 top_p: 0.9
-max_new_tokens: 4000
+max_new_tokens: 6000
 do_sample: True
 repetition_penalty: 1
 # early_stopping: True
