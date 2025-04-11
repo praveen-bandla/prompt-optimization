@@ -163,6 +163,7 @@ class PromptVariationParquet:
         # df = self._access_parquet(base_prompt_indexes[0])
         self.reset_parquet()
         new_data = pd.DataFrame(variations, columns=["bpv_idx", "prompt_variation_string"])
+        print(f'Variations in data_handler: {new_data}')
         df = pd.concat([self.df, new_data], ignore_index=True)
         df.to_parquet(self.file_path, index=False)
 
@@ -181,6 +182,7 @@ class PromptVariationParquet:
         '''
         For a given bpv_idx, fetches the base prompt string associated with the base_prompt_idx.
         '''
+        self.df['bpv_idx'] = df['bpv_idx'].apply(tuple)
         result = self.df[self.df["bpv_idx"] == (self.bp_idx, -1)]['prompt_variation_string']
         return result.iloc[0] if not result.empty else None
 
