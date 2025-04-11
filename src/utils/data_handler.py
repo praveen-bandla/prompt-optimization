@@ -59,7 +59,7 @@ class BasePromptDB:
         Inserts a batch of base prompts into the database.
 
         Args:
-            - prompts (list of tuples): A list of tuples where each tuple contains (bp_idx, base_prompt_string).
+            - prompts (list of tuples): A list of tuples where each tuple contains (bp_idx, base_prompt_string). Here bp_idx is an integer and base_prompt_string is a string.
         '''
         cursor = self.conn.cursor()
         cursor.executemany('''
@@ -125,12 +125,12 @@ class BasePromptDB:
 
 class PromptVariationParquet:
     '''
-    Class used to manage the Prompt Variations in Parquet format as we discussed and is in README. This class will be initialized with a bpv_idx and will have methods to access, write, read prompt variations. It will be similar to the BasePromptDB class, but will have to handle different Parquet files indexed by base prompt, as opposed to a single SQLite database.
+    Class used to manage the Prompt Variations in Parquet format as we discussed and is in README. This class will be initialized with a bp_idx and will have methods to access, write, read prompt variations. It will be similar to the BasePromptDB class, but will have to handle different Parquet files indexed by base prompt, as opposed to a single SQLite database.
     '''
 
     def __init__(self, bp_idx, parquet_root_path = PROMPT_VARIATIONS):
         '''
-        Initializes the PromptVariationParquet class. This is not base prompt specific. It will be used to manage all prompt variations in the project. When needing to access prompt variations for a specific base prompt, the bpv_idx will be passed to the methods of this class.
+        Initializes the PromptVariationParquet class. This is base prompt specific. When needing to access prompt variations for a specific base prompt, the bp_idx will be passed to the methods of this class.
         '''
         self.parquet_root_path = parquet_root_path
         self.bp_idx = bp_idx
@@ -163,6 +163,7 @@ class PromptVariationParquet:
         # df = self._access_parquet(base_prompt_indexes[0])
         self.reset_parquet()
         new_data = pd.DataFrame(variations, columns=["bpv_idx", "prompt_variation_string"])
+        print(f'Variations in data_handler: {new_data}')
         df = pd.concat([self.df, new_data], ignore_index=True)
         df.to_parquet(self.file_path, index=False)
 
@@ -181,6 +182,7 @@ class PromptVariationParquet:
         '''
         For a given bpv_idx, fetches the base prompt string associated with the base_prompt_idx.
         '''
+        self.df['bpv_idx'] = df['bpv_idx'].apply(tuple)
         result = self.df[self.df["bpv_idx"] == (self.bp_idx, -1)]['prompt_variation_string']
         return result.iloc[0] if not result.empty else None
 
@@ -431,6 +433,7 @@ class ModelOutputParquet:
 
         # new_data = pd.DataFrame(model_outputs, columns=["bpv_idx", "model_output_string"])
         # df = pd.concat([self.df, new_data], ignore_index=True)
+        print(model_outputs)
         df = pd.DataFrame(model_outputs, columns=["bpv_idx", "model_output_string"])
         self.reset_parquet()
         df.to_parquet(self.file_path, index=False)

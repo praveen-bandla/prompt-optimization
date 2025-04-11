@@ -3,6 +3,9 @@ Generate Prompt Varitions (New)
 
 This updated script generates a set of prompt variations by calling the prompt variation model to produce prompt variations based on the stored base prompts. It runs inferences and generates 'NUM_PROMPT_VARIATIONS' prompt variations for further use.
 
+Usage:
+    PYTHONPATH=$(pwd) python src/scripts/generate_prompt_variations_new.py "[0,1,2]"
+
 Inputs:
     bp_idx: A list of integers representing the indices of the base prompts to generate prompt variations for.
 
@@ -210,10 +213,17 @@ def prompt_variation_inference():
         generated_text = f"<think>\n{generated_text}"
         
     print("Inference complete.")
-    print("Outputs: ", generated_text)
-    return generated_text
+    #print("Outputs: ", generated_text)
+    #print("Generated text: ", generated_text)
+    think_tag = "</think>"
+    if think_tag in generated_text:
+        model_output = generated_text.split(think_tag, 1)[1].strip()
+    else:
+        raise ValueError(f"Model output does not contain the expected tag '{think_tag}'.")
 
-def parse_model_output(model_output):
+    return model_output
+
+def parse_model_output(model_output, bp_idx):
     '''
     This function parses the model output to extract the prompt variations from two JSON arrays.
 
@@ -223,39 +233,43 @@ def parse_model_output(model_output):
     Outputs:
         - list: A list of tuples, each containing the base prompt variation index and the prompt variation string. Stored as a list of (bpv_idx, bpv_str)
     '''
-    print('Model Output:', model_output)
 
     if not model_output or model_output.strip() == "":
         raise ValueError("Model output is empty. Check model inference.")
 
-    if isinstance(model_output, dict) and "generated_text" in model_output:
-        model_output = model_output["generated_text"]
-    
-    # FOR ONE ARRAY - PREVIOUS CODE
-    json_text = re.search(r"\[.*\]", model_output, re.DOTALL)
-    if json_text:
-        model_output = json_text.group(0)
-    else:
-        raise ValueError("No JSON-like output found in model response.")
-    return [(idx, pv) for idx, pv in enumerate(json.loads(model_output))]
+    model_output = model_output.strip()
+    model_output = re.sub(r'^\[.*?"', '[', model_output)  # Remove from '[' to the first '"'
+    model_output = re.sub(r'"[^"]*\]$', ']', model_output)  # Remove from the last '"' to ']'
+    print(f'Model output: {model_output}')
+    # Check if the output is a JSON array
+    try:
+        # PRAVEEN: COMMENTING OUT FOR NOW
+        # variations = json.loads(model_output)
 
-    # FOR TWO ARRAYS
-    # Extract JSON arrays form the model output
-    # json_arrays = re.findall(r"\[.*?\]", model_output, re.DOTALL)
-    # if len(json_arrays) < 2:
-    #     raise ValueError("Model output does not contain two JSON arrays.")
+        variations = ["Create a hands-on art guide that introduces various techniques to engage creative third-graders in fun learning.", "Design a hands-on art guide that simplifies creative techniques for third-graders to explore art effortlessly.", "Develop a hands-on art guide that encourages creative exploration through various techniques for third-graders to express themselves artistically."]
 
-    # try:
-    #     array1 = json.loads(json_arrays[0])
-    #     array2 = json.loads(json_arrays[1])
-    # except json.JSONDecodeError as e:
-    #     raise ValueError(f"Failed to decode JSON arrays: {e}")
+        # if isinstance(variations, list):
+        #print(variations)
+        lst = [((bp_idx, idx), str(variation)) for idx, variation in enumerate(variations)]
+        return lst
+    except json.JSONDecodeError:
+        pass
 
-    # Combine the two arrays into a single list of tuples
-    combined_variations = [(idx, pv) for idx, pv in enumerate(array1 + array2)]
+    raise ValueError("Model output is not a valid JSON array.")
 
-    return combined_variations
+    # if not model_output or model_output.strip() == "":
+    #     raise ValueError("Model output is empty. Check model inference.")
 
+    # # Clean up the model output
+    # model_output = model_output.strip()
+
+    # # Split the output by semicolons and filter out empty variations
+    # variations = [variation.strip() for variation in model_output.split(";") if variation.strip()]
+    # print(f'variations: {variations}')
+
+    # # Convert to the desired format
+    # return [((bp_idx, idx), variation) for idx, variation in enumerate(variations)]
+        
 def write_parquet(bp_idx, prompt_variations):
     '''
     Writes the prompt variations to the corresponding parquet file associated with the given base prompt index.
@@ -270,17 +284,30 @@ def write_parquet(bp_idx, prompt_variations):
 
     # # Code to add the base prompt to the list of prompt variations
 
-    # # first, create a BasePromptDB object to get the base prompt string
-    # bp_db = BasePromptDB()
-    # # then, get the base prompt string using the index
-    # bp_str = bp_db.fetch_base_prompt(bp_idx)
-    # formatted_bp = [((bp_idx, -1), bp_str)]
-    # # then, add the base prompt to the start of the list of prompt variations
-    # prompt_variations = formatted_bp + prompt_variations
+    # Fetch the base prompt string
+    try: 
+        bp_db = BasePromptDB()
+        bp_str = bp_db.fetch_prompt(bp_idx)
+        if not bp_str:
+            raise ValueError(f"Base prompt with index {bp_idx} not found in the database.")
 
+        # Format the base prompt as a tuple and preprend it to the variations
+        formatted_bp = [((bp_idx, -1), bp_str)]
+        all_variations = formatted_bp + prompt_variations
 
-    pv_parquet = PromptVariationParquet(bp_idx)
-    pv_parquet.insert_prompt_variations(prompt_variations)
+        # # Ensure all bpv_idx values are tuples
+        # all_variations = [
+        #     ((bp_idx, -1) if isinstance(bpv_idx, tuple) else (bp_idx, bpv_idx), bpv_str)
+        #     for bpv_idx, bpv_str in all_variations
+        # ]
+
+        # Write the variations to a parquet file
+        pv_parquet = PromptVariationParquet(bp_idx)
+        pv_parquet.insert_prompt_variations(all_variations)
+
+        print(f'Successfully wrote prompt variations to parquet file for base prompt index {bp_idx}.')
+    except Exception as e:
+        print(f"Error writing prompt variations to parquet file for base prompt index {bp_idx}: {e}")
 
 
 #collect_instruction(0)
@@ -311,7 +338,7 @@ def main(bp_idx):
     # model_output = "[\"prompt_variation1\", \"prompt_variation2\", \"prompt_variation3\"]"
 
     # Step 4: Parse the model output to extract prompt variations
-    prompt_variations = parse_model_output(model_output)
+    prompt_variations = parse_model_output(model_output, bp_idx)
 
     # Step 5: Write the prompt variations to a parquet file
     write_parquet(bp_idx, prompt_variations)

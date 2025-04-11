@@ -14,14 +14,14 @@ class BasePrompt:
     It will include methods to create base prompt, access base prompt, write base prompt, read base prompt. Every component of the project that needs to access base prompts will use this class exclusively.
     '''
 
-    def __init__(self, bpv_idx):
+    def __init__(self, bp_idx):
         '''
-        Initialize a base prompt with a base prompt variation index (given -1 for the second index of the tuple). Whether to create a new base prompt, or access an existing base prompt, this base prompt class will be used.
+        Initialize a base prompt with a base prompt index (a tuple). Whether to create a new base prompt, or access an existing base prompt, this base prompt class will be used.
 
         Args:
-            - bpv_idx (tuple of ints): The base prompt variation index.
+            - bpv_idx (tuple of ints): The base prompt index.
         '''
-        self.bpv_idx = bpv_idx
+        self.bp_idx = bp_idx
         self.prompt = None
 
     def get_prompt_str(self, db = None):
@@ -37,21 +37,22 @@ class BasePrompt:
         '''
         if db is None:
             db = BasePromptDB()
-            self.prompt = db.fetch_prompt(self.bpv_idx)
+            self.prompt = db.fetch_prompt(self.bp_idx)
             db.close_connection()
         else:
-            self.prompt = db.fetch_prompt(self.bpv_idx)
+            self.prompt = db.fetch_prompt(self.bp_idx)
 
         return self.prompt
 
-    def get_prompt_index(self):
-        '''
-        Returns the base prompt variation index.
+    # BECCA: Commenting out at Praveen's request
+    # def get_prompt_index(self):
+    #     '''
+    #     Returns the base prompt variation index.
 
-        Returns:
-            - tuple of ints: The base prompt variation index.
-        '''
-        return self.bpv_idx
+    #     Returns:
+    #         - tuple of ints: The base prompt variation index.
+    #     '''
+    #     return self.bpv_idx
 
     def save_base_prompt(self, db = None):
         '''
@@ -63,10 +64,10 @@ class BasePrompt:
         '''
         if db is None:
             db = BasePromptDB()
-            db.insert_base_prompts([(self.bpv_idx, self.prompt)])
+            db.insert_base_prompts([(self.bp_idx, self.prompt)])
             db.close_connection()
         else:
-            db.insert_base_prompts([(self.bpv_idx, self.prompt)])
+            db.insert_base_prompts([(self.bp_idx, self.prompt)])
 
 
 class PromptVariation:
@@ -98,7 +99,7 @@ class PromptVariation:
         else:
             return self.pv_parquet.fetch_prompt_variation(self.bpv_idx)
 
-    
+    # BECCA: Do we need this?
     def get_bpv_idx(self):
         '''
         Returns the variation index from the corresponding prompt variation parquet file.
@@ -108,6 +109,7 @@ class PromptVariation:
         '''
         return self.bpv_idx
     
+    # BECCA: Do we need this?
     def write_variation(self):
         '''
         Insert a single new variation string to the corresponding prompt variation parquet file.
@@ -137,21 +139,22 @@ class PromptVariation:
         else:
             return self.pv_parquet.fetch_prompt_variation(self.bpv_idx)
     
+    # BECCA: Do we need this? Not used anywhere else
+    # def get_base_prompt_and_variation(self):
+    #     '''
+    #     Fetches both the base prompt and the prompt variation string for this variation.
 
-    def get_base_prompt_and_variation(self):
-        '''
-        Fetches both the base prompt and the prompt variation string for this variation.
-
-        Returns:
-            - tuple: (base_prompt_string, prompt_variation_string)
-        '''
-        return self.pv_parquet.fetch_base_prompt_and_prompt_variation(self.bpv_idx)
+    #     Returns:
+    #         - tuple: (base_prompt_string, prompt_variation_string)
+    #     '''
+    #     return self.pv_parquet.fetch_base_prompt_and_prompt_variation(self.bpv_idx)
     
-    def read_variation(self):
-        '''
-        Reads the prompt variation from the stored Parquet database.
-        '''
-        self.variation_str = self.pv_parquet.fetch_prompt_variation(self.bpv_idx)
+    # BECCA: Do we need this? Not used anywhere else
+    # def read_variation(self):
+    #     '''
+    #     Reads the prompt variation from the stored Parquet database.
+    #     '''
+    #     self.variation_str = self.pv_parquet.fetch_prompt_variation(self.bpv_idx)
 
 
 class ValidationScore: # instantiated for each bpv_idx
@@ -162,7 +165,7 @@ class ValidationScore: # instantiated for each bpv_idx
     It also calculates aggregated scores across rubric sections.
     '''
 
-    def __init__(self, vs_parquet: ValidationScoreParquet, full_string = None): # ADD THAT string is optional
+    def __init__(self, vs_parquet: ValidationScoreParquet, full_string = None):
         '''
         Initialize a validation score with a base prompt index, for all prompt variations of that base prompt.
 
