@@ -275,6 +275,8 @@ class ValidationScoreParquet:
             df = pd.DataFrame(columns = ['bpv_idx'] + [f'section_{i+1}' for i in range(NUM_RUBRIC_SECTIONS)] + [f'section_{i+1}_avg' for i in range(NUM_RUBRIC_SECTIONS)] + ['total_score'])
             df.to_parquet(self.file_path, index=False)
             print(f"Created new ValidationScoreParquet file at {self.file_path}")
+            # PRAVEEN: adding this line such that we store the updated df
+            self.df = df
 
         else:
             print(f"Using existing ValidationScoreParquet file at {self.file_path}")
@@ -301,33 +303,68 @@ class ValidationScoreParquet:
     #     if scores_data:
     #         self.insert_validation_scores([scores_data])
 
-    def insert_validation_scores(self, scores_dict):
+    # PRAVEEN: COMMENTING OUT THE FUNCTION BELOW BASED ON UPDATED RATIONALE - INSERTING AS A LIST OF VS_OBJs
+    # def insert_validation_scores(self, scores_dict):
+    #     '''
+    #     Inserts a batch of validation scores into the respective parquet file. Assumes that the first model output of this batch is the base prompt model output.
+
+    #     Args:
+    #         - scores_dict (list of integers): A dict that contains the section scores, average section scores, and total score. This comes from ValidationScore.write_output().
+
+    #     Raises:
+    #         - ValueError: If the prompt variations are not specific to a single base prompt index.
+    #     '''
+
+    #     # Check if all validaiton scores are specific to a single base prompt index
+    #     base_prompt_indexes = list(set([x[0][0] for x in scores_dict]))
+    #     if len(base_prompt_indexes) > 1:
+    #         raise ValueError("All validation scores must be specific to a single base prompt index.")
+    #     if base_prompt_indexes[0] != self.bp_idx:
+    #         raise ValueError("All validation scores must be specific to the base prompt index provided during initialization of the ValidationScoreParquet Object.")
+
+    #     # CHANGE TO TAKE DICTIONARY (INSTEAD OF LIST) AS INPUT FOR CONVERSION INTO DATAFRAME
+    #     df = pd.DataFrame(scores_dict, columns = ['bpv_idx'] + [f'section_{i+1}' for i in range(NUM_RUBRIC_SECTIONS)] + [f'section_{i+1}_avg' for i in range(NUM_RUBRIC_SECTIONS)] + ['total_score'])
+    #     # BECCA: Pending if the below seciton works as intended
+    #     self.reset_parquet()
+    #     df.to_parquet(self.file_path, index=False)
+
+    #     # BECCA: Old last 2 lines below
+    #     # self.df = pd.concat([self.df, new_data], ignore_index=True)
+    #     # self.df.to_parquet(f'{self.parquet_root_path}/{self.bp_idx}_validation_score.parquet', index=False)
+
+    # PRAVEEN: CREATING A NEW FUNCTION FOR INSERTING VS SCORES BASED ON UPDATED RATIONALE
+
+    def insert_validation_scores(self, vs_objs_lst):
         '''
-        Inserts a batch of validation scores into the respective parquet file. Assumes that the first model output of this batch is the base prompt model output.
+        For self.bp_idx, this method inserts validation scores for each prompt variation. 
 
         Args:
-            - scores_dict (list of integers): A dict that contains the section scores, average section scores, and total score. This comes from ValidationScore.write_output().
-
-        Raises:
-            - ValueError: If the prompt variations are not specific to a single base prompt index.
+            vs_objs_lst: a list of vs_objs 
         '''
-
-        # Check if all validaiton scores are specific to a single base prompt index
-        base_prompt_indexes = list(set([x[0][0] for x in scores_dict]))
-        if len(base_prompt_indexes) > 1:
-            raise ValueError("All validation scores must be specific to a single base prompt index.")
-        if base_prompt_indexes[0] != self.bp_idx:
-            raise ValueError("All validation scores must be specific to the base prompt index provided during initialization of the ValidationScoreParquet Object.")
-
-        # CHANGE TO TAKE DICTIONARY (INSTEAD OF LIST) AS INPUT FOR CONVERSION INTO DATAFRAME
-        df = pd.DataFrame(scores_dict, columns = ['bpv_idx'] + [f'section_{i+1}' for i in range(NUM_RUBRIC_SECTIONS)] + [f'section_{i+1}_avg' for i in range(NUM_RUBRIC_SECTIONS)] + ['total_score'])
-        # BECCA: Pending if the below seciton works as intended
+        # if there is already data, reset it
         self.reset_parquet()
-        df.to_parquet(self.file_path, index=False)
 
-        # BECCA: Old last 2 lines below
-        # self.df = pd.concat([self.df, new_data], ignore_index=True)
-        # self.df.to_parquet(f'{self.parquet_root_path}/{self.bp_idx}_validation_score.parquet', index=False)
+        scores_list = []
+
+        for vs_obj in vs_objs_lst:
+            # retrieve the scores from the vs_obj
+            scores_dict = vs_obj.get_scores()
+            
+            # add bpv_idx to the scores_dict
+            scores_dict['bpv_idx'] = vs_obj.get_bpv_idx()
+
+            scores_list.append(scores_dict)
+
+        # convert the list of dictionaries to a DataFrame
+        new_data = pd.DataFrame(scores_list, columns = ['bpv_idx'] + [f'section_{i+1}' for i in range(NUM_RUBRIC_SECTIONS)] + [f'section_{i+1}_avg' for i in range(NUM_RUBRIC_SECTIONS)] + ['total_score'])
+
+        # update self.df with the new data
+        self.df = pd.concat([self.df, new_data], ignore_index=True)
+
+        # save the updated DataFrame to the Parquet file
+        self.df.to_parquet(self.file_path, index=False)
+
+
 
     def fetch_all_validation_scores(self):
         '''
@@ -387,7 +424,10 @@ class ValidationScoreParquet:
         if bpv_idx[0] != self.bp_idx:
             raise ValueError("All model outputs must be specific to the base prompt index provided during initialization of the ValidatorScoreParquet Object.")
         result = self.df[self.df["bpv_idx"] == bpv_idx]
-        return result if not result.empty else None
+        # Drop the bpv_idx column and convert the remaining DataFrame to a dictionary
+        result_dict = result.drop(columns=["bpv_idx"]).iloc[0].to_dict()
+        
+        return result_dict
     
     # BECCA: No longer needed? Pending removal
     # def fetch_prompt_variation_and_validation_scores(self, bpv_idx):

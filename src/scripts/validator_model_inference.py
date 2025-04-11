@@ -40,10 +40,14 @@ Dependencies:
 from src.utils.prompt import *
 from src.utils.data_handler import *
 from configs.root_paths import *
+from configs.data_size_configs import MODEL_ALIASES
 import yaml
 import json
 import os
 import torch
+
+# adding
+from copy import deepcopy
 
 from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
 from mistral_inference.transformer import Transformer
@@ -53,6 +57,33 @@ from mistral_common.tokens.tokenizers.mistral import MistralTokenizer
 from mistral_common.protocol.instruct.messages import UserMessage
 from mistral_common.protocol.instruct.request import ChatCompletionRequest
 
+
+# PRAVEEN: helper function to generate empty scores dict
+def generate_empty_scores_dict(num_sections = NUM_RUBRIC_SECTIONS, num_models = NUM_VALIDATOR_MODELS):
+    blank_dict = {}
+
+    # Add section scores as tuples of 0
+    for i in range(1, num_sections + 1):
+        blank_dict[f"section_{i}"] = [0] * num_models
+
+    # Add section averages as 0
+    for i in range(1, num_sections + 1):
+        blank_dict[f"section_{i}_avg"] = 0
+
+    # Add total score as 0
+    blank_dict["total_score"] = 0
+
+    return blank_dict
+
+# PRAVEEN: helper function to parse through model output
+def parse_model_output(model_output):
+    '''
+    Model output is a list of integers returned as a string. This function parses the string and returns a list of integers.
+    '''
+    # Split the string by commas and convert to integers
+    parsed_list = [int(x.strip()) for x in model_output.split(',') if x.strip().isdigit()]
+
+    return parsed_list
 
 def load_configs():
     '''
@@ -71,34 +102,55 @@ def load_models():
     if device != "cuda":
         raise RuntimeError("CUDA is not available. Please check your setup.")
 
-    falcon_tokenizer = AutoTokenizer.from_pretrained(FALCON_MAMBA_MODEL_ID)
-    falcon_model = AutoModelForCausalLM.from_pretrained(FALCON_MAMBA_MODEL_ID).to(device)
+    # Map model aliases to their respective models and tokenizers
+    # PRAVEEN: RE-IMPLEMENTING WITH NEW DICT AND VARIABLE NAMES
+    # model_dict = {}
+    # for alias, model_name in MODEL_ALIASES.items():
+    #     tokenizer = AutoTokenizer.from_pretrained(globals()[f'{model_name.upper()}_MODEL_ID'])
+    #     model = AutoModelForCausalLM.from_pretrained(globals()[f'{model_name.upper()}_MODEL_ID']).to(device)
+    #     model_dict[alias] = (model, tokenizer)
+
+
+    # PRAVEEN: NEW IMPLEMENTATION
+    models_dict = deepcopy(VAL_MODEL_DICT)
+
+    for key, model_info in models_dict.items():
+        model_id = model_info['huggingface_model_id']
+
+        # Load tokenizer and model
+        tokenizer = AutoTokenizer.from_pretrained(model_id)
+        model = AutoModelForCausalLM.from_pretrained(model_id).to(device)
+
+        # Update the dictionary with the loaded model and tokenizer
+        models_dict[key] = {
+            'model': model,
+            'tokenizer': tokenizer
+        }
     
-    opt_tokenizer = AutoTokenizer.from_pretrained(OPT_MODEL_ID)
-    opt_model = AutoModelForCausalLM.from_pretrained(OPT_MODEL_ID).to(device)
+    return models_dict
 
-    mistral_tokenizer = AutoTokenizer.from_pretrained(MISTRAL_INSTRUCT_MODEL_ID)
-    mistral_model = AutoModelForCausalLM.from_pretrained(MISTRAL_INSTRUCT_MODEL_ID).to(device)      
+    # falcon_tokenizer = AutoTokenizer.from_pretrained(FALCON_MAMBA_MODEL_ID)
+    # falcon_model = AutoModelForCausalLM.from_pretrained(FALCON_MAMBA_MODEL_ID).to(device)
+    
+    # opt_tokenizer = AutoTokenizer.from_pretrained(OPT_MODEL_ID)
+    # opt_model = AutoModelForCausalLM.from_pretrained(OPT_MODEL_ID).to(device)
+
+    # mistral_tokenizer = AutoTokenizer.from_pretrained(MISTRAL_INSTRUCT_MODEL_ID)
+    # mistral_model = AutoModelForCausalLM.from_pretrained(MISTRAL_INSTRUCT_MODEL_ID).to(device)      
       
-    return {
-        'falcon-mamba': (falcon_model, falcon_tokenizer),
-        'opt': (opt_model, opt_tokenizer),
-        'mistral': (mistral_model, mistral_tokenizer)
-    }
+    # return {
+    #     'falcon-mamba': (falcon_model, falcon_tokenizer),
+    #     'opt': (opt_model, opt_tokenizer),
+    #     'mistral': (mistral_model, mistral_tokenizer)
+    # }
 
 
-def construct_model_input(bpv_idx):
+def construct_model_input(bpv_idx, base_prompt_data_handler, mo_parquet):
     '''
     Constructs the model input by replacing placeholders in the val_model_input.json template.
     '''
-
-    # Collect base prompt string from bpv_idx
-    bp_idx = (bpv_idx[0], 1)
-    base_prompt_data_handler = BasePrompt(bp_idx)
+    # Fetch prompt-variation specific strings
     base_prompt_str = base_prompt_data_handler.get_prompt_str()
-
-    # Fetch the main model output string for the given bpv_idx
-    mo_parquet = ModelOutputParquet(bp_idx[0])
     main_model_output_str = mo_parquet.fetch_model_output(bpv_idx)
 
     if not main_model_output_str:
@@ -126,64 +178,200 @@ def construct_model_input(bpv_idx):
         rubric_text = rubric_text
     )
        
-    full_prompt = [
-        {
-            "role": "system",
-            "content": system_role
-        },
-        {
-            "role": "user",
-            "content": content
-        }
-    ]
+    # BECCA: Removing because not all models may consider system_role and content separately
+    # e.g. Deepseek combines both into content
+    # full_prompt = [
+    #     {
+    #         "role": "system",
+    #         "content": system_role
+    #     },
+    #     {
+    #         "role": "user",
+    #         "content": content
+    #     } 
+    # ]
 
-    return full_prompt
+    # return full_prompt
 
-def validator_model_inference(bpv_idx, models):
+    return system_role, content
+
+def construct_prompt(prompt_structure, system_role, content):
+    '''
+    Based on the prompt structure, constructs the full prompt for the model provided the information
+    '''
+    if prompt_structure == [
+            {
+                "role": "user",
+                "content": ""
+            }
+        ]:
+        return [
+            {
+                "role": "user",
+                "content": f'{system_role} {content}'
+            }
+        ]
+    elif prompt_structure == [
+            {
+                "role": "system",
+                "content": ""
+            },
+            {
+                "role": "user",
+                "content": ""
+            }
+        ]:
+        return [
+            {
+                "role": "system",
+                "content": system_role
+            },
+            {
+                "role": "user",
+                "content": content
+            }
+        ]
+
+
+# PRAVEEN: I COMMENTED OUT TO CHANGE FUNCTION IMPLEMENTATION AND NAME
+# def validator_model_inference(bpv_idx, models, vs_parquet):
+
+#     # Construct full prompt based on model-specific needs
+#     '''
+#     Runs inference on all three validator models to generate the validation scores for a single bpv_idx.
+#     '''
+#     system_role, content = construct_model_input(bpv_idx)
+
+#     for model in model_dict.items():
+#         # return 
+
+#     model_dict = load_models()
+#     configs = load_configs()
+
+#     # Retrieve the hyperparameters
+#     temperature = configs.get("temperature")
+#     top_p = configs.get("top_p")
+#     top_k = configs.get("top_k")
+
+#     generation_args = {
+#         "temperature": temperature,
+#         "top_p": top_p,
+#         "top_k": top_k,
+#     }
+
+#     # Initialize validation scores
+#     validation_scores = ValidationScore(bpv_idx, vs_parquet)
+
+#     # Run inference sequentially for each model
+#     for model_name, (model, tokenizer) in model_dict.items():
+#         print(f'Running inference for model: {model_name}')
+
+        
+#         # Create a pipeline for the current model
+#         pipe = pipeline(
+#             'text-generation', 
+#             model=model, 
+#             tokenizer=tokenizer,
+#             device=0  # Use GPU
+#         )
+#         output = pipe(instruction, **generation_args)
+
+#         # Parse and store the model output
+#         generated_text = output[0]['generated_text']
+#         parsed_list = validation_scores.parse_model_output(generated_text)
+#         validation_scores.append_model_scores(parsed_list)
+
+#     # Store scores by section and calculate aggregated scores
+#     validation_scores.store_scores_by_section(validation_scores.scores)
+#     validation_scores.store_aggregated_scores()
+
+#     return validation_scores.scores
+
+
+def validator_model_inference_per_prompt_variation(bpv_idx, base_prompt_data_handler, mo_parquet):
     '''
     Runs inference on all three validator models to generate the validation scores for a single bpv_idx.
     '''
-    instruction = construct_model_input(bpv_idx)
-    model, tokenizer = load_models()
+    
+    # Step 1: Retrieve global prompt information
+    system_role, content = construct_model_input(bpv_idx)
+
+    # Step 2a: Load models_dict and configs
+    models_dict = load_models()
     configs = load_configs()
 
-    # Retrieve the hyperparameters
-    temperature = configs.get("temperature")
-    top_p = configs.get("top_p")
-    top_k = configs.get("top_k")
+    # Step 2b: Initialize validation scores
+    scores = generate_empty_scores_dict()
 
-    generation_args = {
-        "temperature": temperature,
-        "top_p": top_p,
-        "top_k": top_k,
-    }
+    # Step 3: For each model, run inference
+    for idx, model_info in models_dict.items():
+        # Step 3a: load model specific hyperparameters from configs
+        model_configs = configs[model_info['model_name']]
 
-    # Initialize validation scores
-    validation_scores = ValidationScore(bpv_idx, ValidationScoreParquet(bpv_idx[0]))
+        generation_args = {
+            "temperature": model_configs.get("temperature"),
+            "top_p": model_configs.get("top_p"),
+            "top_k": model_configs.get("top_k")
+        }
 
-    # Run inference sequentially for each model
-    for model_name, (model, tokenizer) in models.items():
-        print(f'Running inference for model: {model_name}')
-        
-        # Create a pipeline for the current model
+        # Step 3b: Construct the prompt based on the model's requirements
+        prompt_structure = model_info['prompt_structure']
+        full_prompt = construct_prompt(prompt_structure, system_role, content)
+
+        # Step 3c: Create a pipeline for the current model
+        print(f'Running inference for model: {model_info["model_name"]}')
         pipe = pipeline(
             'text-generation', 
-            model=model, 
-            tokenizer=tokenizer,
+            model=models_dict[idx]['model'], 
+            tokenizer=models_dict[idx]['tokenizer'],
             device=0  # Use GPU
         )
-        output = pipe(instruction, **generation_args)
 
-        # Parse and store the model output
+        # Step 3d: Run inference
+        output = pipe(full_prompt, **generation_args)
         generated_text = output[0]['generated_text']
-        parsed_list = validation_scores.parse_model_output(generated_text)
-        validation_scores.append_model_scores(parsed_list)
 
-    # Store scores by section and calculate aggregated scores
-    validation_scores.store_scores_by_section(validation_scores.scores)
-    validation_scores.store_aggregated_scores()
+        # Step 3e: Parse and store the model output
+        parsed_list = parse_model_output(generated_text)
 
-    return validation_scores.scores
+        if len(parsed_list) != NUM_RUBRIC_SECTIONS:
+            raise ValueError(f"Parsed list length {len(parsed_list)} does not match expected number of sections {NUM_RUBRIC_SECTIONS}")
+        
+        for i, score in enumerate(parsed_list):
+            scores[f"section_{i + 1}"][idx] = score
+    
+    # Step 4: calculate aggregated scores
+    for i in range(1, NUM_RUBRIC_SECTIONS + 1):
+        section_scores = scores[f"section_{i}"]
+        avg_score = sum(section_scores) / len(section_scores)
+        scores[f"section_{i}_avg"] = avg_score
+    
+    # Step 5: Calculate total average score
+    total_score = 0
+    for i in range(1, NUM_RUBRIC_SECTIONS + 1):
+        total_score += scores[f"section_{i}_avg"] * SECTION_WEIGHTS[f'section_{i}']
+    scores["total_score"] = total_score
+
+    return scores
+
+
+def validator_model_inference_per_base_prompt(bp_idx):
+    '''
+    Performs main model inference on all prompt variations for the given bp_idx. Stores all the outputs in its respective Parquet file.
+
+    Input:
+    - bp_idx (int): The base prompt index.
+    '''
+    all_pv_outputs = []
+    mo_parquet = ModelOutputParquet(bp_idx)
+    for pv_obj in collect_prompt_variations(bp_idx):
+        model_output = validator_model_inference_per_prompt_variation(pv_obj)
+        full_bpv_idx = (mo_parquet.get_bp_idx(), pv_obj.get_bpv_idx())
+        all_pv_outputs.append((full_bpv_idx, model_output))
+    mo_parquet.insert_model_outputs(all_pv_outputs)
+
+
+
 
 
 # BECCA: Do we still need this function or is it now unncessary because we are storing model outputs for base prompts and prompt variations in the same parquet file?
@@ -204,18 +392,27 @@ def validator_model_inference(bpv_idx, models):
 
 
 def main(start_idx, end_idx):
-    """
+    '''
     Main function to process all prompt variations for a given range of indices.
 
     Args:
     - start_idx (tuple): The starting base prompt variation index (e.g., (1, 0)).
     - end_idx (tuple): The ending base prompt variation index (e.g., (1, 4)).
-    """
+    '''
     # Load model configurations
     configs = load_configs()
 
     # Load all models
     models = load_models()
+
+    # Collect base prompt string from bpv_idx
+    bp_idx = (bpv_idx[0])
+    base_prompt_data_handler = BasePrompt(bp_idx)
+
+    # Fetch the main model output string for the given bpv_idx
+    mo_parquet = ModelOutputParquet(bp_idx[0])
+
+    construct_model_input(bpv_idx, base_prompt_data_handler, mo_parquet)
 
     # Collect all scores for all prompt variations
     all_scores = []
@@ -224,6 +421,9 @@ def main(start_idx, end_idx):
         print(f"Processing bpv_idx: {bpv_idx_tuple}")
         scores = validator_model_inference(bpv_idx_tuple, models)
         all_scores.append(scores)
+        # Create function for runnign inference per prompt variaiton
+        # inside function for running inference per base prompt, loop through first function
+        # Refer to main_model_inference.py for example
 
     # Write all scores to Parquet
     vs_parquet = ValidationScoreParquet(start_idx[0])

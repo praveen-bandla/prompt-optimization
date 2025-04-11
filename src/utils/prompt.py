@@ -162,7 +162,7 @@ class ValidationScore: # instantiated for each bpv_idx
     It also calculates aggregated scores across rubric sections.
     '''
 
-    def __init__(self, bpv_idx, vs_parquet: ValidationScoreParquet, score_string = None):
+    def __init__(self, bpv_idx, vs_parquet: ValidationScoreParquet, scores = None):
         '''
         Initialize a validation score with a base prompt index, for all prompt variations of that base prompt.
 
@@ -170,9 +170,8 @@ class ValidationScore: # instantiated for each bpv_idx
             - bpv_idx (tuple of ints): The base prompt variation index.
         '''
         self.bpv_idx = bpv_idx # Use this to derive the bp_idx for file name
-        self.score_string = score_string
         self.vs_parquet = vs_parquet
-        self.scores = None # Initialize scores to None
+        self.scores = scores # Initialize scores to None
         # self.scores = {f'section_{i+1}': [] for i in range(NUM_RUBRIC_SECTIONS)} # Initialize scores for each rubric section
 
     def get_scores(self):
@@ -180,44 +179,44 @@ class ValidationScore: # instantiated for each bpv_idx
         if self.scores is not None:
             return self.scores
         else:
-            self.scores = {f'section_{i+1}': [] for i in range(NUM_RUBRIC_SECTIONS)} # Initialize dict for storing scores
+            self.scores = self.vs_parquet.fetch_bpv_validation_scores(self.bpv_idx)
             return self.scores
 
-    def parse_model_output(self, model_output : str):
-        ''' Converts model output string into a list of integers.'''
-        parsed_list = model_output.strip('()').split(', ')
-        parsed_list = [int(x) for x in parsed_list]
-        return parsed_list
+    # def parse_model_output(self, model_output : str):
+    #     ''' Converts model output string into a list of integers.'''
+    #     parsed_list = model_output.strip('()').split(', ')
+    #     parsed_list = [int(x) for x in parsed_list]
+    #     return parsed_list
     
-    def append_model_scores(self, parsed_list):
-        '''Returns a list of appended scores that has as many elements as NUM_VALIDATOR_MODELS.'''
-        all_val_model_scores = []
-        all_val_model_scores.append(parsed_list)
-        return all_val_model_scores
+    # def append_model_scores(self, parsed_list):
+    #     '''Returns a list of appended scores that has as many elements as NUM_VALIDATOR_MODELS.'''
+    #     all_val_model_scores = []
+    #     all_val_model_scores.append(parsed_list)
+    #     return all_val_model_scores
     
-    def store_scores_by_section(self, all_val_model_scores):
-        '''Sorts the scores by rubric section and stores as a list into a dictionary with keys as section names and values as lists of scores.'''
+    # def store_scores_by_section(self, all_val_model_scores):
+    #     '''Sorts the scores by rubric section and stores as a list into a dictionary with keys as section names and values as lists of scores.'''
         
-        # Check that length of all_val_model_scores matches NUM_VALIDATOR_MODELS
-        if len(all_val_model_scores) != NUM_VALIDATOR_MODELS:
-            raise ValueError(f'The number of validator models must be {NUM_VALIDATOR_MODELS}.')
+    #     # Check that length of all_val_model_scores matches NUM_VALIDATOR_MODELS
+    #     if len(all_val_model_scores) != NUM_VALIDATOR_MODELS:
+    #         raise ValueError(f'The number of validator models must be {NUM_VALIDATOR_MODELS}.')
 
-        # Check that length of each element in all_val_model_scores matches NUM_RUBRIC_SECTIONS
-        for scores in all_val_model_scores:
-            if len(scores) != NUM_RUBRIC_SECTIONS:
-                raise ValueError(f'The number of sections must be {NUM_RUBRIC_SECTIONS}.')
+    #     # Check that length of each element in all_val_model_scores matches NUM_RUBRIC_SECTIONS
+    #     for scores in all_val_model_scores:
+    #         if len(scores) != NUM_RUBRIC_SECTIONS:
+    #             raise ValueError(f'The number of sections must be {NUM_RUBRIC_SECTIONS}.')
 
-        # Initialize a dictionary to hold scores for each section
-        scores_dict = {f'section_{i+1}': [] for i in range(NUM_RUBRIC_SECTIONS)}
+    #     # Initialize a dictionary to hold scores for each section
+    #     scores_dict = {f'section_{i+1}': [] for i in range(NUM_RUBRIC_SECTIONS)}
 
-        for section_i in range(NUM_RUBRIC_SECTIONS):
-            section_scores = []
-            for val_model_scores in all_val_model_scores:
-                section_scores.append(val_model_scores[section_i])
-            scores_dict[f'section_{section_i+1}'] = section_scores
+    #     for section_i in range(NUM_RUBRIC_SECTIONS):
+    #         section_scores = []
+    #         for val_model_scores in all_val_model_scores:
+    #             section_scores.append(val_model_scores[section_i])
+    #         scores_dict[f'section_{section_i+1}'] = section_scores
         
-        self.scores = scores_dict
-        return self.scores
+    #     self.scores = scores_dict
+    #     return self.scores
 
     
     def get_bpv_idx(self):
@@ -256,58 +255,58 @@ class ValidationScore: # instantiated for each bpv_idx
     #     avg_scores = tuple(np.mean(scores_matrix, axis=0)) # Average per validator
     #     return avg_scores
 
-    def calculate_average_section_scores(self):
-        """Calculates the average score for each rubric section across all validator models."""
-        if not self.scores:
-            return None
-        average_scores = {}
-        for section in range(1, NUM_RUBRIC_SECTIONS + 1):
-            section_key = f'section_{section}'
-            if section_key in self.scores:
-                average_scores[section_key] = np.mean(self.scores[section_key])
-            else:
-                raise ValueError(f"Section {section} not found in validation score.")
-        return average_scores
+    # def calculate_average_section_scores(self):
+    #     """Calculates the average score for each rubric section across all validator models."""
+    #     if not self.scores:
+    #         return None
+    #     average_scores = {}
+    #     for section in range(1, NUM_RUBRIC_SECTIONS + 1):
+    #         section_key = f'section_{section}'
+    #         if section_key in self.scores:
+    #             average_scores[section_key] = np.mean(self.scores[section_key])
+    #         else:
+    #             raise ValueError(f"Section {section} not found in validation score.")
+    #     return average_scores
 
-    def calculate_total_score(self):
-        """Calculates the total score across all rubric sections, considering weights from data_size_configs.RUBRIC_WEIGHTS."""
-        if len(SECTION_WEIGHTS) != NUM_RUBRIC_SECTIONS:
-            raise ValueError('The number of rubric sections does not match the number of weights.')
-        if not np.isclose(sum(SECTION_WEIGHTS.values()), 1):
-            raise ValueError('The rubric weights in SECTION_WEIGHTS must sum to 1.')
+    # def calculate_total_score(self):
+    #     """Calculates the total score across all rubric sections, considering weights from data_size_configs.RUBRIC_WEIGHTS."""
+    #     if len(SECTION_WEIGHTS) != NUM_RUBRIC_SECTIONS:
+    #         raise ValueError('The number of rubric sections does not match the number of weights.')
+    #     if not np.isclose(sum(SECTION_WEIGHTS.values()), 1):
+    #         raise ValueError('The rubric weights in SECTION_WEIGHTS must sum to 1.')
         
-        average_scores = self.calculate_average_section_scores()
-        if average_scores is None:
-            return None
-        total_score = 0
-        for section, weight in SECTION_WEIGHTS.items():
-            if section in average_scores:
-                total_score += average_scores[section] * weight
-            else:
-                raise ValueError(f'Section {section} not found in average scores.')
-        return total_score
+    #     average_scores = self.calculate_average_section_scores()
+    #     if average_scores is None:
+    #         return None
+    #     total_score = 0
+    #     for section, weight in SECTION_WEIGHTS.items():
+    #         if section in average_scores:
+    #             total_score += average_scores[section] * weight
+    #         else:
+    #             raise ValueError(f'Section {section} not found in average scores.')
+    #     return total_score
     
 
-    def store_aggregated_scores(self):
-        """Calculates and stores the aggregated validation scores"""
-        average_scores = self.calculate_average_section_scores()
-        total_score = self.calculate_total_score()
+    # def store_aggregated_scores(self):
+    #     """Calculates and stores the aggregated validation scores"""
+    #     average_scores = self.calculate_average_section_scores()
+    #     total_score = self.calculate_total_score()
 
-        if average_scores is None or total_score is None:
-            return None
+    #     if average_scores is None or total_score is None:
+    #         return None
         
-        # Store average scores in self.scores 
-        for section, avg_score in average_scores.items():
-            self.scores[f'{section}_avg'] = avg_score
+    #     # Store average scores in self.scores 
+    #     for section, avg_score in average_scores.items():
+    #         self.scores[f'{section}_avg'] = avg_score
 
-        # Store total score in self.scores
-        self.scores['total_score'] = total_score
+    #     # Store total score in self.scores
+    #     self.scores['total_score'] = total_score
 
-    def write_output(self):
-        '''Writes the validation scores to the stored Parquet database.'''
-        if self.scores is None:
-            raise ValueError("Cannot save empty scores.")
-        self.vs_parquet.insert_validation_scores([(self.bpv_idx, self.scores)])
+    # def write_output(self):
+    #     '''Writes the validation scores to the stored Parquet database.'''
+    #     if self.scores is None:
+    #         raise ValueError("Cannot save empty scores.")
+    #     self.vs_parquet.insert_validation_scores([(self.bpv_idx, self.scores)])
 
 class MainModelOutput:
     '''

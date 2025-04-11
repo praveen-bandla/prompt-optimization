@@ -56,7 +56,7 @@ everything barring model inference should work as needed. had to make some chang
 
 # Step 1: Collect the instruction for generating prompt variations
 # Define manual formatting function
-def collect_instruction(bp_idx):
+def construct_model_input(bp_idx):
     '''
     Creates instructions for generating prompt variations based on a base prompt index. Uses the prompt_variation_model_input.json file as the model input, along with NUM_PROMPT_VARIATIONS from the data_size_configs file.
 
@@ -150,13 +150,13 @@ def load_model():
     return model, tokenizer
 
 # Step 2: Run inference to collect all the prompt variations
-def prompt_variation_inference():
+def prompt_variation_inference(instruction, configs, model, tokenizer):
     '''
     Runs inference on the prompt_variation_model to generate the desired output. It solely retrievers the response as a string and does not process it further.
     '''
-    instruction = collect_instruction(bp_idx)
-    model, tokenizer = load_model()
-    configs = load_configs()
+    # instruction = construct_model_input(bp_idx)
+    # model, tokenizer = load_model()
+    # configs = load_configs()
 
     max_new_tokens = configs.get("max_new_tokens")
     temperature = configs.get("temperature")
@@ -283,7 +283,7 @@ def write_parquet(bp_idx, prompt_variations):
     pv_parquet.insert_prompt_variations(prompt_variations)
 
 
-#collect_instruction(0)
+#construct_model_input(0)
 
 # tester = parse_model_output()
 # print(tester)
@@ -294,17 +294,18 @@ def main(bp_idx):
     '''
 
     # Step 1: Collect instruction
-    instruction = collect_instruction(bp_idx)
+    # Redundant
+    instruction = construct_model_input(bp_idx)
 
     # BECCA: removing bc not needed anymore
     # # Step 2: Load model
-    # pipe = load_model()
+    model, tokenizer = load_model()
 
     # # Step 2: Load model configuration
     configs = load_configs()
 
     # # Step 3: Run inference to collect prompt variations
-    model_output = prompt_variation_inference()
+    model_output = prompt_variation_inference(instruction, configs, model, tokenizer)
 
     # tester code
 

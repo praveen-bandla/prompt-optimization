@@ -1,4 +1,19 @@
-model:
-  temperature: 0.07
-  top_k: 50
+# model:
+#   temperature: 0.07
+#   top_k: 50
+#   top_p: 0.9
+
+# new implementation with model specific hyperparams
+
+falcon-mamba:
+  temperature: 0.7
   top_p: 0.9
+  top_k: 50
+opt:
+  temperature: 0.7
+  top_p: 0.9
+  top_k: 50
+mistral:
+  temperature: 0.7
+  top_p: 0.9
+  top_k: 50
