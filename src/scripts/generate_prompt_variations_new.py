@@ -233,24 +233,38 @@ def parse_model_output(model_output, bp_idx):
     Outputs:
         - list: A list of tuples, each containing the base prompt variation index and the prompt variation string. Stored as a list of (bpv_idx, bpv_str)
     '''
-    print('Model Output:', model_output)
+
+    # if not model_output or model_output.strip() == "":
+    #     raise ValueError("Model output is empty. Check model inference.")
+
+    # model_output = model_output.strip()
+    # model_output = re.sub(r'^\[.*?"', '[', model_output)  # Remove from '[' to the first '"'
+    # model_output = re.sub(r'"[^"]*\]$', ']', model_output)  # Remove from the last '"' to ']'
+    # print(f'Model output: {model_output}')
+    # # Check if the output is a JSON array
+    # try:
+    #     variations = json.loads(model_output)
+    #     # if isinstance(variations, list):
+    #     #print(variations)
+    #     lst = [((bp_idx, idx), str(variation)) for idx, variation in enumerate(variations)]
+    #     return lst
+    # except json.JSONDecodeError:
+    #     pass
+
+    # raise ValueError("Model output is not a valid JSON array.")
 
     if not model_output or model_output.strip() == "":
         raise ValueError("Model output is empty. Check model inference.")
-    
-    # Check if the output is a JSON array
-    try:
 
-        variations = json.loads(model_output)
-        # if isinstance(variations, list):
-        #print(variations)
-        lst = [((bp_idx, idx), str(variation)) for idx, variation in enumerate(variations)]
-        print(lst)
-        return lst
-    except json.JSONDecodeError:
-        pass
+    # Clean up the model output
+    model_output = model_output.strip()
 
-    raise ValueError("Model output is not a valid JSON array.")
+    # Split the output by semicolons and filter out empty variations
+    variations = [variation.strip() for variation in model_output.split(";") if variation.strip()]
+    print(f'variations: {variations}')
+
+    # Convert to the desired format
+    return [((bp_idx, idx), variation) for idx, variation in enumerate(variations)]
         
 def write_parquet(bp_idx, prompt_variations):
     '''
@@ -277,11 +291,11 @@ def write_parquet(bp_idx, prompt_variations):
         formatted_bp = [((bp_idx, -1), bp_str)]
         all_variations = formatted_bp + prompt_variations
 
-        # Ensure all bpv_idx values are tuples
-        all_variations = [
-            ((bp_idx, -1) if isinstance(bpv_idx, tuple) else (bp_idx, bpv_idx), bpv_str)
-            for bpv_idx, bpv_str in all_variations
-        ]
+        # # Ensure all bpv_idx values are tuples
+        # all_variations = [
+        #     ((bp_idx, -1) if isinstance(bpv_idx, tuple) else (bp_idx, bpv_idx), bpv_str)
+        #     for bpv_idx, bpv_str in all_variations
+        # ]
 
         # Write the variations to a parquet file
         pv_parquet = PromptVariationParquet(bp_idx)
