@@ -1,0 +1,5 @@
+2025-04-11 00:11:35.379 [info] Extension host with pid 28197 started
+2025-04-11 00:11:35.379 [info] Lock '/teamspace/studios/this_studio/.local/share/code-server/User/workspaceStorage/124522f6/vscode.lock': Lock acquired.
+2025-04-11 00:11:35.479 [error] Error: connect ENOENT /teamspace/studios/this_studio/.local/share/code-server/code-server-ipc.sock
+	at PipeConnectWrap.afterConnect [as oncomplete] (node:net:1611:16)
+2025-04-11 00:11:35.495 [info] Eager extensions activated

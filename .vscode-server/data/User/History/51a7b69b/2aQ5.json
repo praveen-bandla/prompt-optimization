@@ -1,0 +1,4 @@
+{
+    "system_role": "",
+    "content_template": "You are looking to create prompt variations that will be fed into another large language model (called main model). The main model is tasked with generating learning guides for third graders. Your job is to generate variations for the following base prompt: {bp_str}. Generate {num_prompt_variations} variations of this base prompt. Formatting requirements: Include the word 'third-grade' or 'third-grader' in the prompts. Make sure each prompt is concise. IMPORTANT: WE WANT A VERY ROBUST SPREAD OF VARIATIONS, MAKE EVERY SINGLE PROMPT DIFFERENT. IMPORTANT: RETURN ALL PROMPT VARIATIONS STRICTLY IN JSON ARRAY FORMAT, like this: [\"prompt_variation1\", \"prompt_variation2\", \"prompt_variation3\"]."
+}

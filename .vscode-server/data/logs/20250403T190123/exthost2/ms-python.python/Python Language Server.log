@@ -1,0 +1,31 @@
+2025-04-03 19:04:44.950 [info] [Info  - 7:04:44 PM] (14224) Server root directory: file:///teamspace/studios/this_studio/.vscode-server/extensions/ms-python.vscode-pylance-2025.4.1/dist
+2025-04-03 19:04:44.951 [info] [Info  - 7:04:44 PM] (14224) Pylance language server 2025.4.1 (pyright version 1.1.398, commit 4f24eccc) starting
+2025-04-03 19:04:44.951 [info] [Info  - 7:04:44 PM] (14224) Starting service instance "this_studio" for workspace "/teamspace/studios/this_studio"
+2025-04-03 19:04:44.997 [info] [Info  - 7:04:44 PM] (14224) Setting environmentName for service "this_studio": "3.10.10 (cloudspace conda)"
+2025-04-03 19:04:44.997 [info] [Info  - 7:04:44 PM] (14224) Setting pythonPath for service "this_studio": "/home/zeus/miniconda3/envs/cloudspace/bin/python"
+2025-04-03 19:04:44.998 [info] [Info  - 7:04:44 PM] (14224) No include entries specified; assuming /teamspace/studios/this_studio
+2025-04-03 19:04:44.998 [info] [Info  - 7:04:44 PM] (14224) Auto-excluding **/node_modules
+2025-04-03 19:04:44.999 [info] [Info  - 7:04:44 PM] (14224) Auto-excluding **/__pycache__
+2025-04-03 19:04:44.999 [info] [Info  - 7:04:44 PM] (14224) Auto-excluding **/.*
+2025-04-03 19:04:45.023 [info] [Info  - 7:04:45 PM] (14224) Assuming Python version 3.10.10.final.0
+2025-04-03 19:04:45.132 [info] [Info  - 7:04:45 PM] (14224) Found 27 source files
+2025-04-03 19:04:45.169 [info] [Info  - 7:04:45 PM] (14224) Setting environmentName for service "this_studio": "3.10.10 (cloudspace conda)"
+2025-04-03 19:04:45.169 [info] [Info  - 7:04:45 PM] (14224) Setting pythonPath for service "this_studio": "/home/zeus/miniconda3/envs/cloudspace/bin/python"
+2025-04-03 19:04:45.169 [info] [Info  - 7:04:45 PM] (14224) No include entries specified; assuming /teamspace/studios/this_studio
+2025-04-03 19:04:45.169 [info] [Info  - 7:04:45 PM] (14224) Auto-excluding **/node_modules
+2025-04-03 19:04:45.169 [info] [Info  - 7:04:45 PM] (14224) Auto-excluding **/__pycache__
+2025-04-03 19:04:45.169 [info] [Info  - 7:04:45 PM] (14224) Auto-excluding **/.*
+2025-04-03 19:04:45.184 [info] [Info  - 7:04:45 PM] (14224) Assuming Python version 3.10.10.final.0
+2025-04-03 19:04:45.271 [info] [Info  - 7:04:45 PM] (14224) Found 27 source files
+2025-04-03 19:04:45.696 [info] [Info  - 7:04:45 PM] (14224) BG: Priority queue background worker(2) root directory: file:///teamspace/studios/this_studio/.vscode-server/extensions/ms-python.vscode-pylance-2025.4.1/dist
+2025-04-03 19:04:45.696 [info] [Info  - 7:04:45 PM] (14224) BG: Priority queue background worker(2) started
+2025-04-03 19:04:45.875 [info] [Info  - 7:04:45 PM] (14224) BG: Indexer background runner(3) root directory: file:///teamspace/studios/this_studio/.vscode-server/extensions/ms-python.vscode-pylance-2025.4.1/dist (index)
+2025-04-03 19:04:45.875 [info] [Info  - 7:04:45 PM] (14224) BG: Indexing(3) started
+2025-04-03 19:04:48.107 [info] [Info  - 7:04:48 PM] (14224) BG: scanned(3) 386 files over 1 exec env
+2025-04-03 19:04:49.017 [info] [Info  - 7:04:49 PM] (14224) BG: [BG(1)] Long operation: SemanticTokens range 71:0 - 164:0 at file:///teamspace/studios/this_studio/src/scripts/generate_base_prompts_new.py (3122ms)
+2025-04-03 19:04:52.303 [info] [Info  - 7:04:52 PM] (14224) BG: [IDX(3)] Long operation: index execution environment file:///teamspace/studios/this_studio (5229ms)
+2025-04-03 19:04:52.351 [info] [Info  - 7:04:52 PM] (14224) BG: [IDX(3)] Long operation: index packages file:///teamspace/studios/this_studio (5301ms)
+2025-04-03 19:04:52.351 [info] [Info  - 7:04:52 PM] (14224) BG: indexed(3) 386 files over 1 exec env
+2025-04-03 19:04:52.475 [info] [Info  - 7:04:52 PM] (14224) BG: Indexing finished(3).
+2025-04-03 19:04:54.898 [info] (Client) The existing extension didn't exit within 10 seconds. New instance will start, but you might encounter issues.
+2025-04-03 19:04:54.898 [info] (Client) Pylance async client (2025.4.1) started with python extension (2025.2.0)

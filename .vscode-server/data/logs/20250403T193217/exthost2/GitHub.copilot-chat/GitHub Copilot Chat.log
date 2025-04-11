@@ -1,0 +1,102 @@
+2025-04-03 19:32:48.640 [info] Can't use the Electron fetcher in this environment.
+2025-04-03 19:32:48.641 [info] Using the Node fetch fetcher.
+2025-04-03 19:32:48.641 [info] Initializing Git extension service.
+2025-04-03 19:32:48.641 [info] Successfully activated the vscode.git extension.
+2025-04-03 19:32:48.641 [info] Enablement state of the vscode.git extension: true.
+2025-04-03 19:32:48.641 [info] Successfully registered Git commit message provider.
+2025-04-03 19:32:50.011 [info] Logged in as bellaachang
+2025-04-03 19:32:50.389 [info] Got Copilot token for bellaachang
+2025-04-03 19:32:50.925 [info] Fetched model metadata in 527ms 85e26dee-3ec8-44ec-b6ac-4fa245950f11
+2025-04-03 19:32:50.928 [info] activationBlocker from 'languageModelAccess' took for 2198ms
+2025-04-03 19:32:51.787 [info] copilot token chat_enabled: true, sku: free_limited_copilot
+2025-04-03 19:32:51.788 [info] GitHub.vscode-pull-request-github extension is not yet activated.
+2025-04-03 19:32:51.807 [info] Registering default platform agent...
+2025-04-03 19:33:04.065 [info] message 0 returned. finish reason: [stop]
+2025-04-03 19:33:04.066 [info] request done: requestId: [bca94df9-1e7b-4414-874a-c624ce82f40a] model deployment ID: []
+2025-04-03 19:33:24.514 [info] message 0 returned. finish reason: [stop]
+2025-04-03 19:33:24.515 [info] request done: requestId: [2b7f0d2a-9930-4746-a911-f84f048142aa] model deployment ID: []
+2025-04-03 19:33:25.395 [info] message 0 returned. finish reason: [stop]
+2025-04-03 19:33:25.396 [info] request done: requestId: [63c4cb3a-00b0-47b3-a9df-f2bac39f14d5] model deployment ID: []
+2025-04-03 19:33:25.445 [info] message 0 returned. finish reason: [stop]
+2025-04-03 19:33:25.446 [info] request done: requestId: [9670b9f0-6678-41b6-935a-ed0a8947cbd7] model deployment ID: []
+2025-04-03 19:34:23.978 [info] message 0 returned. finish reason: [stop]
+2025-04-03 19:34:23.980 [info] request done: requestId: [bcc8876c-b542-4418-85eb-cf5b6cd1d9bb] model deployment ID: []
+2025-04-03 19:34:40.363 [info] message 0 returned. finish reason: [stop]
+2025-04-03 19:34:40.364 [info] request done: requestId: [c42fb55e-4dad-42e0-8543-7b02f149dfdc] model deployment ID: []
+2025-04-03 19:40:31.624 [info] message 0 returned. finish reason: [stop]
+2025-04-03 19:40:31.625 [info] request done: requestId: [9a7f303c-d820-43d4-863e-160b2027e0ab] model deployment ID: []
+2025-04-03 19:40:50.029 [info] message 0 returned. finish reason: [stop]
+2025-04-03 19:40:50.030 [info] request done: requestId: [5c66b429-4616-4b27-a053-d2e8a0f79cff] model deployment ID: []
+2025-04-03 19:45:12.820 [info] Fetched model metadata in 686ms fe8c9b57-35da-440b-b5c0-97a2a3cd8ea0
+2025-04-03 19:45:17.903 [info] message 0 returned. finish reason: [stop]
+2025-04-03 19:45:17.904 [info] request done: requestId: [7c1017e4-2dae-4482-ad8c-620574a63f9e] model deployment ID: []
+2025-04-03 19:45:30.060 [info] message 0 returned. finish reason: [stop]
+2025-04-03 19:45:30.061 [info] request done: requestId: [f3d5a3d6-dc86-4353-96b7-da49e7f382e3] model deployment ID: []
+2025-04-03 19:46:29.466 [info] message 0 returned. finish reason: [stop]
+2025-04-03 19:46:29.467 [info] request done: requestId: [7afc3414-5c34-4dd6-adf8-1e4960526e19] model deployment ID: []
+2025-04-03 19:46:46.431 [info] message 0 returned. finish reason: [stop]
+2025-04-03 19:46:46.432 [info] request done: requestId: [4ab21d73-d539-4934-acec-09e336111fa2] model deployment ID: []
+2025-04-03 19:47:53.526 [info] message 0 returned. finish reason: [stop]
+2025-04-03 19:47:53.527 [info] request done: requestId: [c711136c-4146-4284-9f73-1f18c458e014] model deployment ID: []
+2025-04-03 19:48:13.450 [info] message 0 returned. finish reason: [stop]
+2025-04-03 19:48:13.451 [info] request done: requestId: [508d23e6-c570-4865-bf8e-f79a8387c064] model deployment ID: []
+2025-04-03 19:57:29.559 [info] Logged in as bellaachang
+2025-04-03 19:57:29.933 [info] Got Copilot token for bellaachang
+2025-04-03 19:57:30.143 [info] Fetched model metadata in 1412ms 5f8afba8-e97b-49fc-951a-327f1927dea7
+2025-04-03 19:57:30.886 [info] copilot token chat_enabled: true, sku: free_limited_copilot
+2025-04-03 19:57:37.955 [info] message 0 returned. finish reason: [stop]
+2025-04-03 19:57:37.956 [info] request done: requestId: [0208a4ec-c6a0-4d2f-b4ce-460719d1499b] model deployment ID: []
+2025-04-03 19:57:59.415 [info] message 0 returned. finish reason: [stop]
+2025-04-03 19:57:59.416 [info] request done: requestId: [d46952cf-e935-450c-bfb3-40dca10f2869] model deployment ID: []
+2025-04-03 20:12:32.538 [info] Fetched model metadata in 662ms 411eb6fd-eeba-4b10-8340-b9cc735eea3c
+2025-04-03 20:15:03.604 [info] message 0 returned. finish reason: [stop]
+2025-04-03 20:15:03.605 [info] request done: requestId: [de512424-e97e-4621-8ab0-bfeec92cc63b] model deployment ID: []
+2025-04-03 20:15:27.295 [info] message 0 returned. finish reason: [stop]
+2025-04-03 20:15:27.296 [info] request done: requestId: [0c2da405-5990-445e-ba40-9dae87b58972] model deployment ID: []
+2025-04-03 20:27:34.433 [info] Logged in as bellaachang
+2025-04-03 20:27:34.788 [info] Got Copilot token for bellaachang
+2025-04-03 20:27:35.401 [info] Fetched model metadata in 591ms cd5b5e80-ace4-4d18-9ae1-0759c62fc865
+2025-04-03 20:27:35.672 [info] copilot token chat_enabled: true, sku: free_limited_copilot
+2025-04-03 20:34:06.507 [info] message 0 returned. finish reason: [stop]
+2025-04-03 20:34:06.509 [info] request done: requestId: [3cea1107-627f-4963-888c-30c0b4173bb7] model deployment ID: []
+2025-04-03 20:34:21.954 [info] message 0 returned. finish reason: [stop]
+2025-04-03 20:34:21.955 [info] request done: requestId: [595745ff-90d6-442d-a6c0-bc463d3942a9] model deployment ID: []
+2025-04-03 20:34:31.117 [info] message 0 returned. finish reason: [stop]
+2025-04-03 20:34:31.118 [info] request done: requestId: [30036589-591d-4ee4-8e5f-f1d9c77fbe86] model deployment ID: []
+2025-04-03 20:34:46.208 [info] message 0 returned. finish reason: [stop]
+2025-04-03 20:34:46.209 [info] request done: requestId: [2f975ef3-6619-4085-b6e6-f0cea5c4a694] model deployment ID: []
+2025-04-03 20:40:19.303 [info] Logged in as bellaachang
+2025-04-03 20:40:19.786 [info] Got Copilot token for bellaachang
+2025-04-03 20:40:20.495 [info] copilot token chat_enabled: true, sku: free_limited_copilot
+2025-04-03 20:40:21.269 [info] Fetched model metadata in 518ms db598431-f809-4daf-b1a6-aad3d23daf1c
+2025-04-03 20:55:22.161 [info] Fetched model metadata in 641ms 1ecb5c3d-6099-4cb8-80aa-651f11438e9d
+2025-04-03 21:10:23.781 [info] Logged in as bellaachang
+2025-04-03 21:10:24.149 [info] Got Copilot token for bellaachang
+2025-04-03 21:10:24.637 [info] Fetched model metadata in 440ms fa6011ae-8dd8-4e7b-a1b3-a833f42cd47e
+2025-04-03 21:10:24.787 [info] copilot token chat_enabled: true, sku: free_limited_copilot
+2025-04-03 21:25:25.992 [info] Fetched model metadata in 611ms 3d61227c-ad1f-42c1-a945-e3601c60b190
+2025-04-03 21:26:40.711 [info] message 0 returned. finish reason: [stop]
+2025-04-03 21:26:40.713 [info] request done: requestId: [5e360acc-772f-4d7b-8a32-6bc84c105034] model deployment ID: []
+2025-04-03 21:27:01.430 [info] message 0 returned. finish reason: [stop]
+2025-04-03 21:27:01.431 [info] request done: requestId: [e41aab00-92d8-419a-b63c-5cc0eaec1d02] model deployment ID: []
+2025-04-03 21:27:22.182 [info] message 0 returned. finish reason: [stop]
+2025-04-03 21:27:22.183 [info] request done: requestId: [fce65706-7d41-45a6-8286-158c66443890] model deployment ID: []
+2025-04-03 21:27:35.790 [info] message 0 returned. finish reason: [stop]
+2025-04-03 21:27:35.791 [info] request done: requestId: [7403d41e-c25b-4e56-a245-7b1cf04dd111] model deployment ID: []
+2025-04-03 21:35:04.294 [info] Logged in as bellaachang
+2025-04-03 21:35:04.678 [info] Got Copilot token for bellaachang
+2025-04-03 21:35:05.353 [info] copilot token chat_enabled: true, sku: free_limited_copilot
+2025-04-03 21:35:09.719 [info] message 0 returned. finish reason: [stop]
+2025-04-03 21:35:09.720 [info] request done: requestId: [3381e868-99b7-4832-ac64-54e72ad5f377] model deployment ID: []
+2025-04-03 21:35:19.218 [info] message 0 returned. finish reason: [stop]
+2025-04-03 21:35:19.219 [info] request done: requestId: [952f87b8-3769-4680-bc40-feeeed6c7949] model deployment ID: []
+2025-04-03 21:35:42.795 [info] Fetched model metadata in 319ms 52c1d443-7d32-47fe-9824-f1d6faa52186
+2025-04-03 21:35:47.179 [info] message 0 returned. finish reason: [stop]
+2025-04-03 21:35:47.180 [info] request done: requestId: [ea2fe9c3-72a6-4e41-8b45-701a1ca1d055] model deployment ID: []
+2025-04-03 21:36:10.476 [info] message 0 returned. finish reason: [stop]
+2025-04-03 21:36:10.477 [info] request done: requestId: [1aa24240-7454-400e-a2ff-108c8a5737e3] model deployment ID: []
+2025-04-03 21:50:06.562 [info] Fetched model metadata in 494ms c9ddff25-0ece-4b1e-a20c-780d66a490ba
+2025-04-03 22:05:07.368 [info] Logged in as bellaachang
+2025-04-03 22:05:07.721 [info] Got Copilot token for bellaachang
+2025-04-03 22:05:08.158 [info] Fetched model metadata in 415ms 545d1f20-6b80-456e-8d18-539fbc01d02e
+2025-04-03 22:05:08.352 [info] copilot token chat_enabled: true, sku: free_limited_copilot

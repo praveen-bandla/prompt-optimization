@@ -1,0 +1,9 @@
+{
+  "query": {
+    "type": "g6.4xlarge",
+    "app_base_uri": "https://lightning.ai",
+    "spot": "false",
+    "cs_instance_id": "01jrgzabmmqky6sjfv6n7wtsnn",
+    "folder": "/teamspace/studios/this_studio"
+  }
+}

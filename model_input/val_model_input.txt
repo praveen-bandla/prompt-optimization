@@ -1,7 +1,0 @@
-The base prompt was: "{base_prompt_str}"
-
-This is the output: “{main_model_output}”
-
-Grade the output in relation to the base prompt. Use the following rubric. Assign a numerical score for each of the categories based on specific criteria. Return it as a list of numbers in the format (A, B, C, D, E).
-
-Rubric: "{rubric_text}"
