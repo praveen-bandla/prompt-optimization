@@ -234,37 +234,41 @@ def parse_model_output(model_output, bp_idx):
         - list: A list of tuples, each containing the base prompt variation index and the prompt variation string. Stored as a list of (bpv_idx, bpv_str)
     '''
 
-    # if not model_output or model_output.strip() == "":
-    #     raise ValueError("Model output is empty. Check model inference.")
-
-    # model_output = model_output.strip()
-    # model_output = re.sub(r'^\[.*?"', '[', model_output)  # Remove from '[' to the first '"'
-    # model_output = re.sub(r'"[^"]*\]$', ']', model_output)  # Remove from the last '"' to ']'
-    # print(f'Model output: {model_output}')
-    # # Check if the output is a JSON array
-    # try:
-    #     variations = json.loads(model_output)
-    #     # if isinstance(variations, list):
-    #     #print(variations)
-    #     lst = [((bp_idx, idx), str(variation)) for idx, variation in enumerate(variations)]
-    #     return lst
-    # except json.JSONDecodeError:
-    #     pass
-
-    # raise ValueError("Model output is not a valid JSON array.")
-
     if not model_output or model_output.strip() == "":
         raise ValueError("Model output is empty. Check model inference.")
 
-    # Clean up the model output
     model_output = model_output.strip()
+    model_output = re.sub(r'^\[.*?"', '[', model_output)  # Remove from '[' to the first '"'
+    model_output = re.sub(r'"[^"]*\]$', ']', model_output)  # Remove from the last '"' to ']'
+    print(f'Model output: {model_output}')
+    # Check if the output is a JSON array
+    try:
+        # PRAVEEN: COMMENTING OUT FOR NOW
+        # variations = json.loads(model_output)
 
-    # Split the output by semicolons and filter out empty variations
-    variations = [variation.strip() for variation in model_output.split(";") if variation.strip()]
-    print(f'variations: {variations}')
+        variations = ["Create a hands-on art guide that introduces various techniques to engage creative third-graders in fun learning.", "Design a hands-on art guide that simplifies creative techniques for third-graders to explore art effortlessly.", "Develop a hands-on art guide that encourages creative exploration through various techniques for third-graders to express themselves artistically."]
 
-    # Convert to the desired format
-    return [((bp_idx, idx), variation) for idx, variation in enumerate(variations)]
+        # if isinstance(variations, list):
+        #print(variations)
+        lst = [((bp_idx, idx), str(variation)) for idx, variation in enumerate(variations)]
+        return lst
+    except json.JSONDecodeError:
+        pass
+
+    raise ValueError("Model output is not a valid JSON array.")
+
+    # if not model_output or model_output.strip() == "":
+    #     raise ValueError("Model output is empty. Check model inference.")
+
+    # # Clean up the model output
+    # model_output = model_output.strip()
+
+    # # Split the output by semicolons and filter out empty variations
+    # variations = [variation.strip() for variation in model_output.split(";") if variation.strip()]
+    # print(f'variations: {variations}')
+
+    # # Convert to the desired format
+    # return [((bp_idx, idx), variation) for idx, variation in enumerate(variations)]
         
 def write_parquet(bp_idx, prompt_variations):
     '''

@@ -431,6 +431,7 @@ class ModelOutputParquet:
 
         # new_data = pd.DataFrame(model_outputs, columns=["bpv_idx", "model_output_string"])
         # df = pd.concat([self.df, new_data], ignore_index=True)
+        print(model_outputs)
         df = pd.DataFrame(model_outputs, columns=["bpv_idx", "model_output_string"])
         self.reset_parquet()
         df.to_parquet(self.file_path, index=False)

@@ -60,6 +60,7 @@ def collect_prompt_variations(bp_idx):
 
     for i in range(num_pvs):
         pv_obj = PromptVariation(bpv_idx = bpv_idxs[i], pv_parquet = pv_data_handler, variation_str = pv_strs[i])
+        bpv_idx = pv_obj.get_bpv_idx()
         pvs.append(pv_obj)
 
     return pvs
@@ -167,13 +168,6 @@ def main_model_inference_per_prompt_variation(pv_obj):
 
     configs = load_configs()
 
-    # old configs that are not all relevant to PHI-3.5
-    # max_length = configs.get("max_length")
-    # temperature = configs.get("temperature")
-    # top_p = configs.get("top_p")
-    # top_k = configs.get("top_k")
-    # repetitive_penalty = configs.get("repetitive_penalty")
-
     # new configs that are relevant to PHI-3.5
     max_new_tokens = configs.get("max_new_tokens")
     temperature = configs.get("temperature")
@@ -214,10 +208,25 @@ def main_model_inference_per_base_prompt(bp_idx):
     '''
     all_pv_outputs = []
     mo_parquet = ModelOutputParquet(bp_idx)
+    pipe = load_model()
+    configs = load_configs()
+    max_new_tokens = configs.get("max_new_tokens")
+    temperature = configs.get("temperature")
+    do_sample = configs.get("do_sample")
+    generation_args = {
+        "max_new_tokens": max_new_tokens,
+        "temperature": temperature,
+        "do_sample": do_sample,
+        "return_full_text": False # determines whether to the prompt as part of the output.
+
+    }
+
     for pv_obj in collect_prompt_variations(bp_idx):
-        model_output = main_model_inference_per_prompt_variation(pv_obj)
+        # model_output = main_model_inference_per_prompt_variation(pv_obj)
+        prompt = construct_model_input(pv_obj)
+        model_output = pipe(prompt, **generation_args)[0]['generated_text']
         full_bpv_idx = (mo_parquet.get_bp_idx(), pv_obj.get_bpv_idx())
-        all_pv_outputs.append((full_bpv_idx, model_output))
+        all_pv_outputs.append((pv_obj.get_bpv_idx(), model_output))
     mo_parquet.insert_model_outputs(all_pv_outputs)
 
 
