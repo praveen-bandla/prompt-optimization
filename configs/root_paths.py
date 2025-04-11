@@ -18,7 +18,7 @@ MODEL_CONFIGS = os.path.join(CONFIGS_PATH, 'model_configs')
 # Validation model related files
 VALIDATION_SCORES = os.path.join(DATA_PATH, 'validation_scores')
 VALIDATOR_MODEL_INPUT = os.path.join(MODEL_INPUT_PATH, 'validator_model_input.json')
-VALIDATOR_MODEL_CONFIGS = os.path.join(CONFIGS_PATH, 'validator_model_config.yaml')
+VALIDATOR_MODEL_CONFIGS = os.path.join(MODEL_CONFIGS, 'validator_model_config.yaml')
 # FALCON_MAMBA_MODEL = os.path.join(MODELS_PATH, 'tiiuae/falcon-mamba-7b')
 # FALCON_MAMBA_MODEL_ID = 'tiiuae/falcon-mamba-7b'
 OPT_MODEL = os.path.join(MODELS_PATH, 'facebook/opt-6.7b')

@@ -5,7 +5,7 @@
 
 # new implementation with model specific hyperparams
 
-falcon-mamba:
+falcon_mamba:
   temperature: 0.7
   top_p: 0.9
   top_k: 50

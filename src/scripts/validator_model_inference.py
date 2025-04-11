@@ -46,6 +46,7 @@ import json
 import os
 import torch
 import sys
+import yaml
 
 # adding
 from copy import deepcopy
@@ -121,11 +122,24 @@ def load_models():
 
         print(f'model_id: {model_id}')
         # Load tokenizer and model
-        tokenizer = AutoTokenizer.from_pretrained(model_id)
-        model = AutoModelForCausalLM.from_pretrained(model_id).to(device)
+        tokenizer = AutoTokenizer.from_pretrained(
+            model_id,
+            torch_dtype=torch.float16,
+            device_map="auto",
+            trust_remote_code=True
+        )
+        model = AutoModelForCausalLM.from_pretrained(
+            model_id,
+            torch_dtype=torch.float16,
+            device_map="auto",
+            trust_remote_code=True
+        )
 
         # Update the dictionary with the loaded model and tokenizer
         models_dict[key] = {
+            'model_name': model_info['model_name'],
+            'huggingface_model_id': model_info['huggingface_model_id'],
+            'prompt_structure': model_info['prompt_structure'],
             'model': model,
             'tokenizer': tokenizer
         }
@@ -301,6 +315,7 @@ def validator_model_inference_per_prompt_variation(base_prompt_str, main_model_o
     # Step 2a: Load models_dict and configs
     models_dict = load_models()
     configs = load_configs()
+    print(configs)
 
     # Step 2b: Initialize validation scores
     scores = generate_empty_scores_dict()
@@ -308,7 +323,8 @@ def validator_model_inference_per_prompt_variation(base_prompt_str, main_model_o
     # Step 3: For each model, run inference
     for idx, model_info in models_dict.items():
         # Step 3a: load model specific hyperparameters from configs
-        model_configs = configs[model_info['model_name']]
+
+        model_configs = configs.get(str(model_info['model_name']))
 
         generation_args = {
             "temperature": model_configs.get("temperature"),
@@ -325,8 +341,7 @@ def validator_model_inference_per_prompt_variation(base_prompt_str, main_model_o
         pipe = pipeline(
             'text-generation', 
             model=models_dict[idx]['model'], 
-            tokenizer=models_dict[idx]['tokenizer'],
-            device=0  # Use GPU
+            tokenizer=models_dict[idx]['tokenizer']
         )
 
         # Step 3d: Run inference
