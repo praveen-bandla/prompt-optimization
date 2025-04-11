@@ -362,8 +362,7 @@ def validator_model_inference_per_base_prompt(bp_idx):
     Args:
     - bp_idx (int): The base prompt index
     '''
-    all_vs_objects = []
-    mo_parquet
+    
 
 
 
