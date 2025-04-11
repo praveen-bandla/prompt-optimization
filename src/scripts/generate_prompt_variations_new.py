@@ -3,6 +3,9 @@ Generate Prompt Varitions (New)
 
 This updated script generates a set of prompt variations by calling the prompt variation model to produce prompt variations based on the stored base prompts. It runs inferences and generates 'NUM_PROMPT_VARIATIONS' prompt variations for further use.
 
+Usage:
+    PYTHONPATH=$(pwd) python src/scripts/generate_prompt_variations_new.py "[0,1,2]"
+
 Inputs:
     bp_idx: A list of integers representing the indices of the base prompts to generate prompt variations for.
 
@@ -210,10 +213,17 @@ def prompt_variation_inference():
         generated_text = f"<think>\n{generated_text}"
         
     print("Inference complete.")
-    print("Outputs: ", generated_text)
-    return generated_text
+    #print("Outputs: ", generated_text)
+    #print("Generated text: ", generated_text)
+    think_tag = "</think>"
+    if think_tag in generated_text:
+        model_output = generated_text.split(think_tag, 1)[1].strip()
+    else:
+        raise ValueError(f"Model output does not contain the expected tag '{think_tag}'.")
 
-def parse_model_output(model_output):
+    return model_output
+
+def parse_model_output(model_output, bp_idx):
     '''
     This function parses the model output to extract the prompt variations from two JSON arrays.
 
@@ -227,37 +237,21 @@ def parse_model_output(model_output):
 
     if not model_output or model_output.strip() == "":
         raise ValueError("Model output is empty. Check model inference.")
-
-    # if isinstance(model_output, dict) and "generated_text" in model_output:
-    #     model_output = model_output["generated_text"]
     
-    # Check if the output is JSON-like
-    json_text = re.search(r"\[.*\]", model_output, re.DOTALL)
-    if json_text:
-        model_output = json_text.group(0)
-        return [(idx, pv) for idx, pv in enumerate(json.loads(model_output))]
+    # Check if the output is a JSON array
+    try:
 
-     # Handle newline-separated strings
-    lines = model_output.strip().split("\n")
-    variations = [(idx, line.strip()) for idx, line in enumerate(lines) if line.strip()]
+        variations = json.loads(model_output)
+        # if isinstance(variations, list):
+        #print(variations)
+        lst = [((bp_idx, idx), str(variation)) for idx, variation in enumerate(variations)]
+        print(lst)
+        return lst
+    except json.JSONDecodeError:
+        pass
 
-    # FOR TWO ARRAYS
-    # Extract JSON arrays form the model output
-    # json_arrays = re.findall(r"\[.*?\]", model_output, re.DOTALL)
-    # if len(json_arrays) < 2:
-    #     raise ValueError("Model output does not contain two JSON arrays.")
-
-    # try:
-    #     array1 = json.loads(json_arrays[0])
-    #     array2 = json.loads(json_arrays[1])
-    # except json.JSONDecodeError as e:
-    #     raise ValueError(f"Failed to decode JSON arrays: {e}")
-
-    # Combine the two arrays into a single list of tuples
-    combined_variations = [(idx, pv) for idx, pv in enumerate(array1 + array2)]
-
-    return combined_variations
-
+    raise ValueError("Model output is not a valid JSON array.")
+        
 def write_parquet(bp_idx, prompt_variations):
     '''
     Writes the prompt variations to the corresponding parquet file associated with the given base prompt index.
@@ -326,7 +320,7 @@ def main(bp_idx):
     # model_output = "[\"prompt_variation1\", \"prompt_variation2\", \"prompt_variation3\"]"
 
     # Step 4: Parse the model output to extract prompt variations
-    prompt_variations = parse_model_output(model_output)
+    prompt_variations = parse_model_output(model_output, bp_idx)
 
     # Step 5: Write the prompt variations to a parquet file
     write_parquet(bp_idx, prompt_variations)
