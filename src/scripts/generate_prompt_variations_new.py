@@ -36,7 +36,7 @@ import re
 
 from huggingface_hub import login
 
-login(token='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')
+login(token='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')
 
 # PRAVEEN:
 '''
@@ -88,13 +88,14 @@ def collect_instruction(bp_idx):
     # content_template = content_template.replace("{num_prompt_variations}", str(NUM_PROMPT_VARIATIONS / 2))
     #instruction = system_role + " " + content_template
 
-    content = content_template.format(num_prompt_variations=str(NUM_PROMPT_VARIATIONS), bp_str=bp_str)
+    system_role = system_role.format(bp_str=bp_str)
+    content = content_template.format(num_prompt_variations=str(NUM_PROMPT_VARIATIONS))
 
     full_prompt = [
-        # {
-        #     "role": "system",
-        #     "content": system_role
-        # },
+        {
+            "role": "system",
+            "content": system_role
+        },
         {
             "role": "user",
             "content": content
@@ -127,7 +128,7 @@ def load_model():
     Loads the prompt variation model for inference. 
     '''
     model = AutoModelForCausalLM.from_pretrained(
-        PROMPT_VARIATION_MODEL_ID,
+        MISTRAL_INSTRUCT_MODEL_ID,
         torch_dtype=torch.bfloat16,
         device_map="auto",
         trust_remote_code=True,
@@ -135,7 +136,7 @@ def load_model():
     )
 
     tokenizer = AutoTokenizer.from_pretrained(
-        PROMPT_VARIATION_MODEL_ID, 
+        MISTRAL_INSTRUCT_MODEL_ID, 
         trust_remote_code=True)
 
     # BECCA: Deepseek needs specifically structured chats so pipeline is not the best choice here
