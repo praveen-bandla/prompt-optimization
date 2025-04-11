@@ -288,7 +288,7 @@ def construct_prompt(prompt_structure, system_role, content):
 #     return validation_scores.scores
 
 
-def validator_model_inference_per_prompt_variation(bpv_idx, base_prompt_data_handler, mo_parquet):
+def validator_model_inference_per_prompt_variation(bpv_idx):
     '''
     Runs inference on all three validator models to generate the validation scores for a single bpv_idx.
     '''
@@ -359,16 +359,11 @@ def validator_model_inference_per_base_prompt(bp_idx):
     '''
     Performs main model inference on all prompt variations for the given bp_idx. Stores all the outputs in its respective Parquet file.
 
-    Input:
-    - bp_idx (int): The base prompt index.
+    Args:
+    - bp_idx (int): The base prompt index
     '''
-    all_pv_outputs = []
-    mo_parquet = ModelOutputParquet(bp_idx)
-    for pv_obj in collect_prompt_variations(bp_idx):
-        model_output = validator_model_inference_per_prompt_variation(pv_obj)
-        full_bpv_idx = (mo_parquet.get_bp_idx(), pv_obj.get_bpv_idx())
-        all_pv_outputs.append((full_bpv_idx, model_output))
-    mo_parquet.insert_model_outputs(all_pv_outputs)
+    all_vs_objects = []
+    mo_parquet
 
 
 
