@@ -401,6 +401,8 @@ def write_validation_scores_to_parquet(vs_objs, bp_idx):
     # Create a new Parquet file for the validation scores
     vs_parquet = ValidationScoreParquet(bp_idx)
 
+    print(f'Type of vs_objs: {type(vs_objs)}')
+    print(f'Tye of vs_parquet: {type(vs_parquet)}')
     vs_parquet.insert_validation_scores(vs_objs)
 
 
