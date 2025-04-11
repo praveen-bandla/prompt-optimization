@@ -372,6 +372,7 @@ def validator_model_inference_per_base_prompt(bp_idx):
     base_prompt_str = bp_obj.get_prompt_str()
 
     mo_parquet = ModelOutputParquet(bp_idx)
+    vs_parquet = ValidationScoreParquet(bp_idx)
 
     for idx in range(NUM_PROMPT_VARIATIONS):
         # Load the main model output string for the given bpv_idx
@@ -379,12 +380,11 @@ def validator_model_inference_per_base_prompt(bp_idx):
         main_model_output_str = model_output_obj.get_output_str()
 
         # Run inference
-        # PRAVEEN: COMMENTING OUT FOR NOW
-        # scores = validator_model_inference_per_prompt_variation(base_prompt_str, main_model_output_str)
-        scores = generate_empty_scores_dict()
+        scores = validator_model_inference_per_prompt_variation(base_prompt_str, main_model_output_str)
+        #scores = generate_empty_scores_dict()
 
         # Create a new ValidationScore object
-        vs_obj = ValidationScore((bp_idx, idx), scores)
+        vs_obj = ValidationScore((bp_idx, idx), vs_parquet, scores)
         all_vs_objs.append(vs_obj)
 
     return all_vs_objs
@@ -401,15 +401,7 @@ def write_validation_scores_to_parquet(vs_objs, bp_idx):
     # Create a new Parquet file for the validation scores
     vs_parquet = ValidationScoreParquet(bp_idx)
 
-    print(f'Type of vs_objs: {type(vs_objs)}')
-    print(f'Tye of vs_parquet: {type(vs_parquet)}')
     vs_parquet.insert_validation_scores(vs_objs)
-
-
-
-    
-
-
 
 
 

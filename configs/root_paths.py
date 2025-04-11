@@ -25,7 +25,7 @@ OPT_MODEL = os.path.join(MODELS_PATH, 'facebook/opt-6.7b')
 OPT_MODEL_ID = 'facebook/opt-6.7b'
 MISTRAL_INSTRUCT_MODEL = os.path.join(MODELS_PATH, 'mistralai/Mistral-7B-Instruct-v0.2')
 MISTRAL_INSTRUCT_MODEL_ID = 'mistralai/Mistral-7B-Instruct-v0.2'
-RUBRIC_PATH = os.path.join(CONFIGS_PATH, 'rubric.txt')
+RUBRIC_PATH = os.path.join(MODEL_INPUT_PATH, 'rubric.txt')
 
 # BP and BPV related files
 SQL_DB = os.path.join(DATA_PATH, 'base_prompts', 'base_prompts.db')
