@@ -11,7 +11,8 @@ Inputs:
 
 Example usage:
     # Run inference on all prompt variations for prompt variation indices 0,1,2,3,4 of base prompt 1.
-    python validator_model_inference.py (1, 0) (1, 4)
+    PYTHONPATH=$(pwd) python src/scripts/validator_model_inference.py 0 1
+    Will run on bp_idx 0 only
 
 Outputs:
 - Writes validation scores to a Parquet file named `{i}_validation_score.parquet`, where `i` is the index
@@ -374,7 +375,7 @@ def validator_model_inference_per_prompt_variation(base_prompt_str, main_model_o
     total_score = 0
     for i in range(1, NUM_RUBRIC_SECTIONS + 1):
         total_score += scores[f"section_{i}_avg"] * SECTION_WEIGHTS[f'section_{i}']
-    scores["total_score"] = total_score
+    scores["total_score"] = round(total_score, 2)
 
     return scores
 
