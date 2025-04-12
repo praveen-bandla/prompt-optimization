@@ -198,6 +198,7 @@ class PromptVariationParquet:
         '''
         if bpv_idx[0] != self.bp_idx:
             return ValueError("All model outputs must be specific to the base prompt index provided during initialization of the PromptVariationParquet Object.")
+        self.df['bpv_idx'] = self.df['bpv_idx'].apply(tuple)
         result = self.df[self.df["bpv_idx"] == bpv_idx]['prompt_variation_string']
         return result.iloc[0] if not result.empty else None
     
@@ -212,6 +213,7 @@ class PromptVariationParquet:
             - str: The base prompt string if found, else None.
             - str: The prompt variation string if found, else None.
         '''
+        self.df['bpv_idx'] = self.df['bpv_idx'].apply(tuple)
         base_prompt = self.df[self.df["bpv_idx"] == (self.bp_idx, -1)]['prompt_variation_string']
         prompt_variation = self.df[self.df["bpv_idx"] == bpv_idx]['prompt_variation_string']
         return base_prompt.iloc[0] if not base_prompt.empty else None, prompt_variation.iloc[0] if not prompt_variation.empty else None
