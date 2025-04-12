@@ -214,7 +214,7 @@ def prompt_variation_inference():
     print("Outputs: ", generated_text)
     return generated_text
 
-def parse_model_output(model_output):
+def parse_model_output(model_output, bp_idx):
     '''
     This function parses the model output to extract the prompt variations from two JSON arrays.
 
@@ -238,7 +238,7 @@ def parse_model_output(model_output):
         model_output = json_text.group(0)
     else:
         raise ValueError("No JSON-like output found in model response.")
-    return [(idx, pv) for idx, pv in enumerate(json.loads(model_output))]
+    return [((bp_idx,idx), str(pv)) for idx, pv in enumerate(json.loads(model_output))]
 
     # FOR TWO ARRAYS
     # Extract JSON arrays form the model output
@@ -253,9 +253,9 @@ def parse_model_output(model_output):
     #     raise ValueError(f"Failed to decode JSON arrays: {e}")
 
     # Combine the two arrays into a single list of tuples
-    combined_variations = [(idx, pv) for idx, pv in enumerate(array1 + array2)]
+    # combined_variations = [(idx, pv) for idx, pv in enumerate(array1 + array2)]
 
-    return combined_variations
+    # return combined_variations
 
 def write_parquet(bp_idx, prompt_variations):
     '''
@@ -280,8 +280,31 @@ def write_parquet(bp_idx, prompt_variations):
     # prompt_variations = formatted_bp + prompt_variations
 
 
-    pv_parquet = PromptVariationParquet(bp_idx)
-    pv_parquet.insert_prompt_variations(prompt_variations)
+    # pv_parquet = PromptVariationParquet(bp_idx)
+    # pv_parquet.insert_prompt_variations(prompt_variations)
+    try: 
+        bp_db = BasePromptDB()
+        bp_str = bp_db.fetch_prompt(bp_idx)
+        if not bp_str:
+            raise ValueError(f"Base prompt with index {bp_idx} not found in the database.")
+
+        # Format the base prompt as a tuple and preprend it to the variations
+        formatted_bp = [((bp_idx, -1), bp_str)]
+        all_variations = formatted_bp + prompt_variations
+
+        # # Ensure all bpv_idx values are tuples
+        # all_variations = [
+        #     ((bp_idx, -1) if isinstance(bpv_idx, tuple) else (bp_idx, bpv_idx), bpv_str)
+        #     for bpv_idx, bpv_str in all_variations
+        # ]
+
+        # Write the variations to a parquet file
+        pv_parquet = PromptVariationParquet(bp_idx)
+        pv_parquet.insert_prompt_variations(all_variations)
+
+        print(f'Successfully wrote prompt variations to parquet file for base prompt index {bp_idx}.')
+    except Exception as e:
+        print(f"Error writing prompt variations to parquet file for base prompt index {bp_idx}: {e}")
 
 
 #collect_instruction(0)
@@ -312,7 +335,7 @@ def main(bp_idx):
     # model_output = "[\"prompt_variation1\", \"prompt_variation2\", \"prompt_variation3\"]"
 
     # Step 4: Parse the model output to extract prompt variations
-    prompt_variations = parse_model_output(model_output)
+    prompt_variations = parse_model_output(model_output, bp_idx)
 
     # Step 5: Write the prompt variations to a parquet file
     write_parquet(bp_idx, prompt_variations)
