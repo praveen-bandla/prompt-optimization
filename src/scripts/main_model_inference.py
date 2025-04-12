@@ -199,7 +199,7 @@ def main_model_inference_per_prompt_variation(pv_obj):
     return output[0]['generated_text']
 
 
-def main_model_inference_per_base_prompt(bp_idx):
+def main_model_inference_per_base_prompt(bp_idx, pipe, configs):
     '''
     Performs main model inference on all prompt variations for the given bp_idx. Stores all the outputs in its respective Parquet file.
 
@@ -208,8 +208,8 @@ def main_model_inference_per_base_prompt(bp_idx):
     '''
     all_pv_outputs = []
     mo_parquet = ModelOutputParquet(bp_idx)
-    pipe = load_model()
-    configs = load_configs()
+    # pipe = load_model()
+    # configs = load_configs()
     max_new_tokens = configs.get("max_new_tokens")
     temperature = configs.get("temperature")
     do_sample = configs.get("do_sample")
@@ -237,8 +237,11 @@ if __name__ == "__main__":
     start_idx = int(sys.argv[1])
     end_idx = int(sys.argv[2])
 
+    pipe = load_model()
+    configs = load_configs()
+
     for bp_idx in range(start_idx, end_idx):
-        main_model_inference_per_base_prompt(bp_idx)
+        main_model_inference_per_base_prompt(bp_idx, pipe, configs)
         print(f"Finished inference for base prompt index {bp_idx}.")
     print("All inferences have been completed.")
 
