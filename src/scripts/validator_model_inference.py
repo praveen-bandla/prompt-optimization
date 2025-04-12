@@ -82,8 +82,11 @@ def parse_model_output(model_output):
     '''
     Model output is a list of integers returned as a string. This function parses the string and returns a list of integers.
     '''
-    # Split the string by commas and convert to integers
-    parsed_list = [int(x.strip()) for x in model_output.split(',') if x.strip().isdigit()]
+    # # Split the string by commas and convert to integers
+    # parsed_list = [int(x.strip()) for x in model_output.split(',') if x.strip().isdigit()]
+    parsed_list = json.loads(model_output)
+
+    print(parsed_list)
 
     return parsed_list
 
@@ -304,7 +307,7 @@ def construct_prompt(prompt_structure, system_role, content):
 #     return validation_scores.scores
 
 
-def validator_model_inference_per_prompt_variation(base_prompt_str, main_model_output_str):
+def validator_model_inference_per_prompt_variation(base_prompt_str, main_model_output_str, models_dict, configs):
     '''
     Runs inference on all three validator models to generate the validation scores for a single bpv_idx.
     '''
@@ -312,10 +315,10 @@ def validator_model_inference_per_prompt_variation(base_prompt_str, main_model_o
     # Step 1: Retrieve global prompt information
     system_role, content = construct_model_input(base_prompt_str, main_model_output_str)
 
-    # Step 2a: Load models_dict and configs
-    models_dict = load_models()
-    configs = load_configs()
-    print(configs)
+    # # Step 2a: Load models_dict and configs
+    # models_dict = load_models()
+    # configs = load_configs()
+    # print(configs)
 
     # Step 2b: Initialize validation scores
     scores = generate_empty_scores_dict()
@@ -329,7 +332,9 @@ def validator_model_inference_per_prompt_variation(base_prompt_str, main_model_o
         generation_args = {
             "temperature": model_configs.get("temperature"),
             "top_p": model_configs.get("top_p"),
-            "top_k": model_configs.get("top_k")
+            "top_k": model_configs.get("top_k"),
+            "max_new_tokens": model_configs.get("max_new_tokens"),
+            "do_sample": model_configs.get("do_sample")
         }
 
         # Step 3b: Construct the prompt based on the model's requirements
@@ -341,7 +346,9 @@ def validator_model_inference_per_prompt_variation(base_prompt_str, main_model_o
         pipe = pipeline(
             'text-generation', 
             model=models_dict[idx]['model'], 
-            tokenizer=models_dict[idx]['tokenizer']
+            tokenizer=models_dict[idx]['tokenizer'],
+            device_map="auto",  # Use GPU
+            return_full_text = False
         )
 
         # Step 3d: Run inference
@@ -392,13 +399,16 @@ def validator_model_inference_per_base_prompt(bp_idx):
     mo_parquet = ModelOutputParquet(bp_idx)
     vs_parquet = ValidationScoreParquet(bp_idx)
 
-    for idx in range(NUM_PROMPT_VARIATIONS):
+    models_dict = load_models()
+    configs = load_configs()
+
+    for idx in range(-1, NUM_PROMPT_VARIATIONS):
         # Load the main model output string for the given bpv_idx
         model_output_obj = MainModelOutput((bp_idx, idx), mo_parquet)
         main_model_output_str = model_output_obj.get_output_str()
 
         # Run inference
-        scores = validator_model_inference_per_prompt_variation(base_prompt_str, main_model_output_str)
+        scores = validator_model_inference_per_prompt_variation(base_prompt_str, main_model_output_str, models_dict, configs)
         #scores = generate_empty_scores_dict()
 
         # Create a new ValidationScore object
