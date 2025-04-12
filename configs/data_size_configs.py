@@ -25,42 +25,10 @@ MODEL_ALIASES = {
 
 
 VAL_MODEL_DICT = {
-    # 0:{
-    #     'model_name': 'falcon_mamba',
-    #     # 'huggingface_model_id': 'tiiuae/falcon-mamba-7b',
-    #     'huggingface_model_id': 'tiiuae/Falcon3-3B-Instruct',
-    #     'prompt_structure':[
-    #         {
-    #             "role": "system",
-    #             "content": ""
-    #         },
-    #         {
-    #             "role": "user",
-    #             "content": ""
-    #         }
-    #     ]
-            
-    # },  
-
-#     1:{
-#         'model_name': 'opt',
-#         'huggingface_model_id': 'facebook/opt-6.7b',
-#         'prompt_structure':[
-#             {
-#                 "role": "system",
-#                 "content": ""
-#             },
-#             {
-#                 "role": "user",
-#                 "content": ""
-#             } 
-#         ]
-#     }
-# }
-    },
     0:{
-        'model_name': 'qwen',
-        'huggingface_model_id': 'Qwen/Qwen2.5-7B-Instruct',
+        'model_name': 'falcon_mamba',
+        # 'huggingface_model_id': 'tiiuae/falcon-mamba-7b',
+        'huggingface_model_id': 'tiiuae/Falcon3-3B-Instruct',
         'prompt_structure':[
             {
                 "role": "system",
@@ -69,9 +37,40 @@ VAL_MODEL_DICT = {
             {
                 "role": "user",
                 "content": ""
-            } 
+            }
         ]
-    }
+            
+    },  
+
+    # 1:{
+    #     'model_name': 'opt',
+    #     'huggingface_model_id': 'facebook/opt-6.7b',
+    #     'prompt_structure':[
+    #         {
+    #             "role": "system",
+    #             "content": ""
+    #         },
+    #         {
+    #             "role": "user",
+    #             "content": ""
+    #         } 
+    #     ]
+    # },
+
+    # 2:{
+    #     'model_name': 'qwen',
+    #     'huggingface_model_id': 'Qwen/Qwen2.5-7B-Instruct',
+    #     'prompt_structure':[
+    #         {
+    #             "role": "system",
+    #             "content": ""
+    #         },
+    #         {
+    #             "role": "user",
+    #             "content": ""
+    #         } 
+    #     ]
+    # }
 }
 
 # MODEL_ALIASES = {
