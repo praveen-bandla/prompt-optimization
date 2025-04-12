@@ -42,9 +42,25 @@ VAL_MODEL_DICT = {
             
     # },  
 
+#     1:{
+#         'model_name': 'opt',
+#         'huggingface_model_id': 'facebook/opt-6.7b',
+#         'prompt_structure':[
+#             {
+#                 "role": "system",
+#                 "content": ""
+#             },
+#             {
+#                 "role": "user",
+#                 "content": ""
+#             } 
+#         ]
+#     }
+# }
+    },
     0:{
-        'model_name': 'opt',
-        'huggingface_model_id': 'facebook/opt-6.7b',
+        'model_name': 'qwen',
+        'huggingface_model_id': 'Qwen/Qwen2.5-7B-Instruct',
         'prompt_structure':[
             {
                 "role": "system",
@@ -57,18 +73,6 @@ VAL_MODEL_DICT = {
         ]
     }
 }
-#     },
-#     2:{
-#         'model_name': 'mistral_instruct',
-#         'huggingface_model_id': 'mistralai/Mistral-7B-Instruct-v0.2',
-#         'prompt_structure':[
-#             {
-#                 "role": "user",
-#                 "content": ""
-#             }
-#         ]
-#     }
-# }
 
 # MODEL_ALIASES = {
 #     'validator_model_1': {
