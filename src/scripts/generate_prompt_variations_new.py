@@ -3,9 +3,6 @@ Generate Prompt Varitions (New)
 
 This updated script generates a set of prompt variations by calling the prompt variation model to produce prompt variations based on the stored base prompts. It runs inferences and generates 'NUM_PROMPT_VARIATIONS' prompt variations for further use.
 
-Usage:
-    PYTHONPATH=$(pwd) python src/scripts/generate_prompt_variations_new.py "[0,1,2]"
-
 Inputs:
     bp_idx: A list of integers representing the indices of the base prompts to generate prompt variations for.
 
@@ -39,7 +36,7 @@ import re
 
 from huggingface_hub import login
 
-login(token='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')
+login(token='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')
 
 # PRAVEEN:
 '''
@@ -59,7 +56,7 @@ everything barring model inference should work as needed. had to make some chang
 
 # Step 1: Collect the instruction for generating prompt variations
 # Define manual formatting function
-def construct_model_input(bp_idx):
+def collect_instruction(bp_idx):
     '''
     Creates instructions for generating prompt variations based on a base prompt index. Uses the prompt_variation_model_input.json file as the model input, along with NUM_PROMPT_VARIATIONS from the data_size_configs file.
 
@@ -91,13 +88,14 @@ def construct_model_input(bp_idx):
     # content_template = content_template.replace("{num_prompt_variations}", str(NUM_PROMPT_VARIATIONS / 2))
     #instruction = system_role + " " + content_template
 
-    content = content_template.format(num_prompt_variations=str(NUM_PROMPT_VARIATIONS), bp_str=bp_str)
+    system_role = system_role.format(bp_str=bp_str)
+    content = content_template.format(num_prompt_variations=str(NUM_PROMPT_VARIATIONS))
 
     full_prompt = [
-        # {
-        #     "role": "system",
-        #     "content": system_role
-        # },
+        {
+            "role": "system",
+            "content": system_role
+        },
         {
             "role": "user",
             "content": content
@@ -130,7 +128,7 @@ def load_model():
     Loads the prompt variation model for inference. 
     '''
     model = AutoModelForCausalLM.from_pretrained(
-        PROMPT_VARIATION_MODEL_ID,
+        MISTRAL_INSTRUCT_MODEL_ID,
         torch_dtype=torch.bfloat16,
         device_map="auto",
         trust_remote_code=True,
@@ -138,7 +136,7 @@ def load_model():
     )
 
     tokenizer = AutoTokenizer.from_pretrained(
-        PROMPT_VARIATION_MODEL_ID, 
+        MISTRAL_INSTRUCT_MODEL_ID, 
         trust_remote_code=True)
 
     # BECCA: Deepseek needs specifically structured chats so pipeline is not the best choice here
@@ -153,13 +151,13 @@ def load_model():
     return model, tokenizer
 
 # Step 2: Run inference to collect all the prompt variations
-def prompt_variation_inference(instruction, configs, model, tokenizer):
+def prompt_variation_inference():
     '''
     Runs inference on the prompt_variation_model to generate the desired output. It solely retrievers the response as a string and does not process it further.
     '''
-    # instruction = construct_model_input(bp_idx)
-    # model, tokenizer = load_model()
-    # configs = load_configs()
+    instruction = collect_instruction(bp_idx)
+    model, tokenizer = load_model()
+    configs = load_configs()
 
     max_new_tokens = configs.get("max_new_tokens")
     temperature = configs.get("temperature")
@@ -213,15 +211,8 @@ def prompt_variation_inference(instruction, configs, model, tokenizer):
         generated_text = f"<think>\n{generated_text}"
         
     print("Inference complete.")
-    #print("Outputs: ", generated_text)
-    #print("Generated text: ", generated_text)
-    think_tag = "</think>"
-    if think_tag in generated_text:
-        model_output = generated_text.split(think_tag, 1)[1].strip()
-    else:
-        raise ValueError(f"Model output does not contain the expected tag '{think_tag}'.")
-
-    return model_output
+    print("Outputs: ", generated_text)
+    return generated_text
 
 def parse_model_output(model_output, bp_idx):
     '''
@@ -233,43 +224,39 @@ def parse_model_output(model_output, bp_idx):
     Outputs:
         - list: A list of tuples, each containing the base prompt variation index and the prompt variation string. Stored as a list of (bpv_idx, bpv_str)
     '''
+    print('Model Output:', model_output)
 
     if not model_output or model_output.strip() == "":
         raise ValueError("Model output is empty. Check model inference.")
 
-    model_output = model_output.strip()
-    model_output = re.sub(r'^\[.*?"', '[', model_output)  # Remove from '[' to the first '"'
-    model_output = re.sub(r'"[^"]*\]$', ']', model_output)  # Remove from the last '"' to ']'
-    print(f'Model output: {model_output}')
-    # Check if the output is a JSON array
-    try:
-        # PRAVEEN: COMMENTING OUT FOR NOW
-        # variations = json.loads(model_output)
+    if isinstance(model_output, dict) and "generated_text" in model_output:
+        model_output = model_output["generated_text"]
+    
+    # FOR ONE ARRAY - PREVIOUS CODE
+    json_text = re.search(r"\[.*\]", model_output, re.DOTALL)
+    if json_text:
+        model_output = json_text.group(0)
+    else:
+        raise ValueError("No JSON-like output found in model response.")
+    return [((bp_idx,idx), str(pv)) for idx, pv in enumerate(json.loads(model_output))]
 
-        variations = ["Create a hands-on art guide that introduces various techniques to engage creative third-graders in fun learning.", "Design a hands-on art guide that simplifies creative techniques for third-graders to explore art effortlessly.", "Develop a hands-on art guide that encourages creative exploration through various techniques for third-graders to express themselves artistically."]
+    # FOR TWO ARRAYS
+    # Extract JSON arrays form the model output
+    # json_arrays = re.findall(r"\[.*?\]", model_output, re.DOTALL)
+    # if len(json_arrays) < 2:
+    #     raise ValueError("Model output does not contain two JSON arrays.")
 
-        # if isinstance(variations, list):
-        #print(variations)
-        lst = [((bp_idx, idx), str(variation)) for idx, variation in enumerate(variations)]
-        return lst
-    except json.JSONDecodeError:
-        pass
+    # try:
+    #     array1 = json.loads(json_arrays[0])
+    #     array2 = json.loads(json_arrays[1])
+    # except json.JSONDecodeError as e:
+    #     raise ValueError(f"Failed to decode JSON arrays: {e}")
 
-    raise ValueError("Model output is not a valid JSON array.")
+    # Combine the two arrays into a single list of tuples
+    # combined_variations = [(idx, pv) for idx, pv in enumerate(array1 + array2)]
 
-    # if not model_output or model_output.strip() == "":
-    #     raise ValueError("Model output is empty. Check model inference.")
+    # return combined_variations
 
-    # # Clean up the model output
-    # model_output = model_output.strip()
-
-    # # Split the output by semicolons and filter out empty variations
-    # variations = [variation.strip() for variation in model_output.split(";") if variation.strip()]
-    # print(f'variations: {variations}')
-
-    # # Convert to the desired format
-    # return [((bp_idx, idx), variation) for idx, variation in enumerate(variations)]
-        
 def write_parquet(bp_idx, prompt_variations):
     '''
     Writes the prompt variations to the corresponding parquet file associated with the given base prompt index.
@@ -284,7 +271,17 @@ def write_parquet(bp_idx, prompt_variations):
 
     # # Code to add the base prompt to the list of prompt variations
 
-    # Fetch the base prompt string
+    # # first, create a BasePromptDB object to get the base prompt string
+    # bp_db = BasePromptDB()
+    # # then, get the base prompt string using the index
+    # bp_str = bp_db.fetch_base_prompt(bp_idx)
+    # formatted_bp = [((bp_idx, -1), bp_str)]
+    # # then, add the base prompt to the start of the list of prompt variations
+    # prompt_variations = formatted_bp + prompt_variations
+
+
+    # pv_parquet = PromptVariationParquet(bp_idx)
+    # pv_parquet.insert_prompt_variations(prompt_variations)
     try: 
         bp_db = BasePromptDB()
         bp_str = bp_db.fetch_prompt(bp_idx)
@@ -310,7 +307,7 @@ def write_parquet(bp_idx, prompt_variations):
         print(f"Error writing prompt variations to parquet file for base prompt index {bp_idx}: {e}")
 
 
-#construct_model_input(0)
+#collect_instruction(0)
 
 # tester = parse_model_output()
 # print(tester)
@@ -321,18 +318,17 @@ def main(bp_idx):
     '''
 
     # Step 1: Collect instruction
-    # Redundant
-    instruction = construct_model_input(bp_idx)
+    instruction = collect_instruction(bp_idx)
 
     # BECCA: removing bc not needed anymore
     # # Step 2: Load model
-    model, tokenizer = load_model()
+    # pipe = load_model()
 
     # # Step 2: Load model configuration
     configs = load_configs()
 
     # # Step 3: Run inference to collect prompt variations
-    model_output = prompt_variation_inference(instruction, configs, model, tokenizer)
+    model_output = prompt_variation_inference()
 
     # tester code
 
