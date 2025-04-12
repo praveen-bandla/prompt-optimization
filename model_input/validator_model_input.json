@@ -1,4 +1,4 @@
 {
     "system_role": "You are scoring learning guides according to a rubric.",
-    "content_template": "The base prompt was: {base_prompt_str}.\nThis is the output: {main_model_output}.\nGrade the output in relation to the base prompt. Use the following rubric. Assign a numerical score for each of the categories based on specific criteria. Return it as a list of numbers in the format [A, B, C, D, E].\nRubric: {rubric_text}"
+    "content_template": "The base prompt was: {base_prompt_str}.\nThis is the output: {main_model_output}.\nGrade the output in relation to the base prompt. Use the following rubric. Assign a numerical score for each of the categories based on specific criteria. Return ONLY a JSON array of [section1_score, section2_score, section3_score, section4_score, section5_score] corresponding to the number of sections. Do not return anything else.\nRubric: {rubric_text}"
 }

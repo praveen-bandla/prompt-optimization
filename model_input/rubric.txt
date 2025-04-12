@@ -4,16 +4,11 @@ Evaluates how well the text is organized and whether it flows smoothly for the r
 
 | Score | Criteria |
 | --- | --- |
-| **10** | Exceptionally well-structured, logical progression, and highly readable. Paragraphs and sections flow seamlessly. |
-| **9** | Very well-organized with clear transitions, but minor areas could be refined for even better readability. |
-| **8** | Generally well-structured, but occasional awkward transitions or uneven paragraphing. |
-| **7** | Mostly organized, but some parts feel choppy or slightly disjointed. |
-| **6** | Some structural weaknesses make it harder to follow, but the overall message is still discernible. |
-| **5** | Noticeable issues with organization; text lacks a clear structure and requires effort to follow. |
-| **4** | Weak structure; ideas jump around without clear connections, making comprehension difficult. |
-| **3** | Poorly structured; lacks logical flow and forces the reader to work hard to understand the content. |
-| **2** | Nearly unreadable due to lack of organization; ideas are scattered randomly. |
-| **1** | Completely unreadable; no discernible structure or coherence. |
+| **5** | Exceptionally well-structured, logical progression, and highly readable. Paragraphs and sections flow seamlessly. |
+| **4** | Very well-organized with clear transitions, but minor areas could be refined for even better readability. |
+| **3** | Generally well-structured, but occasional awkward transitions or uneven paragraphing. |
+| **2** | Mostly organized, but some parts feel choppy or slightly disjointed. |
+| **1** | Some structural weaknesses make it harder to follow, but the overall message is still discernible. |
 
 ---
 
@@ -23,16 +18,11 @@ Assesses how directly and clearly the explanation conveys the intended concept.
 
 | Score | Criteria |
 | --- | --- |
-| **10** | Exceptionally clear, precise, and free of unnecessary complexity. Ideas are conveyed with straightforward and unambiguous language. |
-| **9** | Very clear and easy to understand, with only minor areas that could be slightly more direct. |
-| **8** | Mostly clear, though some sentences could be refined for conciseness or improved clarity. |
-| **7** | Generally understandable but contains occasional vague or overly complex phrasing. |
-| **6** | Somewhat clear, but requires extra effort to interpret certain sections. |
-| **5** | Noticeably unclear in parts; multiple sections require re-reading to fully grasp. |
-| **4** | Significant issues with clarity; explanations feel unnecessarily convoluted. |
-| **3** | Poor clarity; explanations are vague, ambiguous, or overly technical without necessary simplifications. |
-| **2** | Very difficult to understand; heavily disorganized or full of jargon without explanation. |
-| **1** | Completely incomprehensible or nonsensical. |
+| **5** | Exceptionally clear, precise, and free of unnecessary complexity. Ideas are conveyed with straightforward and unambiguous language. |
+| **4** | Very clear and easy to understand, with only minor areas that could be slightly more direct. |
+| **3** | Mostly clear, though some sentences could be refined for conciseness or improved clarity. |
+| **2** | Generally understandable but contains occasional vague or overly complex phrasing. |
+| **1** | Somewhat clear, but requires extra effort to interpret certain sections. |
 
 ---
 
@@ -42,16 +32,11 @@ Evaluates how well the response captures the complexity and nuances of the educa
 
 | Score | Criteria |
 | --- | --- |
-| **10** | Provides a deep, nuanced, and accurate explanation. Covers all key aspects while adding insightful details. |
-| **9** | Strong conceptual depth with minor areas that could be slightly expanded or refined. |
-| **8** | Covers the main ideas thoroughly but may lack deeper insights or explanations in some areas. |
-| **7** | Mostly correct and informative, but some points feel slightly underdeveloped or oversimplified. |
-| **6** | Covers basic aspects but lacks depth in key areas. Some minor conceptual gaps. |
-| **5** | Noticeable gaps in depth; important aspects of the concept are not explored sufficiently. |
-| **4** | Weak conceptual depth; significant oversimplifications or missing explanations. |
-| **3** | Minimal conceptual understanding; lacks key details or provides a superficial explanation. |
-| **2** | Very poor depth; major misunderstandings or misinterpretations of the concept. |
-| **1** | No meaningful conceptual explanation; completely inaccurate or nonsensical. |
+| **5** | Provides a deep, nuanced, and accurate explanation. Covers all key aspects while adding insightful details. |
+| **4** | Strong conceptual depth with minor areas that could be slightly expanded or refined. |
+| **3** | Covers the main ideas thoroughly but may lack deeper insights or explanations in some areas. |
+| **2** | Mostly correct and informative, but some points feel slightly underdeveloped or oversimplified. |
+| **1** | Covers basic aspects but lacks depth in key areas. Some minor conceptual gaps. |
 
 ---
 
@@ -61,16 +46,11 @@ Measures how well the response stays on topic and directly addresses the given p
 
 | Score | Criteria |
 | --- | --- |
-| **10** | Fully addresses the prompt with a precise, highly relevant explanation. No unnecessary tangents. |
-| **9** | Strong relevance, with only minor deviations or extra details that don’t distract from the main focus. |
-| **8** | Mostly on-topic, but includes some unnecessary information or slight deviations. |
-| **7** | Generally relevant, but includes noticeable sections that stray from the core question. |
-| **6** | Somewhat relevant, but parts of the response feel off-topic or too generalized. |
-| **5** | Noticeable lack of focus; key aspects of the prompt are not sufficiently addressed. |
-| **4** | Weak relevance; large portions of the response are tangential or unrelated. |
-| **3** | Poor alignment with the prompt; most of the content is off-topic. |
-| **2** | Barely relevant to the prompt; only a small portion addresses the actual question. |
-| **1** | Completely off-topic or does not respond to the prompt at all. |
+| **5** | Fully addresses the prompt with a precise, highly relevant explanation. No unnecessary tangents. |
+| **4** | Strong relevance, with only minor deviations or extra details that don’t distract from the main focus. |
+| **3** | Mostly on-topic, but includes some unnecessary information or slight deviations. |
+| **2** | Generally relevant, but includes noticeable sections that stray from the core question. |
+| **1** | Somewhat relevant, but parts of the response feel off-topic or too generalized. |
 
 ---
 
@@ -80,13 +60,8 @@ Assesses how compelling and engaging the explanation is for the reader.
 
 | Score | Criteria |
 | --- | --- |
-| **10** | Exceptionally engaging, dynamic, and thought-provoking. Captures and holds attention effortlessly. |
-| **9** | Very engaging with strong explanations and examples, though minor improvements could enhance it. |
-| **8** | Generally engaging, but may lack variety in phrasing or examples that would make it more compelling. |
-| **7** | Moderately engaging, though some sections feel dry or could use better storytelling. |
-| **6** | Somewhat engaging, but requires additional effort to maintain reader interest. |
-| **5** | Noticeably dull; explanations are informative but lack engagement. |
-| **4** | Weak engagement; content feels monotonous or uninspiring. |
-| **3** | Poor engagement; difficult to stay interested in the content. |
-| **2** | Very unengaging; completely dry or technical without any attempt to maintain interest. |
-| **1** | Actively disengaging; makes the subject feel unappealing or confusing. |
+| **5** | Exceptionally engaging, dynamic, and thought-provoking. Captures and holds attention effortlessly. |
+| **4** | Very engaging with strong explanations and examples, though minor improvements could enhance it. |
+| **3** | Generally engaging, but may lack variety in phrasing or examples that would make it more compelling. |
+| **2** | Moderately engaging, though some sections feel dry or could use better storytelling. |
+| **1** | Somewhat engaging, but requires additional effort to maintain reader interest. |

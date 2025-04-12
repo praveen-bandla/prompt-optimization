@@ -13,7 +13,7 @@ SECTION_WEIGHTS = {
     'section_4': 0.2,
     'section_5': 0.2
 }
-NUM_VALIDATOR_MODELS = 1
+NUM_VALIDATOR_MODELS = 3
 
 # Map model aliases to model names
 # commenting out for now
@@ -25,26 +25,10 @@ MODEL_ALIASES = {
 
 
 VAL_MODEL_DICT = {
-    # 0:{
-    #     'model_name': 'falcon_mamba',
-    #     # 'huggingface_model_id': 'tiiuae/falcon-mamba-7b',
-    #     'huggingface_model_id': 'tiiuae/Falcon3-3B-Instruct',
-    #     'prompt_structure':[
-    #         {
-    #             "role": "system",
-    #             "content": ""
-    #         },
-    #         {
-    #             "role": "user",
-    #             "content": ""
-    #         }
-    #     ]
-            
-    # },  
-
     0:{
-        'model_name': 'opt',
-        'huggingface_model_id': 'facebook/opt-6.7b',
+        'model_name': 'falcon_mamba',
+        # 'huggingface_model_id': 'tiiuae/falcon-mamba-7b',
+        'huggingface_model_id': 'tiiuae/Falcon3-3B-Instruct',
         'prompt_structure':[
             {
                 "role": "system",
@@ -53,22 +37,36 @@ VAL_MODEL_DICT = {
             {
                 "role": "user",
                 "content": ""
+            }
+        ]
+            
+    },
+    1:{
+        'model_name': 'gemma',
+        'huggingface_model_id': 'google/gemma-2-9b-it',
+        'prompt_structure':[
+            {
+                "role": "user",
+                "content": ""
             } 
+        ]
+
+    },
+    2:{
+        'model_name': 'qwen',
+        'huggingface_model_id': 'Qwen/Qwen2.5-7B-Instruct',
+        'prompt_structure':[
+            {
+                "role": "system",
+                "content": ""
+            },
+            {
+                "role": "user",
+                "content": ""
+            }
         ]
     }
 }
-#     },
-#     2:{
-#         'model_name': 'mistral_instruct',
-#         'huggingface_model_id': 'mistralai/Mistral-7B-Instruct-v0.2',
-#         'prompt_structure':[
-#             {
-#                 "role": "user",
-#                 "content": ""
-#             }
-#         ]
-#     }
-# }
 
 # MODEL_ALIASES = {
 #     'validator_model_1': {

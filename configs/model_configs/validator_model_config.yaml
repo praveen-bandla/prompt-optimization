@@ -11,13 +11,15 @@ falcon_mamba:
   top_k: 50
   max_new_tokens: 50
   do_sample: true
-opt:
+gemma:
   temperature: 0.7
   top_p: 0.9
   top_k: 50
   max_new_tokens: 50
   do_sample: true
-mistral:
+qwen:
   temperature: 0.7
   top_p: 0.9
   top_k: 50
+  max_new_tokens: 50
+  do_sample: true
