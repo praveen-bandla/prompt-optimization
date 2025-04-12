@@ -531,7 +531,6 @@ class ModelOutputParquet:
 
         # new_data = pd.DataFrame(model_outputs, columns=["bpv_idx", "model_output_string"])
         # df = pd.concat([self.df, new_data], ignore_index=True)
-        print(model_outputs)
         df = pd.DataFrame(model_outputs, columns=["bpv_idx", "model_output_string"])
         self.reset_parquet()
         df.to_parquet(self.file_path, index=False)
@@ -551,6 +550,7 @@ class ModelOutputParquet:
         '''
         Fetches the base prompt string associated with the base_prompt_idx.
         '''
+        self.df['bpv_idx'] = self.df['bpv_idx'].apply(tuple)
         result = self.df[self.df["bpv_idx"] == (self.bp_idx, -1)]['model_output_string']
         return result.iloc[0] if not result.empty else None
 
@@ -564,9 +564,9 @@ class ModelOutputParquet:
         Returns:
             - str: The model output string if found, else None.
         '''
+        self.df['bpv_idx'] = self.df['bpv_idx'].apply(tuple)
         if bpv_idx[0] != self.bp_idx:
             return ValueError("All model outputs must be specific to the base prompt index provided during initialization of the ModelOutputParquet Object.")
-        print(bpv_idx)
         result = self.df[self.df["bpv_idx"] == bpv_idx]['model_output_string']
         return result.iloc[0] if not result.empty else None
     

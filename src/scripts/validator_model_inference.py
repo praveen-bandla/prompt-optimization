@@ -46,6 +46,7 @@ import json
 import os
 import torch
 import sys
+import yaml
 
 # adding
 from copy import deepcopy
@@ -81,8 +82,11 @@ def parse_model_output(model_output):
     '''
     Model output is a list of integers returned as a string. This function parses the string and returns a list of integers.
     '''
-    # Split the string by commas and convert to integers
-    parsed_list = [int(x.strip()) for x in model_output.split(',') if x.strip().isdigit()]
+    # # Split the string by commas and convert to integers
+    # parsed_list = [int(x.strip()) for x in model_output.split(',') if x.strip().isdigit()]
+    parsed_list = json.loads(model_output)
+
+    print(parsed_list)
 
     return parsed_list
 
@@ -116,17 +120,33 @@ def load_models():
     models_dict = deepcopy(VAL_MODEL_DICT)
 
     for key, model_info in models_dict.items():
+        print('Starting to load model:', model_info['model_name'])
         model_id = model_info['huggingface_model_id']
 
+        print(f'model_id: {model_id}')
         # Load tokenizer and model
-        tokenizer = AutoTokenizer.from_pretrained(model_id)
-        model = AutoModelForCausalLM.from_pretrained(model_id).to(device)
+        tokenizer = AutoTokenizer.from_pretrained(
+            model_id,
+            torch_dtype=torch.float16,
+            device_map="auto",
+            trust_remote_code=True
+        )
+        model = AutoModelForCausalLM.from_pretrained(
+            model_id,
+            torch_dtype=torch.float16,
+            device_map="auto",
+            trust_remote_code=True
+        )
 
         # Update the dictionary with the loaded model and tokenizer
         models_dict[key] = {
+            'model_name': model_info['model_name'],
+            'huggingface_model_id': model_info['huggingface_model_id'],
+            'prompt_structure': model_info['prompt_structure'],
             'model': model,
             'tokenizer': tokenizer
         }
+        print('Finished loading model:', model_info['model_name'])
     
     return models_dict
 
@@ -287,7 +307,7 @@ def construct_prompt(prompt_structure, system_role, content):
 #     return validation_scores.scores
 
 
-def validator_model_inference_per_prompt_variation(base_prompt_str, main_model_output_str):
+def validator_model_inference_per_prompt_variation(base_prompt_str, main_model_output_str, models_dict, configs):
     '''
     Runs inference on all three validator models to generate the validation scores for a single bpv_idx.
     '''
@@ -295,9 +315,10 @@ def validator_model_inference_per_prompt_variation(base_prompt_str, main_model_o
     # Step 1: Retrieve global prompt information
     system_role, content = construct_model_input(base_prompt_str, main_model_output_str)
 
-    # Step 2a: Load models_dict and configs
-    models_dict = load_models()
-    configs = load_configs()
+    # # Step 2a: Load models_dict and configs
+    # models_dict = load_models()
+    # configs = load_configs()
+    # print(configs)
 
     # Step 2b: Initialize validation scores
     scores = generate_empty_scores_dict()
@@ -305,12 +326,15 @@ def validator_model_inference_per_prompt_variation(base_prompt_str, main_model_o
     # Step 3: For each model, run inference
     for idx, model_info in models_dict.items():
         # Step 3a: load model specific hyperparameters from configs
-        model_configs = configs[model_info['model_name']]
+
+        model_configs = configs.get(str(model_info['model_name']))
 
         generation_args = {
             "temperature": model_configs.get("temperature"),
             "top_p": model_configs.get("top_p"),
-            "top_k": model_configs.get("top_k")
+            "top_k": model_configs.get("top_k"),
+            "max_new_tokens": model_configs.get("max_new_tokens"),
+            "do_sample": model_configs.get("do_sample")
         }
 
         # Step 3b: Construct the prompt based on the model's requirements
@@ -323,12 +347,15 @@ def validator_model_inference_per_prompt_variation(base_prompt_str, main_model_o
             'text-generation', 
             model=models_dict[idx]['model'], 
             tokenizer=models_dict[idx]['tokenizer'],
-            device=0  # Use GPU
+            device_map="auto",  # Use GPU
+            return_full_text = False
         )
 
         # Step 3d: Run inference
         output = pipe(full_prompt, **generation_args)
         generated_text = output[0]['generated_text']
+
+        print(f"Generated text: {generated_text}")
 
         # Step 3e: Parse and store the model output
         parsed_list = parse_model_output(generated_text)
@@ -349,12 +376,13 @@ def validator_model_inference_per_prompt_variation(base_prompt_str, main_model_o
     total_score = 0
     for i in range(1, NUM_RUBRIC_SECTIONS + 1):
         total_score += scores[f"section_{i}_avg"] * SECTION_WEIGHTS[f'section_{i}']
-    scores["total_score"] = total_score
+    scores["total_score"] = round(total_score, 2)
 
     return scores
 
 
-def validator_model_inference_per_base_prompt(bp_idx):
+def validator_model_inference_per_base_prompt(mo_parquet, vs_parquet, bp_idx):
+    # add vs_parquet as an argument
     '''
     Performs main model inference on all prompt variations for the given bp_idx. Stores all the outputs in its respective Parquet file.
 
@@ -371,26 +399,27 @@ def validator_model_inference_per_base_prompt(bp_idx):
     # Load the base_prompt_str
     base_prompt_str = bp_obj.get_prompt_str()
 
-    mo_parquet = ModelOutputParquet(bp_idx)
+    models_dict = load_models()
+    configs = load_configs()
 
-    for idx in range(NUM_PROMPT_VARIATIONS):
+    for idx in range(-1, NUM_PROMPT_VARIATIONS):
         # Load the main model output string for the given bpv_idx
         model_output_obj = MainModelOutput((bp_idx, idx), mo_parquet)
         main_model_output_str = model_output_obj.get_output_str()
 
         # Run inference
-        # PRAVEEN: COMMENTING OUT FOR NOW
-        # scores = validator_model_inference_per_prompt_variation(base_prompt_str, main_model_output_str)
-        scores = generate_empty_scores_dict()
+        scores = validator_model_inference_per_prompt_variation(base_prompt_str, main_model_output_str, models_dict, configs)
+        #scores = generate_empty_scores_dict()
 
         # Create a new ValidationScore object
-        vs_obj = ValidationScore((bp_idx, idx), scores)
+        vs_obj = ValidationScore((bp_idx, idx), vs_parquet, scores)
         all_vs_objs.append(vs_obj)
 
     return all_vs_objs
 
 
-def write_validation_scores_to_parquet(vs_objs, bp_idx):
+def write_validation_scores_to_parquet(vs_parquet, vs_objs, bp_idx):
+    # add vs_parquet as an argument
     '''
     Writes the validation scores to a Parquet file.
 
@@ -399,15 +428,9 @@ def write_validation_scores_to_parquet(vs_objs, bp_idx):
     - bp_idx (int): The base prompt index.
     '''
     # Create a new Parquet file for the validation scores
-    vs_parquet = ValidationScoreParquet(bp_idx)
+    # vs_parquet = ValidationScoreParquet(bp_idx)
 
     vs_parquet.insert_validation_scores(vs_objs)
-
-
-
-    
-
-
 
 
 
@@ -490,11 +513,15 @@ if __name__ == "__main__":
     start_idx = int(sys.argv[1])
     end_idx = int(sys.argv[2])
     for bp_idx in range(start_idx, end_idx):
+        vs_parquet = ValidationScoreParquet(bp_idx)
         # Run inference for the given base prompt index
-        vs_objs = validator_model_inference_per_base_prompt(bp_idx)
+        mo_parquet = ModelOutputParquet(bp_idx)
+        vs_parquet = ValidationScoreParquet(bp_idx)
+
+        vs_objs = validator_model_inference_per_base_prompt(mo_parquet, vs_parquet, bp_idx)
         
         # Write the validation scores to Parquet
-        write_validation_scores_to_parquet(vs_objs, bp_idx)
+        write_validation_scores_to_parquet(vs_parquet, vs_objs, bp_idx)
         
         print(f"Finished inference for base prompt index {bp_idx}.")
 
