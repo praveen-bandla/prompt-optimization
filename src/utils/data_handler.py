@@ -212,6 +212,7 @@ class PromptVariationParquet:
             - str: The base prompt string if found, else None.
             - str: The prompt variation string if found, else None.
         '''
+        self.df['bpv_idx'] = df['bpv_idx'].apply(tuple)
         base_prompt = self.df[self.df["bpv_idx"] == (self.bp_idx, -1)]['prompt_variation_string']
         prompt_variation = self.df[self.df["bpv_idx"] == bpv_idx]['prompt_variation_string']
         return base_prompt.iloc[0] if not base_prompt.empty else None, prompt_variation.iloc[0] if not prompt_variation.empty else None
