@@ -3,8 +3,8 @@
 #SBATCH --gres=gpu:1
 #SBATCH --gres=gpu:a100:1
 #SBATCH --cpus-per-task=4 
-#SBATCH --job-name=generate_base_prompts
-#SBATCH --output=output/generate_base_prompts.out 
+#SBATCH --job-name=generate_base_prompts_a100
+#SBATCH --output=output/generate_base_prompts_a100.out 
 
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
