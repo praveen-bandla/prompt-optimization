@@ -25,7 +25,7 @@ VALIDATOR_MODEL_CONFIGS = os.path.join(MODEL_CONFIGS, 'validator_model_config.ya
 OPT_MODEL = os.path.join(MODELS_PATH, 'facebook/opt-6.7b')
 OPT_MODEL_ID = 'facebook/opt-6.7b'
 MISTRAL_INSTRUCT_MODEL = os.path.join(MODELS_PATH, 'mistralai/Mistral-7B-Instruct-v0.3')
-MISTRAL_INSTRUCT_MODEL_ID = 'mistralai/Mistral-7B-Instruct-v0.2'
+MISTRAL_INSTRUCT_MODEL_ID = 'mistralai/Mistral-7B-Instruct-v0.3'
 RUBRIC_PATH = os.path.join(MODEL_INPUT_PATH, 'rubric.txt')
 
 
