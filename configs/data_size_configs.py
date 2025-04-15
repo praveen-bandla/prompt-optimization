@@ -2,8 +2,8 @@
 This script contains all information related to the data size configurations. I have added some example things but this is not complete. This is just a starting point. Add to it as needed.
 '''
 
-NUM_PROMPT_VARIATIONS = 10
-NUM_BASE_PROMPTS = 10
+NUM_PROMPT_VARIATIONS = 100
+NUM_BASE_PROMPTS = 1700
 # PARTITION_SIZE_MODEL_OUTPUT_PARQUET = 0
 NUM_RUBRIC_SECTIONS = 5
 SECTION_WEIGHTS = {
@@ -13,15 +13,15 @@ SECTION_WEIGHTS = {
     'section_4': 2.0,
     'section_5': 0.5
 }
-NUM_VALIDATOR_MODELS = 2
+NUM_VALIDATOR_MODELS = 3
 
 # Map model aliases to model names
 # commenting out for now
-MODEL_ALIASES = {
-    'validator_model_1': 'falcon_mamba',
-    'validator_model_2': 'opt',
-    'validator_model_3': 'mistral_instruct',
-}
+# MODEL_ALIASES = {
+#     'validator_model_1': 'falcon_mamba',
+#     'validator_model_2': 'opt',
+#     'validator_model_3': 'mistral_instruct',
+# }
 
 
 VAL_MODEL_DICT = {
@@ -50,22 +50,22 @@ VAL_MODEL_DICT = {
                 "content": ""
             } 
         ]
+    #}
+    },
+    2:{
+        'model_name': 'qwen',
+        'huggingface_model_id': 'Qwen/Qwen2.5-7B-Instruct',
+        'prompt_structure':[
+            {
+                "role": "system",
+                "content": ""
+            },
+            {
+                "role": "user",
+                "content": ""
+            }
+        ]
     }
-    # },
-    # 2:{
-    #     'model_name': 'qwen',
-    #     'huggingface_model_id': 'Qwen/Qwen2.5-7B-Instruct',
-    #     'prompt_structure':[
-    #         {
-    #             "role": "system",
-    #             "content": ""
-    #         },
-    #         {
-    #             "role": "user",
-    #             "content": ""
-    #         }
-    #     ]
-    # }
 }
 
 # MODEL_ALIASES = {

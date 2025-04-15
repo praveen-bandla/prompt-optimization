@@ -1,11 +1,15 @@
 #!/bin/bash
 
 #SBATCH --gres=gpu:1
+#SBATCH --gres=gpu:a100:1
+#SBATCH --job-name=generate_base_prompts
+
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=1
+
 #SBATCH --time=1:00:00 
-#SBATCH --mem=2GB 
+#SBATCH --mem=64GB 
 #SBATCH --mail-type=END
 #SBATCH --mail-user=ic2664@nyu.edu
 
