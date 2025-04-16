@@ -25,5 +25,5 @@ singularity exec --nv \
     echo 'Running with system Python'
     cd /scratch/ic2664/prompt-optimization/ || echo 'cd failed'
     export PYTHONPATH=$(pwd)
-    python3 ./src/scripts/generate_base_prompts_new.py || echo 'Python script failed'
+    python3 src/scripts/generate_base_prompts_new.py || echo 'Python script failed'
 "
