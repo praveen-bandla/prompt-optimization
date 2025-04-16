@@ -19,7 +19,7 @@ module load singularity
 singularity exec --nv \
   --bind /scratch \
   --overlay /scratch/ic2664/overlay-25GB-500K.ext3:rw \
-  /scratch/dj2565/cuda11.8.86-cudnn8.7-devel-ubuntu22.04.2.sif \
+  /scratch/ic2664/cuda11.8.86-cudnn8.7-devel-ubuntu22.04.2.sif \
   /bin/bash -c "
     source /ext3/miniconda3/etc/profile.d/conda.sh
     conda activate venv-bella
