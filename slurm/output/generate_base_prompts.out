@@ -1,2 +1,3 @@
-Running with system Python
-Python script failed
+Inside container
+PYTHONPATH: /scratch/ic2664/prompt-optimization
+Database created at /scratch/ic2664/prompt-optimization/data/base_prompts/base_prompts.db

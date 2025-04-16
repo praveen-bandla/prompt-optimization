@@ -21,9 +21,12 @@ singularity exec --nv \
   --bind /scratch \
   --overlay /scratch/ic2664/overlay-25GB-500K.ext3:rw \
   /scratch/ic2664/cuda11.8.86-cudnn8.7-devel-ubuntu22.04.2.sif \
-  /bin/bash -c "
-    echo 'Running with system Python'
-    cd /scratch/ic2664/prompt-optimization/ || echo 'cd failed'
+  /bin/bash -c '
+    echo "Inside container"
+    cd /scratch/ic2664/prompt-optimization/ || { echo "cd failed"; exit 1; }
+    source venv-bella/bin/activate
     export PYTHONPATH=$(pwd)
-    python3 src/scripts/generate_base_prompts_new.py || echo 'Python script failed'
-"
+    echo "PYTHONPATH: $PYTHONPATH"
+    export HF_HOME=/scratch/ic2664/huggingface_cache
+    python3 src/scripts/generate_base_prompts_new.py || echo "Python script failed"
+'
