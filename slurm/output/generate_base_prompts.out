@@ -1,9 +1,0 @@
-Lmod has detected the following error: These module(s) or extension(s) exist
-but cannot be loaded as requested: "singularity"
-   Try: "module spider singularity" to see how to load the module(s).
-
-
-
-/bin/bash: line 2: /ext3/miniconda3/etc/profile.d/conda.sh: No such file or directory
-/bin/bash: line 3: conda: command not found
-/bin/bash: line 5: python: command not found
