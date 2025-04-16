@@ -4,4 +4,6 @@ but cannot be loaded as requested: "singularity"
 
 
 
-FATAL:   While checking image: could not open image /scratch/dj2565/cuda11.8.86-cudnn8.7-devel-ubuntu22.04.2.sif: failed to retrieve path for /scratch/dj2565/cuda11.8.86-cudnn8.7-devel-ubuntu22.04.2.sif: lstat /scratch/dj2565/cuda11.8.86-cudnn8.7-devel-ubuntu22.04.2.sif: permission denied
+/bin/bash: line 2: /ext3/miniconda3/etc/profile.d/conda.sh: No such file or directory
+/bin/bash: line 3: conda: command not found
+/bin/bash: line 5: python: command not found
