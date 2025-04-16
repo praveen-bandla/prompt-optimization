@@ -1,1 +1,4 @@
-FATAL:   could not open image /scratch/dj2565/cuda11.8.86-cudnn8.7-devel-ubuntu22.04.2.sif: failed to retrieve path for /scratch/dj2565/cuda11.8.86-cudnn8.7-devel-ubuntu22.04.2.sif: lstat /scratch/dj2565/cuda11.8.86-cudnn8.7-devel-ubuntu22.04.2.sif: permission denied
+Traceback (most recent call last):
+  File "/scratch/ic2664/prompt-optimization/./src/scripts/generate_base_prompts_new.py", line 28, in <module>
+    from src.utils.prompt import *
+ModuleNotFoundError: No module named 'src'
