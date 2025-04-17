@@ -3,7 +3,7 @@ This script contains all information related to the data size configurations. I 
 '''
 
 NUM_PROMPT_VARIATIONS = 50
-NUM_BASE_PROMPTS = 2000
+NUM_BASE_PROMPTS = 10
 # PARTITION_SIZE_MODEL_OUTPUT_PARQUET = 0
 NUM_RUBRIC_SECTIONS = 5
 SECTION_WEIGHTS = {

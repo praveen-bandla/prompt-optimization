@@ -15,3 +15,4 @@ The attention mask and the pad token id were not set. As a consequence, you may 
 Setting `pad_token_id` to `eos_token_id`:None for open-end generation.
 The attention mask is not set and cannot be inferred from input because pad token is same as eos token. As a consequence, you may observe unexpected behavior. Please pass your input's `attention_mask` to obtain reliable results.
 Starting from v4.46, the `logits` model output will have the same type as the model (except at train time, where it will always be FP32)
+slurmstepd: error: *** JOB 59363521 ON gr048 CANCELLED AT 2025-04-17T01:01:08 ***
