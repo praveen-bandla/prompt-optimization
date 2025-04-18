@@ -33,36 +33,25 @@ import os
 # Shared tokenizer
 prompt_opt_tokenizer = AutoTokenizer.from_pretrained(PROMPT_OPT_BASE_MODEL_ID)
 
-# Load regression head model
+# Load regression head model base
 regression_head_base = AutoModelForCausalLM.from_pretrained(
     PROMPT_OPT_BASE_MODEL_ID,
     torch_dtype = torch.float16,
     device_map="auto",
     cache_dir = PROMPT_OPT_BASE_PATH
 )
-regression_head_model = PeftModel.from_pretrained(
-    regression_head_base,
-    LORA_REGRESSION_HEAD_PATH,
-    torch_dtype=torch.float16,
-    device_map="auto",
-    cache_dir = LORA_REGRESSION_HEAD_PATH
-)
-print("Regression head base and model downloaded and saved locally.")
+regression_head_base.save_pretrained(LORA_REGRESSION_HEAD_PATH)
+print("Base model for regression head saved to:", LORA_REGRESSION_HEAD_PATH)
 
-# Load prompt generator model
+# Load prompt generator model base
 prompt_gen_base = AutoModelForCausalLM.from_pretrained(
     PROMPT_OPT_BASE_MODEL_ID,
     torch_dtype = torch.float16,
     device_map="auto",
     cache_dir = PROMPT_OPT_BASE_PATH
 )
-prompt_gen_model = PeftModel.from_pretrained(
-    prompt_gen_base,
-    LORA_PROMPT_GEN_PATH,
-    torch_dtype=torch.float16,
-    device_map="auto",
-    cache_dir=LORA_PROMPT_GEN_PATH
-)
-print("Regression head base and model downloaded and saved locally.")
+prompt_gen_base.save_pretrained(LORA_PROMPT_GEN_PATH)
+print("Base model frompt generator saved to:", LORA_PROMPT_GEN_PATH)
+
 # NOTE: Using device_map="auto" will automatically place the model on the same GPU if memory allows. Must ensure Greene job requests enough memory (24GB+)
 
