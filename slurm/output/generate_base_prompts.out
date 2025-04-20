@@ -1,3 +1,33 @@
 Inside container
 PYTHONPATH: /scratch/ic2664/prompt-optimization
 Database created at /scratch/ic2664/prompt-optimization/data/base_prompts/base_prompts.db
+GPU OR NOT cuda:0
+instruction : [{'role': 'system', 'content': 'You are an expert in prompt engineering. Your task is to generate high-quality prompts for a language model that will be used to create learning guides for third-grade students.'}, {'role': 'user', 'content': 'Generate EXACTLY 10 different prompts that ask a language model to generate a learning guide for a third-grade student. Each prompt must: (1) include the word \'guide\' and either \'third-grade\' or \'third-grader\', (2) be between 5–25 words long, and (3) cover single a **different educational topic**. Keep the structure of the prompts diverse and include verbs in each prompt. All topics must be specific and age-appropriate for third-grade students in a U.S. school setting. Avoid overly vague topics like \'science\' or \'art\' — instead, use specific instructional topics like \'how to mix primary colors\' or \'how the water cycle works\'. Avoid topics that are too advanced for third-grade students, such as \'coding\', \'economics\', or \'ancient civilizations\'. Output should be a single JSON array of double-quoted strings with no explanation or commentary. Format: ["prompt1", "prompt2", ...]'}]
+Successfully loaded model and configs.
+Running inference to generate prompt variations...
+Raw Model Output: [
+"Create a step-by-step guide for a third-grader on how to write their name correctly.",
+"Develop a comprehensive guide for third-grade math problems involving basic addition facts.",
+"Design a fun interactive guide for teaching fractions using real-life examples to a third-grader.",
+"Write a clear concise guide explaining photosynthesis to a curious third-grader.",
+"Craft a beginner's guide for reading comprehension strategies tailored specifically for third-graders.",
+"Produce a detailed guide outlining the steps involved in conducting a simple science experiment at home by a third-grader.",
+"Compose a helpful guide offering tips and tricks for mastering multiplication tables for third-grade level.",
+"Prepare a kid-friendly guide illustrating the life cycle of butterflies from egg stage to adult butterfly for a third-grader.",
+"Construct a straightforward guide covering the basics of time telling including hours minutes seconds for a third-grader.",
+"Build a visual guide showing the process of mixing primary colors to create secondary colors suitable for a third-grader."
+]
+Formatted Output: [
+"Create a step-by-step guide for a third-grader on how to write their name correctly.",
+"Develop a comprehensive guide for third-grade math problems involving basic addition facts.",
+"Design a fun interactive guide for teaching fractions using real-life examples to a third-grader.",
+"Write a clear concise guide explaining photosynthesis to a curious third-grader.",
+"Craft a beginner's guide for reading comprehension strategies tailored specifically for third-graders.",
+"Produce a detailed guide outlining the steps involved in conducting a simple science experiment at home by a third-grader.",
+"Compose a helpful guide offering tips and tricks for mastering multiplication tables for third-grade level.",
+"Prepare a kid-friendly guide illustrating the life cycle of butterflies from egg stage to adult butterfly for a third-grader.",
+"Construct a straightforward guide covering the basics of time telling including hours minutes seconds for a third-grader.",
+"Build a visual guide showing the process of mixing primary colors to create secondary colors suitable for a third-grader."
+]
+Database connection to /scratch/ic2664/prompt-optimization/data/base_prompts/base_prompts.db closed.
+Base prompts generated and written to SQLite database.
