@@ -60,7 +60,7 @@ def collect_instruction():
     content_template = prompt_structure["content_template"]
     #instruction = system_role + " " + content_template
 
-    content = content_template.format(num_prompt = NUM_BASE_PROMPTS)
+    content = content_template.format(num_prompt = BATCH_SIZE)
 
     full_prompt = [
         {
@@ -285,7 +285,7 @@ def base_prompt_inference():
     
     # return assistant_response
 
-def parse_model_output_as_bp_objects(model_output):
+def parse_model_output_as_bp_objects(model_output, offset=0):
     '''
     This function parses the model output to extract the base prompts as tuples of (bp_idx, base_prompt_string). NB: This assumes that the db is empty. This handles the randomization of ordering of prompts as well.
 
@@ -298,10 +298,10 @@ def parse_model_output_as_bp_objects(model_output):
     base_prompts = json.loads(model_output)
 
     # creating random order of prompts stored as int indices
-    random_indices = random.sample(range(NUM_BASE_PROMPTS), NUM_BASE_PROMPTS)
+    random_indices = random.sample(range(len(base_prompts)), len(base_prompts))
 
     # returning a list of tuples in the desired format of the random order of prompts
-    return [(new_idx, base_prompts[random_idx]) for new_idx, random_idx in enumerate(random_indices)]
+    return [(offset + new_idx, base_prompts[random_idx]) for new_idx, random_idx in enumerate(random_indices)]
 
 
 # Step 3: Write the base prompts to a SQLite database
@@ -323,20 +323,23 @@ def main():
         os.remove(SQL_DB)
     # creates the BasePromptDB object
     bp_db = BasePromptDB()
+    bp_idx_counter = 0
 
-    # generates model output by inferencing
-    model_output = base_prompt_inference()
-    
-    # formats the model output as a list of tuples in random order
-    formatted_base_prompts = parse_model_output_as_bp_objects(model_output)
+    for batch_num in range(NUM_BATCHES):   # ✅ Loops 20 times
+        print(f"\n🌀 Batch {batch_num + 1}/{NUM_BATCHES}...")
+        try:
+            model_output = base_prompt_inference(BATCH_SIZE)  # ✅ Generate 100 prompts
+            formatted_prompts = parse_model_output_as_bp_objects(
+                model_output, offset=bp_idx_counter
+            )
+            write_to_db(formatted_prompts, bp_db)
+            bp_idx_counter += BATCH_SIZE  # ✅ Tracks global prompt index
+        except Exception as e:
+            print(f"Batch {batch_num + 1} failed: {e}")
+            continue
 
-    #formatted_base_prompts = [(1, 'testing1'), (2, 'testing2'), (3, 'tesingt3'), (4, 'test4'), (5, 'test5')]
-    
-    # writes the base prompts to the SQLite database
-    write_to_db(formatted_base_prompts, bp_db)
-    # closes the connection to the database
     bp_db.close_connection()
-    print("Base prompts generated and written to SQLite database.")
+    print(f"\n✅ All base prompts written to DB: {bp_idx_counter} prompts total.")
 
 
 if __name__ == "__main__":
