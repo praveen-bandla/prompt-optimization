@@ -3,13 +3,13 @@
 #SBATCH --job-name=generate_base_prompts
 #SBATCH --output=slurm/output/generate_base_prompts_%j.out
 #SBATCH --error=slurm/output/generate_base_prompts_%j.err
-#SBATCH --partition=a100_2
-#SBATCH --gres=gpu:a100:1
-#SBATCH --cpus-per-task=4
+#SBATCH --partition=rtx8000
+#SBATCH --gres=gpu:rtx8000:1
+#SBATCH --cpus-per-task=8
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
-#SBATCH --time=01:00:00
-#SBATCH --mem=32GB
+#SBATCH --time=02:00:00
+#SBATCH --mem=64GB
 #SBATCH --mail-type=END
 #SBATCH --mail-user=dj2565@nyu.edu
 
