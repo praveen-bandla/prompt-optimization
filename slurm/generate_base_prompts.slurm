@@ -15,7 +15,7 @@
 
 # Clean environment
 module purge
-module load singularity
+module load singularity/3.7.4
 
 # Run inside Singularity container with overlay and Conda
 singularity exec --nv \
@@ -26,6 +26,7 @@ singularity exec --nv \
     source /ext3/miniconda3/etc/profile.d/conda.sh
     conda activate venv-darren
     cd /scratch/dj2565/prompt-optimization/
+    export PYTHONPATH=$PYTHONPATH:/scratch/dj2565/prompt-optimization/
     echo 'Start time: ' \$(date)
     python ./src/scripts/generate_base_prompts_new.py
     echo 'End time: ' \$(date)
