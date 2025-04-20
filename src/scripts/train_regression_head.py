@@ -136,6 +136,11 @@ def objective(trial):
             outputs = model(**inputs)
             logits = outputs.logits
 
+            # PRAVEEN: I think this where the error is coming from. The logits and labels are not the same shape
+
+            # PRAVEEN: fixing the shape issue
+            logits = logits.mean(dim=1)
+
             # Debugging: Print shapes
             print(f'Epoch {epoch + 1}, Training - Logits shape: {logits.shape}, Labels shape: {labels.shape}')
 
@@ -155,6 +160,11 @@ def objective(trial):
                 outputs = model(**inputs)
                 logits = outputs.logits
 
+                # PRAVEEN: I think this where the error is coming from. The logits and labels are not the same shape
+
+                # PRAVEEN: fixing the shape issue
+                logits = logits.mean(dim=1)
+
                 # Debugging: Print shapes
                 print(f'Validation - Logits shape: {logits.shape}, Labels shape: {labels.shape}')
 
@@ -172,7 +182,8 @@ study = optuna.create_study(direction="minimize")
 study.optimize(objective, n_trials=10)
 
 # Save model
-save_path = f"{LORA_REGRESSION_HEAD_PATH}_trial_{study.best_trial.number}"
-os.makedirs(save_path, exist_ok=True)
-model.save_pretrained(save_path)
-print(f"Model saved to {save_path}")
+# PRAVEEN: commenting out for now just to test the training code
+# save_path = f"{LORA_REGRESSION_HEAD_PATH}_trial_{study.best_trial.number}"
+# os.makedirs(save_path, exist_ok=True)
+# model.save_pretrained(save_path)
+# print(f"Model saved to {save_path}")
