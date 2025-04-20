@@ -50,3 +50,9 @@ MAIN_MODEL_INPUT = os.path.join(MODEL_INPUT_PATH, 'main_model_input.json')
 MAIN_MODEL_CONFIGS = os.path.join(MODEL_CONFIGS, 'main_model_config.yaml')
 MAIN_MODEL = os.path.join(MODELS_PATH, 'microsoft-Phi-3.5-mini-instruct/')   
 MAIN_MODEL_ID = "microsoft/Phi-3.5-mini-instruct"
+
+# prompt optimizer related paths
+PROMPT_OPT_BASE_MODEL_ID = 'meta-llama/Llama-3.2-1B'
+PROMPT_OPT_BASE_PATH = os.path.join(MODELS_PATH, 'prompt_opt_base')
+LORA_PROMPT_GEN_PATH = os.path.join(MODELS_PATH, 'lora_prompt_gen')
+LORA_REGRESSION_HEAD_PATH = os.path.join(MODELS_PATH, 'lora_regression_head')

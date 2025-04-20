@@ -13,3 +13,4 @@ src/utils/__pycache__/__init__.cpython-312.pyc
 src/utils/__pycache__/data_handler.cpython-312.pyc
 src/utils/__pycache__/prompt.cpython-312.pyc
 venv/
+models/
