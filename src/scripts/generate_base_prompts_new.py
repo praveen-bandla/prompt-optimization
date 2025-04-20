@@ -120,6 +120,9 @@ def load_model():
 
     #tokenizer = AutoTokenizer.from_pretrained(BASE_PROMPT_MODEL, trust_remote_code=True)
     tokenizer = AutoTokenizer.from_pretrained(base_prompt_model_id, torch_dtype=torch.bfloat16, device_map="auto", trust_remote_code=True)
+
+    tokenizer.pad_token = tokenizer.eos_token
+    model.config.pad_token_id = tokenizer.eos_token_id
     
     # Load Configuration JSON
     # with open(BASE_PROMPT_MODEL_INPUT, "r") as file:
@@ -296,6 +299,9 @@ def parse_model_output_as_bp_objects(model_output):
         - list: A list of tuples, each containing the base prompt index and the base prompt string. Stored as a list of (bp_idx, bp_str)
     '''
     base_prompts = json.loads(model_output)
+
+    if NUM_BASE_PROMPTS > len(base_prompts):
+        raise ValueError(f"NUM_BASE_PROMPTS ({NUM_BASE_PROMPTS}) exceeds the number of generated prompts ({len(base_prompts)}).")
 
     # creating random order of prompts stored as int indices
     random_indices = random.sample(range(NUM_BASE_PROMPTS), NUM_BASE_PROMPTS)
