@@ -43,6 +43,7 @@ PROMPT_VARIATION_MODEL_CONFIG = os.path.join(CONFIGS_PATH, 'model_configs/prompt
 PROMPT_TOPIC_MODEL_INPUT = os.path.join(MODEL_INPUT_PATH, 'base_prompt_topics.json')
 BASE_PROMPT_MODEL_INPUT = os.path.join(MODEL_INPUT_PATH, 'base_prompt_input.json')
 BASE_PROMPT_MODEL_CONFIG = os.path.join(CONFIGS_PATH, 'model_configs/base_prompt_config.yaml')
+PROMPT_TEMPLATE_CONFIG = os.path.join(CONFIGS_PATH, 'model_configs/prompt_template_config.yaml')
 #BASE_PROMPT_MODEL = os.path.join(MODELS_PATH, 'Llama-3.1-8B/original/')
 #BASE_PROMPT_MODEL = os.path.join(MODELS_PATH, 'microsoft-Phi-3.5-mini-instruct/')
 
