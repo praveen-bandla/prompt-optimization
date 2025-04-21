@@ -297,10 +297,9 @@ def parse_model_output_as_bp_objects(model_output, offset=0):
     '''
     base_prompts = json.loads(model_output)
 
-    # creating random order of prompts stored as int indices
+    # Shuffle actual output length, not fixed 2000
     random_indices = random.sample(range(len(base_prompts)), len(base_prompts))
 
-    # returning a list of tuples in the desired format of the random order of prompts
     return [(offset + new_idx, base_prompts[random_idx]) for new_idx, random_idx in enumerate(random_indices)]
 
 
@@ -333,7 +332,7 @@ def main():
                 model_output, offset=bp_idx_counter
             )
             write_to_db(formatted_prompts, bp_db)
-            bp_idx_counter += BATCH_SIZE  # ✅ Tracks global prompt index
+            bp_idx_counter += len(formatted_prompts)  # ✅ Tracks global prompt index
         except Exception as e:
             print(f"Batch {batch_num + 1} failed: {e}")
             continue
