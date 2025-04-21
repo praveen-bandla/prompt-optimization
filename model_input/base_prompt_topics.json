@@ -1,0 +1,4 @@
+{
+    "system_role": "You are an expert in prompt engineering. Your task is to generate high-quality, broad, and varied educational topics.",
+    "content_template": "Generate EXACTLY 20 different educational topics to feed to another language model. These should be VERY general and standard US education topics. Output should be a single JSON array of double-quoted strings with no explanation or commentary. Format: [\"prompt1\", \"prompt2\", ...]"
+}
