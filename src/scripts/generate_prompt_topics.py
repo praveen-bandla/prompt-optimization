@@ -22,7 +22,7 @@ login(token="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")
 # Step 1: Collect the instruction for generating base prompts
 def collect_instruction():
     '''
-    Creates instructions for generating base prompts. Uses the base_prompt_model_input.json file as the model input, along with NUM_BASE_PROMPTS from the data_size_configs file.
+    Creates instructions for generating base prompts. Uses the prompt_topic_model_input.json file as the model input.
 
     Inputs: None
 
@@ -31,7 +31,7 @@ def collect_instruction():
     
     '''
     if not os.path.exists(PROMPT_TOPIC_MODEL_INPUT):
-        raise FileNotFoundError(f"Instruction file not found at {PROMPT_TOPIC_MODEL_INPUT }")
+        raise FileNotFoundError(f"Instruction file not found at {PROMPT_TOPIC_MODEL_INPUT}")
     with open(PROMPT_TOPIC_MODEL_INPUT , 'r') as f:
         topic_structure = json.load(f)
     
@@ -64,7 +64,7 @@ def load_configs():
     Outputs: 
         - configs: the configurations for the base prompt model.
     '''
-    config_path = BASE_PROMPT_MODEL_CONFIG
+    config_path = PROMPT_TEMPLATE_CONFIG
 
     with open(config_path, 'r') as f:
         configs = yaml.safe_load(f)
@@ -150,9 +150,9 @@ def load_model():
 
 # Step 2: Run inference to collect all the base prompts
 
-def base_prompt_inference(): 
+def topic_inference(): 
     '''
-    This runs inference on the base_prompt_model to generate the desired output. It solely retrieves the response as a string and does not process it further.
+    This runs inference on the topic_model to generate the desired output. It solely retrieves the response as a string and does not process it further.
     '''
     instruction = collect_instruction()
     model, tokenizer = load_model()
@@ -263,7 +263,7 @@ def base_prompt_inference():
     
     # return assistant_response
 
-def parse_model_output_as_bp_objects(model_output):
+def parse_model_output_as_topics(model_output):
     '''
     This function parses the model output to extract the base prompts as tuples of (bp_idx, base_prompt_string). NB: This assumes that the db is empty. This handles the randomization of ordering of prompts as well.
 
@@ -273,20 +273,17 @@ def parse_model_output_as_bp_objects(model_output):
     Outputs:
         - list: A list of tuples, each containing the base prompt index and the base prompt string. Stored as a list of (bp_idx, bp_str)
     '''
-    base_prompts = json.loads(model_output)
-
-    if NUM_BASE_PROMPTS > len(base_prompts):
-        raise ValueError(f"NUM_BASE_PROMPTS ({NUM_BASE_PROMPTS}) exceeds the number of generated prompts ({len(base_prompts)}).")
+    topics = json.loads(model_output)
 
     # creating random order of prompts stored as int indices
-    random_indices = random.sample(range(NUM_BASE_PROMPTS), NUM_BASE_PROMPTS)
+    random_indices = random.sample(range(20), 20)
 
     # returning a list of tuples in the desired format of the random order of prompts
-    return [(new_idx, base_prompts[random_idx]) for new_idx, random_idx in enumerate(random_indices)]
+    return [(new_idx, topics[random_idx]) for new_idx, random_idx in enumerate(random_indices)]
 
 
 # Step 3: Write the base prompts to a SQLite database
-def write_to_db(formatted_base_prompts, bp_db):
+def write_to_db(formatted_topics, topic_db):
     '''
     This function writes the base prompts to the SQLite database using the BasePromptDB object.
 
@@ -294,7 +291,7 @@ def write_to_db(formatted_base_prompts, bp_db):
         - formatted_base_prompts: A list of tuples, each containing the base prompt index and the base prompt string. Stored as a list of (bp_idx, bp_str)
         - bp_db: an object of type BasePromptDB (data handler) used to write
     '''
-    bp_db.insert_base_prompts(formatted_base_prompts)
+    topic_db.insert_topics(formatted_topics)
 
     return
 
@@ -303,20 +300,20 @@ def main():
     if os.path.exists(SQL_TOPIC_DB): #ensures that we do not have a pre-existing database
         os.remove(SQL_TOPIC_DB)
     # creates the BasePromptDB object
-    bp_db = BasePromptDB()
+    topic_db = PromptTopicDB(SQL_TOPIC_DB)
 
     # generates model output by inferencing
-    model_output = base_prompt_inference()
+    model_output = topic_inference()
     
     # formats the model output as a list of tuples in random order
-    formatted_base_prompts = parse_model_output_as_bp_objects(model_output)
+    formatted_topics= parse_model_output_as_topics(model_output)
 
     #formatted_base_prompts = [(1, 'testing1'), (2, 'testing2'), (3, 'tesingt3'), (4, 'test4'), (5, 'test5')]
     
     # writes the base prompts to the SQLite database
-    write_to_db(formatted_base_prompts, bp_db)
+    write_to_db(formatted_topics, topic_db)
     # closes the connection to the database
-    bp_db.close_connection()
+    topic_db.close_connection()
     print("Prompt topics generated and written to SQLite database.")
 
 
