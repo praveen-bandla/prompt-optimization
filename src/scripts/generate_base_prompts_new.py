@@ -289,7 +289,7 @@ def base_prompt_inference(batch_size, topic):
     
     # return assistant_response
 
-def parse_model_output_as_bp_objects(model_output):
+def parse_model_output_as_bp_objects(model_output, offset=0):
     '''
     This function parses the model output to extract the base prompts as tuples of (bp_idx, base_prompt_string). NB: This assumes that the db is empty. This handles the randomization of ordering of prompts as well.
 
@@ -308,7 +308,7 @@ def parse_model_output_as_bp_objects(model_output):
     random_indices = random.sample(range(NUM_BASE_PROMPTS), NUM_BASE_PROMPTS)
 
     # returning a list of tuples in the desired format of the random order of prompts
-    return [(new_idx, base_prompts[random_idx]) for new_idx, random_idx in enumerate(random_indices)]
+    return [(offset + new_idx, base_prompts[random_idx]) for new_idx, random_idx in enumerate(random_indices)]
 
 
 # Step 3: Write the base prompts to a SQLite database
