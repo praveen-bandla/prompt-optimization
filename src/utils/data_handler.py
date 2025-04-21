@@ -625,7 +625,7 @@ class RegressionHeadDataset(torch.utils.data.Dataset):
     It is of type torch.utils.data.Dataset, so it can be used with DataLoader.
     '''
 
-    def __init__(self, prompt_variations_path = PROMPT_VARIATIONS, validation_scores_path = VALIDATION_SCORES, train_size = 35, val_size = 12, test_size = 13):
+    def __init__(self, prompt_variations_path = PROMPT_VARIATIONS, validation_scores_path = VALIDATION_SCORES, train_size = 35, val_size = 12, test_size = 13, train_indices = TRAIN_INDICES, val_indices = VAL_INDICES, test_indices = TEST_INDICES):
         '''
         Initialize the dataset with the path to the prompt variations and validation scores.
 
