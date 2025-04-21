@@ -117,8 +117,6 @@ def load_model():
         #local_files_only=True
     )
 
-    print("GPU OR NOT", model.device)
-
     #tokenizer = AutoTokenizer.from_pretrained(BASE_PROMPT_MODEL, trust_remote_code=True)
     tokenizer = AutoTokenizer.from_pretrained(base_prompt_model_id, torch_dtype=torch.bfloat16, device_map="auto", trust_remote_code=True)
 
@@ -301,11 +299,8 @@ def parse_model_output_as_bp_objects(model_output, offset=0):
     '''
     base_prompts = json.loads(model_output)
 
-    if NUM_BASE_PROMPTS > len(base_prompts):
-        raise ValueError(f"NUM_BASE_PROMPTS ({NUM_BASE_PROMPTS}) exceeds the number of generated prompts ({len(base_prompts)}).")
-
     # creating random order of prompts stored as int indices
-    random_indices = random.sample(range(NUM_BASE_PROMPTS), NUM_BASE_PROMPTS)
+    random_indices = random.sample(range(len(base_prompts)), len(base_prompts))
 
     # returning a list of tuples in the desired format of the random order of prompts
     return [(offset + new_idx, base_prompts[random_idx]) for new_idx, random_idx in enumerate(random_indices)]
