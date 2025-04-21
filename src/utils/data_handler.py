@@ -613,3 +613,132 @@ class ModelOutputParquet:
         '''
         self.delete_parquet()
         self._initialize_parquet()
+
+
+
+
+class RegressionHeadDataset(torch.utils.data.Dataset):
+    '''
+    This class will be used to load and manage the dataset used for training the regression head. It will load all the prompt variations (including the base prompt) and their respective validation scores from the Parquet file structure.
+    It will also shuffle the dataset and split it into training and validation sets.
+    It assumes that all prompt variations are to be loaded at the same time.
+    It is of type torch.utils.data.Dataset, so it can be used with DataLoader.
+    '''
+
+    def __init__(self, prompt_variations_path = PROMPT_VARIATIONS, validation_scores_path = VALIDATION_SCORES, train_size = 35, val_size = 12, test_size = 13):
+        '''
+        Initialize the dataset with the path to the prompt variations and validation scores.
+
+        Args:
+            - prompt_variations_path (str): The path to the prompt variations Parquet file.
+            - validation_scores_path (str): The path to the validation scores Parquet file.
+        '''
+        self.prompt_variations_path = prompt_variations_path
+        self.validation_scores_path = validation_scores_path
+        self.train_size = train_size
+        self.test_size = test_size
+        self.val_size = val_size
+
+        self.data = self._load_and_merge_data()
+
+        self.train_indices, self.test_indices, self.val_indices = self._split_data()
+
+    def _load_and_merge_data(self):
+        '''
+        Loads and merges prompt variations and validation scores from Parquet files.
+
+        Returns:
+            pd.DataFrame: Merged dataset containing prompt variations and validation scores.
+        '''
+        # List all files in the directories
+        prompt_variation_files = [os.path.join(self.prompt_variations_path, f) for f in os.listdir(self.prompt_variations_path) if f.endswith('.parquet')]
+        validation_score_files = [os.path.join(self.validation_scores_path, f) for f in os.listdir(self.validation_scores_path) if f.endswith('.parquet')]
+
+        combined_data = []
+
+        # Iterate through all files and merge data
+        for pv_file, vs_file in zip(prompt_variation_files, validation_score_files):
+            # Load Parquet files
+            prompt_variations = pd.read_parquet(pv_file)
+            validation_scores = pd.read_parquet(vs_file)
+
+            # Merge on bpv_idx
+            merged = pd.merge(prompt_variations, validation_scores, on="bpv_idx")
+            combined_data.append(merged)
+
+        # Concatenate all merged data
+        return pd.concat(combined_data, ignore_index=True)
+
+    def _split_data(self):
+        '''
+        Splits the dataset into train, test, and validation subsets with random sampling.
+
+        Returns:
+            tuple: Indices for train, test, and validation subsets.
+        '''
+        train_indices = []
+        test_indices = []
+        val_indices = []
+
+        grouped = self.data.groupby("base_prompt")
+        for _, group in grouped:
+            group_indices = list(group.index)
+            if len(group_indices) < self.train_size + self.test_size + self.val_size:
+                raise ValueError(f"Not enough prompt variations for base prompt to split into train, test, and val.")
+
+            # Shuffle the indices
+            random.shuffle(group_indices)
+
+            # Assign random indices to train, test, and validation
+            train_indices.extend(group_indices[:self.train_size])
+            test_indices.extend(group_indices[self.train_size:self.train_size + self.test_size])
+            val_indices.extend(group_indices[self.train_size + self.test_size:self.train_size + self.test_size + self.val_size])
+
+        return train_indices, test_indices, val_indices
+
+    def get_subset(self, split):
+        '''
+        Returns a subset of the dataset (train, test, or validation).
+
+        Args:
+            split (str): The subset to return ('train', 'test', or 'val').
+
+        Returns:
+            RegressionHeadDatasetSubset: A subset of the dataset.
+        '''
+        if split == "train":
+            indices = self.train_indices
+        elif split == "test":
+            indices = self.test_indices
+        elif split == "val":
+            indices = self.val_indices
+        else:
+            raise ValueError(f"Invalid split: {split}. Must be 'train', 'test', or 'val'.")
+
+        return RegressionHeadDatasetSubset(self.data, indices)
+
+
+class RegressionHeadDatasetSubset(torch.utils.data.Dataset):
+    '''
+    A subset of the RegressionHeadDataset (train, test, or validation).
+    '''
+
+    def __init__(self, full_data, indices):
+        '''
+        Args:
+            full_data (pd.DataFrame): The full dataset loaded by the master class.
+            indices (list): Indices for the subset.
+        '''
+        self.data = full_data.loc[indices]
+
+    def __len__(self):
+        return len(self.data)
+
+    def __getitem__(self, idx):
+        row = self.data.iloc[idx]
+        return {
+            "base_prompt": row["base_prompt"],
+            "prompt_variation": row["prompt_variation_string"],
+            "total_score": row["total_score"]
+        }
+        
