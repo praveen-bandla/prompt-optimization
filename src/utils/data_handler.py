@@ -67,10 +67,10 @@ class PromptTopicDB:
         Fetches all topics from the database.
 
         Returns:
-            - list of tuples: A list of tuples where each tuple contains (idx, topic).
+            - list of strings: A list of strings, which are each topics.
         '''
         cursor = self.conn.cursor()
-        cursor.execute('SELECT * FROM topics')
+        cursor.execute('SELECT topic FROM topics')
         return cursor.fetchall()
     
     def fetch_topic(self, idx):

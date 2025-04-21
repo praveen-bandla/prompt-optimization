@@ -35,13 +35,14 @@ import torch
 import transformers
 import re
 from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
+import random
 
 from huggingface_hub import login
 
 login(token="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")
 
 # Step 1: Collect the instruction for generating base prompts
-def collect_instruction():
+def collect_instruction(batch_size, topic):
     '''
     Creates instructions for generating base prompts. Uses the base_prompt_model_input.json file as the model input, along with NUM_BASE_PROMPTS from the data_size_configs file.
 
@@ -60,7 +61,7 @@ def collect_instruction():
     content_template = prompt_structure["content_template"]
     #instruction = system_role + " " + content_template
 
-    content = content_template.format(num_prompt = NUM_BASE_PROMPTS)
+    content = content_template.format(num_prompt = batch_size, topic = topic)
 
     full_prompt = [
         {
@@ -175,11 +176,11 @@ def load_model():
 
 # Step 2: Run inference to collect all the base prompts
 
-def base_prompt_inference(): 
+def base_prompt_inference(batch_size, topic): 
     '''
     This runs inference on the base_prompt_model to generate the desired output. It solely retrieves the response as a string and does not process it further.
     '''
-    instruction = collect_instruction()
+    instruction = collect_instruction(batch_size, topic)
     model, tokenizer = load_model()
     configs = load_configs()
 
@@ -330,19 +331,29 @@ def main():
     # creates the BasePromptDB object
     bp_db = BasePromptDB()
 
-    # generates model output by inferencing
-    model_output = base_prompt_inference()
-    
-    # formats the model output as a list of tuples in random order
-    formatted_base_prompts = parse_model_output_as_bp_objects(model_output)
+    # grab necessary topics
+    topic_db = PromptTopicDB(SQL_TOPIC_DB)
+    topics = topic_db.fetch_all_topics()
 
-    #formatted_base_prompts = [(1, 'testing1'), (2, 'testing2'), (3, 'tesingt3'), (4, 'test4'), (5, 'test5')]
-    
-    # writes the base prompts to the SQLite database
-    write_to_db(formatted_base_prompts, bp_db)
-    # closes the connection to the database
+    bp_idx_counter = 0
+    topic_counter = 0
+
+    for batch_num in range(NUM_BATCHES):
+        print(f"Batch {batch_num + 1}/{NUM_BATCHES}...")
+        try:
+            model_output = base_prompt_inference(BATCH_SIZE, topics[topic_counter])
+            formatted_prompts = parse_model_output_as_bp_objects(
+                model_output, offset=bp_idx_counter
+            )
+            write_to_db(formatted_prompts, bp_db)
+            bp_idx_counter += BATCH_SIZE
+            topic_counter += 1
+        except Exception as e:
+            print(f"Batch {batch_num + 1} failed: {e}")
+            continue
+
     bp_db.close_connection()
-    print("Base prompts generated and written to SQLite database.")
+    print(f"All base prompts written to DB: {bp_idx_counter} prompts total.")
 
 
 if __name__ == "__main__":
