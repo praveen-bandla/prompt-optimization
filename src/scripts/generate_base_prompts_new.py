@@ -11,7 +11,7 @@ Dependencies:
     - base_prompt_model_input.json: A JSON file containing instructions for generating base prompts.
     - base_prompt_model_config.yaml: A YAML file specifying model parameters and settings.
     - data_handler.py: base prompt class
-    - prompt.py: base prompt class
+    - prompt.py: base promgipt class
 
 Outputs:
     None
@@ -41,7 +41,7 @@ from huggingface_hub import login
 login(token="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")
 
 # Step 1: Collect the instruction for generating base prompts
-def collect_instruction():
+def collect_instruction(batch_size):
     '''
     Creates instructions for generating base prompts. Uses the base_prompt_model_input.json file as the model input, along with NUM_BASE_PROMPTS from the data_size_configs file.
 
@@ -172,11 +172,11 @@ def load_model():
 
 # Step 2: Run inference to collect all the base prompts
 
-def base_prompt_inference(): 
+def base_prompt_inference(batch_size): 
     '''
     This runs inference on the base_prompt_model to generate the desired output. It solely retrieves the response as a string and does not process it further.
     '''
-    instruction = collect_instruction()
+    instruction = collect_instruction(batch_size)
     model, tokenizer = load_model()
     configs = load_configs()
 
