@@ -29,4 +29,4 @@ singularity exec --nv \
     echo "PYTHONPATH: $PYTHONPATH"
     export HF_HOME=/scratch/ic2664/huggingface_cache
     python3 src/scripts/generate_base_prompts_new.py || echo "Python script failed"
-'d
+'
