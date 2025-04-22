@@ -8,7 +8,7 @@
 #SBATCH --cpus-per-task=8
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
-#SBATCH --time=02:00:00
+#SBATCH --time=04:00:00
 #SBATCH --mem=64GB
 #SBATCH --mail-type=END
 #SBATCH --mail-user=dj2565@nyu.edu
@@ -25,6 +25,7 @@ singularity exec --nv \
   /bin/bash -c "
     source /ext3/miniconda3/etc/profile.d/conda.sh
     conda activate venv-darren
+    pip install -r /scratch/dj2565/prompt-optimization/requirements.txt
     cd /scratch/dj2565/prompt-optimization/
     export PYTHONPATH=$PYTHONPATH:/scratch/dj2565/prompt-optimization/
     echo 'Start time: ' \$(date)
