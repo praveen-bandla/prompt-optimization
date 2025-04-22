@@ -318,27 +318,40 @@ def write_to_db(formatted_base_prompts, bp_db):
 
 
 def main():
-    if os.path.exists(SQL_DB): #ensures that we do not have a pre-existing database
+    if os.path.exists(SQL_DB):
         os.remove(SQL_DB)
-    # creates the BasePromptDB object
-    bp_db = BasePromptDB()
-    bp_idx_counter = 0
 
-    for batch_num in range(NUM_BATCHES):   # ✅ Loops 20 times
-        print(f"\n🌀 Batch {batch_num + 1}/{NUM_BATCHES}...")
+    bp_db = BasePromptDB()
+
+    # Start from highest bp_idx already in DB (resumable)
+    bp_idx_counter = bp_db.get_max_bp_idx() + 1
+    print(f"📍 Starting from bp_idx: {bp_idx_counter}")
+
+    while bp_idx_counter < NUM_BASE_PROMPTS:
+        print(f"\n🌀 Generating prompts starting from index {bp_idx_counter}...")
+
         try:
-            model_output = base_prompt_inference(BATCH_SIZE)  # ✅ Generate 100 prompts
+            model_output = base_prompt_inference(BATCH_SIZE)
             formatted_prompts = parse_model_output_as_bp_objects(
                 model_output, offset=bp_idx_counter
             )
+
+            if len(formatted_prompts) == 0:
+                print(f"⚠️ Batch returned 0 prompts — skipping.")
+                continue
+
             write_to_db(formatted_prompts, bp_db)
-            bp_idx_counter += len(formatted_prompts)  # ✅ Tracks global prompt index
+
+            print(f"✅ Inserted {len(formatted_prompts)} prompts (bp_idx {bp_idx_counter}–{bp_idx_counter + len(formatted_prompts) - 1})")
+
+            bp_idx_counter += len(formatted_prompts)
+
         except Exception as e:
-            print(f"Batch {batch_num + 1} failed: {e}")
+            print(f"❌ Batch failed: {e}")
             continue
 
     bp_db.close_connection()
-    print(f"\n✅ All base prompts written to DB: {bp_idx_counter} prompts total.")
+    print(f"\n🏁 Finished: {bp_idx_counter} base prompts written.")
 
 
 if __name__ == "__main__":
