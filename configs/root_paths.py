@@ -56,3 +56,4 @@ PROMPT_OPT_BASE_MODEL_ID = 'meta-llama/Llama-3.2-1B'
 PROMPT_OPT_BASE_PATH = os.path.join(MODELS_PATH, 'prompt_opt_base')
 LORA_PROMPT_GEN_PATH = os.path.join(MODELS_PATH, 'lora_prompt_gen')
 LORA_REGRESSION_HEAD_PATH = os.path.join(MODELS_PATH, 'lora_regression_head')
+REGRESSION_HEAD_CONFIG_PATH = os.path.join(MODEL_CONFIGS, 'regression_head.yaml')
