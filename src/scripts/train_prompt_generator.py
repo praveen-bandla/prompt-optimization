@@ -40,9 +40,15 @@ def load_models(lora_rank, lora_alpha, dropout_rate):
     # Load tokenizer
     tokenizer = AutoTokenizer.from_pretrained(PROMPT_OPT_BASE_MODEL_ID, use_safetensors=True)
     tokenizer.pad_token = tokenizer.eos_token
+    tokenizer.pad_token_id = tokenizer.eos_token_id
+    tokenizer.padding_side = 'left' # Required for decoder-only models like Llama
 
     # Load regression head
-    regression_head = AutoModelForSequenceClassification.from_pretrained(LORA_REGRESSION_HEAD_PATH, use_safetensors=True).to(device)
+    regression_head = AutoModelForSequenceClassification.from_pretrained(
+        LORA_REGRESSION_HEAD_PATH, 
+        use_safetensors=True).to(device)
+    # Explicitly set pad_token_id for config
+    regression_head.config.pad_token_id = tokenizer.pad_token_id
     regression_head.eval()
 
     # Load prompt generator
@@ -104,7 +110,10 @@ def train_prompt_generator(trial, train_dataset):
 
             # Score variations using regression head
             variation_inputs = tokenizer(variations, return_tensors="pt", padding=True, truncation=True).to(device)
-            scores = regression_head(**variation_inputs).logits
+            scores = regression_head(
+                input_ids = variation_inputs['input_ids'],
+                attention_mask = variation_inputs['attention_mask']
+                ).logits
 
             # Compute softmax weights for the scores
             weights = softmax(scores, dim=1)
@@ -135,7 +144,7 @@ if __name__ == "__main__":
     study = optuna.create_study(direction="minimize")
     study.optimize(
         lambda trial: objective(trial, train_dataset), 
-        n_trials=10)
+        n_trials=5)
 
     # Save the best model
     best_trial = study.best_trial

@@ -19,7 +19,7 @@ import torch
 import optuna
 from torch.utils.data import DataLoader
 from transformers import AutoModelForCausalLM, AutoTokenizer, DataCollatorWithPadding
-from peft import LoraConfig, get_peft_model
+from peft import LoraConfig, get_peft_model, TaskType
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error
 import pandas as pd
@@ -89,8 +89,10 @@ def objective(trial):
 
     # Load model and tokenizer
     tokenizer = AutoTokenizer.from_pretrained(PROMPT_OPT_BASE_MODEL_ID, use_safetensors=True) # must be base model
-    tokenizer.pad_token = tokenizer.eos_token # Set pad token to eos token for causal LM
+    tokenizer.pad_token = tokenizer.eos_token
+    tokenizer.pad_token_id = tokenizer.eos_token_id # Set pad token to eos token for causal LM
     # Alternatively, can use: tokenizer.add_special_tokenz({"pad_token": "[PAD]"})
+    tokenizer.padding_side = 'left'
 
     regression_head_model = AutoModelForCausalLM.from_pretrained(LORA_REGRESSION_HEAD_PATH, use_safetensors=True).to(device)
 
