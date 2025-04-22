@@ -76,6 +76,9 @@ def apply_lora(model, lora_rank, lora_alpha, dropout_rate):
     )
     return get_peft_model(model, lora_config)
 
+best_model = None
+best_tokenizer = None
+
 def train_prompt_generator(trial, train_dataset):
     """Train the prompt generator using the regression head's feedback."""
     # Hyperparameters
@@ -129,11 +132,15 @@ def train_prompt_generator(trial, train_dataset):
 
         print(f"Epoch {epoch + 1} completed. Loss: {weighted_loss.item()}")
     
-    return weighted_loss.item()
+    return prompt_generator, tokenizer, weighted_loss.item()
 
 def objective(trial, train_dataset):
     """Optuna objective function for hyperparameter tuning."""
-    return train_prompt_generator(trial, train_dataset)
+    global best_model, best_tokenizer
+    model, tokenizer, loss = train_prompt_generator(trial, train_dataset)
+    best_model = model
+    best_tokenizer = tokenizer
+    return loss
 
 if __name__ == "__main__":
     train_dataset = load_dataset()
@@ -148,16 +155,11 @@ if __name__ == "__main__":
 
     # Save the best model
     best_trial = study.best_trial
-    print(f"Best trial: {best_trial.params}")
+    print(f"Best trial: {best_trial.number}, Best trials params: {best_trial.params}")
 
     # Reload tokenizer and prompt generator for saving
-    save_path = f"{LORA_PROMPT_GEN_PATH}_trial_{best_trial.number}"
+    save_path = f"{LORA_PROMPT_GEN_PATH}_best_trial"
     os.makedirs(save_path, exist_ok=True)
-    tokenizer, _, prompt_generator = load_models(
-        best_trial.params["lora_rank"],
-        best_trial.params["lora_alpha"],
-        best_trial.params["dropout_rate"]
-    )
-    tokenizer.save_pretrained(save_path)
-    prompt_generator.save_pretrained(save_path)
+    best_tokenizer.save_pretrained(save_path)
+    best_model.save_pretrained(save_path)
     print(f"Trained prompt generator saved to {save_path}")

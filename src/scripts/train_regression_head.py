@@ -79,6 +79,26 @@ val_dataset = PromptDataset(val_data)
 def collate_fn(batch, tokenizer):
     return tokenize_function(batch, tokenizer)
 
+def load_models(lora_rank, lora_alpha, dropout_rate):
+    tokenizer = AutoTokenizer.from_pretrained(PROMPT_OPT_BASE_MODEL_ID, use_safetensors=True)
+    tokenizer.pad_token = tokenizer.eos_token
+    tokenizer.pad_token_id = tokenizer.eos_token_id
+    tokenizer.padding_side = "left"
+
+    base_model = AutoModelForCausalLM.from_pretrained(LORA_REGRESSION_HEAD_PATH, use_safetensors=True).to(device)
+
+    lora_config = LoraConfig(
+        r=lora_rank,
+        lora_alpha=lora_alpha,
+        target_modules=["q_proj", "v_proj"],
+        lora_dropout=dropout_rate,
+        task_type=TaskType.SEQ_CLS
+    )
+    regression_head = get_peft_model(base_model, lora_config)
+
+    return tokenizer, regression_head
+
+
 def objective(trial):
     # Hyperparameter search space
     lora_rank=trial.suggest_int("lora_rank", 4, 16)
@@ -178,14 +198,37 @@ def objective(trial):
         print(f"Epoch {epoch + 1}, Validation Loss: {sum(val_losses) / len(val_losses)}")
 
     # Return the average validation loss
-    return sum(val_losses) / len(val_losses)
+    return model, tokenizer, sum(val_losses) / len(val_losses)
 
 # Run the hyperparameter optimiztion
-study = optuna.create_study(direction="minimize")
-study.optimize(objective, n_trials=10)
+best_model = None
+best_tokenizer = None
+
+def wrapped_objective(trial):
+    global best_model, best_tokenizer
+    model, tokenizer, val_loss = objective(trial)
+    best_model = model
+    best_tokenizer = tokenizer
+    return val_loss
+
+study = optuna.create_study(direction='minimize')
+study.optimize(wrapped_objective, n_trials=10)
+
 
 # Save model
 # PRAVEEN: commenting out for now just to test the training code
+# Save the best model
+best_trial = study.best_trial
+print(f"Best trial: {best_trial.number}, Best trials params: {best_trial.params}")
+
+# Reload tokenizer and prompt generator for saving
+save_path = f"{LORA_PROMPT_GEN_PATH}_best_trial"
+os.makedirs(save_path, exist_ok=True)
+best_tokenizer.save_pretrained(save_path)
+best_model.save_pretrained(save_path)
+print(f"Trained regression head saved to {save_path}")
+
+# BECCA: Old save code below
 # save_path = f"{LORA_REGRESSION_HEAD_PATH}_trial_{study.best_trial.number}"
 
 # os.makedirs(save_path, exist_ok=True)
