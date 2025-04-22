@@ -1,5 +1,5 @@
 """
-Module for training a regression head with LoRA and quantization.
+Module for training a regression head with LoRA.
 
 Steps:
 1. Load and preprocess the dataset.
@@ -99,7 +99,8 @@ def objective(trial):
         r=lora_rank, # Lora attention dimension, the rank. Smaller r means fewer parameters are updated
         lora_alpha=lora_alpha, # Alpha scaling factor for LoRA
         target_modules=["q_proj", "v_proj"], 
-        lora_dropout=dropout_rate # Help with regularization. Dropout probability for LoRA layers
+        lora_dropout=dropout_rate, # Help with regularization. Dropout probability for LoRA layers
+        task_type = TaskType.SEQ_CLS # Sequence classification task
     )
     model = get_peft_model(regression_head_model, lora_config)
 
@@ -184,6 +185,7 @@ study.optimize(objective, n_trials=10)
 # Save model
 # PRAVEEN: commenting out for now just to test the training code
 # save_path = f"{LORA_REGRESSION_HEAD_PATH}_trial_{study.best_trial.number}"
+
 # os.makedirs(save_path, exist_ok=True)
 # model.save_pretrained(save_path)
 # print(f"Model saved to {save_path}")
