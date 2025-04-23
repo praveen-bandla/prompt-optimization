@@ -69,7 +69,7 @@ def collect_instruction(bp_idx):
     '''
 
     # collecting base_prompt_str from the database based on the given index
-    bp_db = BasePromptDB()
+    bp_db = BasePromptDB(FILTERED_SQL_DB)
     bp = BasePrompt(bp_idx)
     bp_str = bp.get_prompt_str()
     
@@ -287,7 +287,7 @@ def write_parquet(bp_idx, prompt_variations):
     # pv_parquet = PromptVariationParquet(bp_idx)
     # pv_parquet.insert_prompt_variations(prompt_variations)
     try: 
-        bp_db = BasePromptDB()
+        bp_db = BasePromptDB(FILTERED_SQL_DB)
         bp_str = bp_db.fetch_prompt(bp_idx)
         if not bp_str:
             raise ValueError(f"Base prompt with index {bp_idx} not found in the database.")
