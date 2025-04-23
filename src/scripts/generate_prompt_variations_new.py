@@ -218,15 +218,11 @@ def prompt_variation_inference(bp_idx, configs, model, tokenizer):
     print("Outputs: ", generated_text)
     return generated_text
 
+
 def parse_model_output(model_output, bp_idx):
     '''
-    This function parses the model output to extract the prompt variations from two JSON arrays.
-
-    Inputs:
-        - model_output: The model output string from prompt_variation_inference()
-
-    Outputs:
-        - list: A list of tuples, each containing the base prompt variation index and the prompt variation string. Stored as a list of (bpv_idx, bpv_str)
+    Parses model output and returns unique prompt variations.
+    Limits to NUM_PROMPT_VARIATIONS.
     '''
     print('Model Output:', model_output)
 
@@ -235,14 +231,29 @@ def parse_model_output(model_output, bp_idx):
 
     if isinstance(model_output, dict) and "generated_text" in model_output:
         model_output = model_output["generated_text"]
-    
-    # FOR ONE ARRAY - PREVIOUS CODE
-    json_text = re.search(r"\[.*\]", model_output, re.DOTALL)
-    if json_text:
-        model_output = json_text.group(0)
-    else:
+
+    # Extract JSON array using regex
+    json_text_match = re.search(r"\[.*\]", model_output, re.DOTALL)
+    if not json_text_match:
         raise ValueError("No JSON-like output found in model response.")
-    return [((bp_idx,idx), str(pv)) for idx, pv in enumerate(json.loads(model_output))]
+
+    json_text = json_text_match.group(0)
+
+    # Sanitize control characters
+    json_text = re.sub(r'[\x00-\x1f\x7f]', '', json_text)
+
+    try:
+        variations_raw = json.loads(json_text)
+    except json.JSONDecodeError as e:
+        print(f"🚨 JSON parsing error: {e}")
+        print(f"📝 Problematic JSON snippet:\n{json_text[:500]}...")
+        raise
+
+    # Remove duplicates and limit to NUM_PROMPT_VARIATIONS
+    unique_variations = list(dict.fromkeys(variations_raw))[:NUM_PROMPT_VARIATIONS]
+
+    return [((bp_idx, idx), pv) for idx, pv in enumerate(unique_variations)]
+
 
     # FOR TWO ARRAYS
     # Extract JSON arrays form the model output
