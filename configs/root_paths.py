@@ -31,6 +31,7 @@ RUBRIC_PATH = os.path.join(MODEL_INPUT_PATH, 'rubric.txt')
 
 # BP and BPV related files
 SQL_DB = os.path.join(DATA_PATH, 'base_prompts', 'base_prompts.db')
+FILTERED_SQL_DB = os.path.join(DATA_PATH, 'base_prompts', 'filtered_base_prompts.db')
 SQL_TOPIC_DB = os.path.join(DATA_PATH, 'base_prompts', 'prompt_topics.db')
 PROMPT_VARIATIONS = os.path.join(DATA_PATH, 'prompt_variations')
 PROMPT_VARIATION_MODEL = os.path.join(MODELS_PATH, 'deepseek-ai/DeepSeek-R1-Distill-Qwen-7B')
