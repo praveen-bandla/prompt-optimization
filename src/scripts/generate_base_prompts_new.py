@@ -341,7 +341,7 @@ def main():
                 model_output, offset=bp_idx_counter
             )
             write_to_db(formatted_prompts, bp_db)
-            bp_idx_counter += BATCH_SIZE
+            bp_idx_counter += len(formatted_prompts)
             topic_counter += 1
         except Exception as e:
             print(f"Batch {batch_num + 1} failed: {e}")

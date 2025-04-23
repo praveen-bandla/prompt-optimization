@@ -151,7 +151,7 @@ def load_model():
     return model, tokenizer
 
 # Step 2: Run inference to collect all the prompt variations
-def prompt_variation_inference(configs, model, tokenizer):
+def prompt_variation_inference(bp_idx, configs, model, tokenizer):
     '''
     Runs inference on the prompt_variation_model to generate the desired output. It solely retrievers the response as a string and does not process it further.
     '''
@@ -206,6 +206,10 @@ def prompt_variation_inference(configs, model, tokenizer):
     # Decode the generated text
     generated_text = tokenizer.decode(outputs[0][input_tensor.shape[1]:], skip_special_tokens=True)
     
+    # Empty output check
+    if not generated_text or generated_text.strip() == "":
+        raise ValueError(f"❌ Model output is empty for bp_idx {bp_idx}. Check model inference or prompt formatting.")
+
     # Enforce the model to start its response with "<think>\n"
     if not generated_text.startswith("<think>\n"):
         generated_text = f"<think>\n{generated_text}"
@@ -324,21 +328,31 @@ def main(bp_idx, configs, model, tokenizer):
     # # Step 2: Load model
     # pipe = load_model()
 
+    # DARREN: removed because redundant, we already load the model configs in the function below
     # # Step 2: Load model configuration
-    configs = load_configs()
+    # configs = load_configs()
 
-    # # Step 3: Run inference to collect prompt variations
-    model_output = prompt_variation_inference(configs, model, tokenizer)
+    # # Step 2: Run inference to collect prompt variations
+    model_output = prompt_variation_inference(bp_idx, configs, model, tokenizer)
 
     # tester code
 
     # model_output = "[\"prompt_variation1\", \"prompt_variation2\", \"prompt_variation3\"]"
 
-    # Step 4: Parse the model output to extract prompt variations
+    # Step 3: Parse the model output to extract prompt variations
     prompt_variations = parse_model_output(model_output, bp_idx)
 
-    # Step 5: Write the prompt variations to a parquet file
+    # Check if the number of prompt variations is less than the expected number
+    if len(prompt_variations) < NUM_PROMPT_VARIATIONS:
+        print(f"⚠️ Warning: Only {len(prompt_variations)} prompt variations generated for bp_idx {bp_idx}")
+
+
+    # Step 4: Write the prompt variations to a parquet file
     write_parquet(bp_idx, prompt_variations)
+
+    # Confirm successful writing to parquet
+    print(f"✅ Successfully saved {len(prompt_variations)} prompt variations for bp_idx {bp_idx}.")
+
 
 
 
