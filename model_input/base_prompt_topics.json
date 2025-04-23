@@ -1,0 +1,4 @@
+{
+    "system_role": "You are an expert in topic generation. Your task is to generate high-quality, broad, and varied educational topics.",
+    "content_template": "Generate EXACTLY 50 different educational topics. These should be very general, standard US subjects like Math or English, which are common at the primary school level. Output should be a single JSON array of double-quoted strings with no explanation or commentary. Format: [\"topic1\", \"topic2\", ...]"
+}
