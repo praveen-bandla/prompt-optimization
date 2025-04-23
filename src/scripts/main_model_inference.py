@@ -201,15 +201,13 @@ def main_model_inference_per_prompt_variation(pv_obj):
 
 def main_model_inference_per_base_prompt(bp_idx, pipe, configs):
     '''
-    Performs main model inference on all prompt variations for the given bp_idx. Stores all the outputs in its respective Parquet file.
-
-    Input:
-    - bp_idx (int): The base prompt index.
+    Performs main model inference on all prompt variations for the given bp_idx in batches.
     '''
     all_pv_outputs = []
     mo_parquet = ModelOutputParquet(bp_idx)
-    # pipe = load_model()
-    # configs = load_configs()
+    prompt_variations = collect_prompt_variations(bp_idx)
+
+    batch_size = MM_OUTPUT_BATCH_SIZE  # Use your defined variable
     max_new_tokens = configs.get("max_new_tokens")
     temperature = configs.get("temperature")
     do_sample = configs.get("do_sample")
@@ -217,9 +215,23 @@ def main_model_inference_per_base_prompt(bp_idx, pipe, configs):
         "max_new_tokens": max_new_tokens,
         "temperature": temperature,
         "do_sample": do_sample,
-        "return_full_text": False # determines whether to the prompt as part of the output.
-
+        "return_full_text": False
     }
+
+    for i in range(0, len(prompt_variations), batch_size):
+        batch_pvs = prompt_variations[i:i + batch_size]
+        prompts = [construct_model_input(pv) for pv in batch_pvs]
+        outputs = pipe(prompts, **generation_args)
+
+        for pv, output in zip(batch_pvs, outputs):
+            model_output = output['generated_text']
+            all_pv_outputs.append((pv.get_bpv_idx(), model_output))
+
+        print(f"🔹 Processed batch {i // batch_size + 1} of bp_idx {bp_idx}")
+
+    mo_parquet.insert_model_outputs(all_pv_outputs)
+    print(f"✅ Completed bp_idx {bp_idx} with {len(all_pv_outputs)} outputs.")
+
 
     for pv_obj in collect_prompt_variations(bp_idx):
         # model_output = main_model_inference_per_prompt_variation(pv_obj)

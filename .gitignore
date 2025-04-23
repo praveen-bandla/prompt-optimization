@@ -3,7 +3,7 @@ prompt-optimization-env/
 praveen-po-env/
 venv-praveen/
 venv-bella/
-venv-darren/.DS_Store
+venv-darren/
 .DS_Store
 models/microsoft-Phi-3.5-mini-instruct
 models/Llama-3.1-8B
@@ -13,5 +13,4 @@ src/utils/__pycache__/__init__.cpython-312.pyc
 src/utils/__pycache__/data_handler.cpython-312.pyc
 src/utils/__pycache__/prompt.cpython-312.pyc
 venv/
-venv-darren/
 get-pip.py
