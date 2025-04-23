@@ -1,40 +1,35 @@
 import sqlite3
 import pandas as pd
-import random
+import os
 from configs.root_paths import SQL_DB
 
-# Step 1: Connect to the existing database
+# Path for new filtered DB
+NEW_SQL_DB = SQL_DB.replace("base_prompts.db", "filtered_base_prompts.db")
+
+# Load data from original DB
 conn = sqlite3.connect(SQL_DB)
-
-# Step 2: Load all base prompts
 df = pd.read_sql_query("SELECT * FROM base_prompts", conn)
-
-# Step 3: Filter prompts containing both "guide" and "third-grade"
-filtered_df = df[
-    df['base_prompt_string'].str.contains('guide', case=False, na=False) &
-    df['base_prompt_string'].str.contains('third-grade', case=False, na=False)
-]
-
-# Step 4: Shuffle the filtered DataFrame (keeping original bp_idx)
-filtered_df = filtered_df.sample(frac=1).reset_index(drop=True)
-
-print(f"🎯 Total filtered prompts: {len(filtered_df)}")
-
-# Step 5: Overwrite the base_prompts table with filtered, shuffled prompts
-conn.execute("DROP TABLE IF EXISTS base_prompts")
-
-# Recreate the table with the same schema
-conn.execute("""
-CREATE TABLE base_prompts (
-    bp_idx INTEGER PRIMARY KEY,
-    base_prompt_string TEXT
-)
-""")
-
-# Insert filtered and shuffled prompts
-filtered_df.to_sql("base_prompts", conn, if_exists="append", index=False)
-
-conn.commit()
 conn.close()
 
-print("✅ Successfully overwrote base_prompts table with filtered and shuffled prompts.")
+print(f"📋 Loaded {len(df)} total prompts from original DB.")
+
+# Filter prompts containing both 'guide' and 'third-grade'
+filtered_df = df[
+    df['base_prompt_string'].str.contains('guide', case=False) &
+    df['base_prompt_string'].str.contains('third-grade', case=False)
+].copy()
+
+print(f"📊 Found {len(filtered_df)} prompts containing both 'guide' and 'third-grade'.")
+
+# Shuffle rows but keep bp_idx unchanged
+filtered_df = filtered_df.sample(frac=1, random_state=42).reset_index(drop=True)
+
+# Save to NEW DB
+if os.path.exists(NEW_SQL_DB):
+    os.remove(NEW_SQL_DB)
+
+conn_new = sqlite3.connect(NEW_SQL_DB)
+filtered_df.to_sql('base_prompts', conn_new, index=False, if_exists='replace')
+conn_new.close()
+
+print(f"✅ Filtered and shuffled prompts saved to {NEW_SQL_DB}. Total prompts: {len(filtered_df)}")
