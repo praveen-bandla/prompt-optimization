@@ -276,7 +276,7 @@ def parse_model_output_as_topics(model_output):
     topics = json.loads(model_output)
 
     # creating random order of prompts stored as int indices
-    random_indices = random.sample(range(20), 20)
+    random_indices = random.sample(range(50), 50)
 
     # returning a list of tuples in the desired format of the random order of prompts
     return [(new_idx, topics[random_idx]) for new_idx, random_idx in enumerate(random_indices)]
