@@ -29,6 +29,6 @@ singularity exec --nv \
     cd /scratch/dj2565/prompt-optimization/
     export PYTHONPATH=$PYTHONPATH:/scratch/dj2565/prompt-optimization/
     echo 'Start time: ' \$(date)
-    python ./src/scripts/generate_base_prompts_new.py
+    python src/scripts/generate_base_prompts_new.py
     echo 'End time: ' \$(date)
 "

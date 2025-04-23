@@ -25,7 +25,6 @@ singularity exec --nv \
   /bin/bash -c "
     source /ext3/miniconda3/etc/profile.d/conda.sh
     conda activate venv-darren
-    pip install -r /scratch/dj2565/prompt-optimization/requirements.txt
     cd /scratch/dj2565/prompt-optimization/
     export PYTHONPATH=\$PYTHONPATH:/scratch/dj2565/prompt-optimization/
     export HF_HOME=/scratch/dj2565/huggingface_cache

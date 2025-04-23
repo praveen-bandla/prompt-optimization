@@ -217,7 +217,7 @@ def prompt_variation_inference(bp_idx, configs, model, tokenizer):
     print("Inference complete.")
     print("Outputs: ", generated_text)
     return generated_text
-
+ 
 
 def parse_model_output(model_output, bp_idx):
     '''
