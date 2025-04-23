@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "/scratch/dj2565/prompt-optimization/./src/scripts/generate_base_prompts_new.py", line 28, in <module>
+    from src.utils.prompt import *
+  File "/scratch/dj2565/prompt-optimization/src/utils/prompt.py", line 5, in <module>
+    from src.utils.data_handler import BasePromptDB, ValidationScoreParquet
+  File "/scratch/dj2565/prompt-optimization/src/utils/data_handler.py", line 5, in <module>
+    import pandas as pd
+ModuleNotFoundError: No module named 'pandas'
