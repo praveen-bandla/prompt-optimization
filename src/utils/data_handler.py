@@ -9,6 +9,113 @@ from configs.data_size_configs import *
 #NUM_RUBRIC_SECTIONS
 #from prompt import ValidationScore
 
+class PromptTopicDB:
+    '''
+    A class to manage the SQLite database for prompt topics.
+    This class is meant to handle all calls to the database. No other module anywhere will handle database calls directly. They will simply call the methods of this class.
+
+    Further, this class will store the database connection object as an instance variable, so that the connection is not opened and closed for every call. This will improve performance. Every instance of this class will have a connection to the database, and the connection will be closed when the instance is destroyed.
+    '''
+
+    def __init__(self, db_path = SQL_DB):
+        '''
+        Initializes the PromptTopicDB class and creates the database if it doesn't exist.
+
+        Args:
+            - db_path (str): The path to the SQLite database file.
+        '''
+        self.db_path = db_path
+        self.conn = None
+        self._initialize_db()
+
+    def _initialize_db(self):
+        '''
+        Initializes the database by creating the table if it doesn't exist.
+        '''
+        db_exists = os.path.exists(self.db_path)
+        self.conn = sqlite3.connect(self.db_path)
+        
+        if not db_exists:
+            cursor = self.conn.cursor()
+            cursor.execute('''
+                CREATE TABLE topics (
+                    idx INT PRIMARY KEY,
+                    topic TEXT NOT NULL
+                )
+            ''')
+            self.conn.commit()
+            print(f"Database created at {self.db_path}")
+        else:
+            print(f"Database accessed at {self.db_path}")
+
+    def insert_topics(self, prompts):
+        '''
+        Inserts a batch of topics into the database.
+
+        Args:
+            - prompts (list of tuples): A list of tuples where each tuple contains (idx, topic). Here idx is an integer and topic is a string.
+        '''
+        cursor = self.conn.cursor()
+        cursor.executemany('''
+            INSERT INTO topics (idx, topic) VALUES (?, ?)
+        ''', prompts)
+        self.conn.commit()
+
+    def fetch_all_topics(self):
+        '''
+        Primarily used for testing purposes.
+        Fetches all topics from the database.
+
+        Returns:
+            - list of strings: A list of strings, which are each topics.
+        '''
+        cursor = self.conn.cursor()
+        cursor.execute('SELECT topic FROM topics')
+        return cursor.fetchall()
+    
+    def fetch_topic(self, idx):
+        '''
+        Fetches a specific topic from the database by iidx.
+        Is called by the Prompt class.
+
+        Args:
+            - idx (int): The index.
+
+        Returns:
+            - str: The topic string.
+        '''
+        cursor = self.conn.cursor()
+        cursor.execute('SELECT topic FROM topics WHERE idx = ?', (idx,))
+        result = cursor.fetchone()
+        return result[0] if result else None
+
+    def close_connection(self):
+        '''
+        Closes the database connection.
+        '''
+        if self.conn:
+            self.conn.close()
+            print(f"Database connection to {self.db_path} closed.")
+
+    def delete_database(self):
+        '''
+        Deletes the SQLite database file.
+        Closes the connection before deleting the file.
+        '''
+        self.close_connection()
+        if os.path.exists(self.db_path):
+            os.remove(self.db_path)
+            print(f"Database at {self.db_path} deleted.")
+        else:
+            print(f"No database found at {self.db_path} to delete.")
+
+    def reset_database(self):
+        '''
+        Resets the database by deleting and recreating it.
+        '''
+        self.delete_database()
+        self._initialize_db()
+
 class BasePromptDB:
     '''
     A class to manage the SQLite database for base prompts.
@@ -66,6 +173,7 @@ class BasePromptDB:
             INSERT INTO base_prompts (bp_idx, base_prompt_string) VALUES (?, ?)
         ''', prompts)
         self.conn.commit()
+        print("Base prompts inserted.")
 
     def fetch_all_prompts(self):
         '''
