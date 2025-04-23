@@ -5,7 +5,7 @@
 #SBATCH --error=slurm/output/generate_base_prompts_%j.err
 #SBATCH --partition=rtx8000
 #SBATCH --gres=gpu:rtx8000:1
-#SBATCH --cpus-per-task=8
+#SBATCH --cpus-per-task=4
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --time=04:00:00
