@@ -1,0 +1,66 @@
+Start time:  Sun Apr 20 13:08:31 EDT 2025
+Database created at /scratch/dj2565/prompt-optimization/data/base_prompts/base_prompts.db
+
+🌀 Batch 1/20...
+Batch 1 failed: base_prompt_inference() takes 0 positional arguments but 1 was given
+
+🌀 Batch 2/20...
+Batch 2 failed: base_prompt_inference() takes 0 positional arguments but 1 was given
+
+🌀 Batch 3/20...
+Batch 3 failed: base_prompt_inference() takes 0 positional arguments but 1 was given
+
+🌀 Batch 4/20...
+Batch 4 failed: base_prompt_inference() takes 0 positional arguments but 1 was given
+
+🌀 Batch 5/20...
+Batch 5 failed: base_prompt_inference() takes 0 positional arguments but 1 was given
+
+🌀 Batch 6/20...
+Batch 6 failed: base_prompt_inference() takes 0 positional arguments but 1 was given
+
+🌀 Batch 7/20...
+Batch 7 failed: base_prompt_inference() takes 0 positional arguments but 1 was given
+
+🌀 Batch 8/20...
+Batch 8 failed: base_prompt_inference() takes 0 positional arguments but 1 was given
+
+🌀 Batch 9/20...
+Batch 9 failed: base_prompt_inference() takes 0 positional arguments but 1 was given
+
+🌀 Batch 10/20...
+Batch 10 failed: base_prompt_inference() takes 0 positional arguments but 1 was given
+
+🌀 Batch 11/20...
+Batch 11 failed: base_prompt_inference() takes 0 positional arguments but 1 was given
+
+🌀 Batch 12/20...
+Batch 12 failed: base_prompt_inference() takes 0 positional arguments but 1 was given
+
+🌀 Batch 13/20...
+Batch 13 failed: base_prompt_inference() takes 0 positional arguments but 1 was given
+
+🌀 Batch 14/20...
+Batch 14 failed: base_prompt_inference() takes 0 positional arguments but 1 was given
+
+🌀 Batch 15/20...
+Batch 15 failed: base_prompt_inference() takes 0 positional arguments but 1 was given
+
+🌀 Batch 16/20...
+Batch 16 failed: base_prompt_inference() takes 0 positional arguments but 1 was given
+
+🌀 Batch 17/20...
+Batch 17 failed: base_prompt_inference() takes 0 positional arguments but 1 was given
+
+🌀 Batch 18/20...
+Batch 18 failed: base_prompt_inference() takes 0 positional arguments but 1 was given
+
+🌀 Batch 19/20...
+Batch 19 failed: base_prompt_inference() takes 0 positional arguments but 1 was given
+
+🌀 Batch 20/20...
+Batch 20 failed: base_prompt_inference() takes 0 positional arguments but 1 was given
+Database connection to /scratch/dj2565/prompt-optimization/data/base_prompts/base_prompts.db closed.
+
+✅ All base prompts written to DB: 0 prompts total.
+End time:  Sun Apr 20 13:09:09 EDT 2025
