@@ -49,6 +49,7 @@ PROMPT_TEMPLATE_CONFIG = os.path.join(CONFIGS_PATH, 'model_configs/prompt_templa
 
 # main model related data paths
 MODEL_OUTPUTS = os.path.join(DATA_PATH, 'model_outputs')
+MODEL_TEST_OUTPUTS = os.path.join(DATA_PATH, 'model_test_outputs')
 MAIN_MODEL_INPUT = os.path.join(MODEL_INPUT_PATH, 'main_model_input.json')
 MAIN_MODEL_CONFIGS = os.path.join(MODEL_CONFIGS, 'main_model_config.yaml')
 MAIN_MODEL = os.path.join(MODELS_PATH, 'microsoft-Phi-3.5-mini-instruct/')   
