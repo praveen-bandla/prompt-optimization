@@ -1,6 +1,6 @@
 temperature: 0.1
-top_p: 0.9
-top_k: 40
-max_new_tokens: 10000
+top_p: 0.95
+top_k: 45
+max_new_tokens: 8000
 repetition_penalty: 1.2
 do_sample: True

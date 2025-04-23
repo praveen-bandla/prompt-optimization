@@ -2,7 +2,7 @@
 This script contains all information related to the data size configurations. I have added some example things but this is not complete. This is just a starting point. Add to it as needed.
 '''
 
-NUM_PROMPT_VARIATIONS = 50
+NUM_PROMPT_VARIATIONS = 40
 NUM_BASE_PROMPTS = 2000
 NUM_BATCHES = 20
 BATCH_SIZE = 100
