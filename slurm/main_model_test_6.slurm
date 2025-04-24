@@ -23,10 +23,10 @@ singularity exec --nv \
   --overlay /scratch/ic2664/overlay-25GB-500K.ext3:ro \
   /scratch/ic2664/cuda11.8.86-cudnn8.7-devel-ubuntu22.04.2.sif \
   /bin/bash -c "
-    source /ext3/miniconda3/etc/profile.d/conda.sh
-    conda activate venv-bella
     cd /scratch/ic2664/prompt-optimization/
-    export PYTHONPATH=\$PYTHONPATH:/scratch/ic2664/prompt-optimization/
+    source venv-bella/bin/activate
+    export PYTHONPATH=$(pwd)
+    echo "PYTHONPATH: $PYTHONPATH"
     export HF_HOME=/scratch/ic2664/huggingface_cache
     echo 'Start time: ' \$(date)
     echo 'Running main model inference for bp_idx [1000, 1001, ..., 1099]'
