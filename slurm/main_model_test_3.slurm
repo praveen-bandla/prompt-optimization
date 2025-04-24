@@ -22,14 +22,14 @@ singularity exec --nv \
   --bind /scratch \
   --overlay /scratch/ic2664/overlay-25GB-500K.ext3:rw \
   /scratch/ic2664/cuda11.8.86-cudnn8.7-devel-ubuntu22.04.2.sif \
-  /bin/bash -c "
+  /bin/bash -c '
     cd /scratch/ic2664/prompt-optimization/
     source venv-bella/bin/activate
-    export PYTHONPATH='$(pwd)'
+    export PYTHONPATH=$(pwd)
     echo "PYTHONPATH: $PYTHONPATH"
     export HF_HOME=/scratch/ic2664/huggingface_cache
-    echo 'Start time: ' \$(date)
-    echo 'Running main model inference for bp_idx [700, 701, ..., 799]'
-    python src/scripts/main_model_inference_test.py 700 800
-    echo 'End time: ' \$(date)
-"
+    echo "Start time: $(date)"
+    echo "Running main model inference for bp_idx [700, 701, ..., 899]"
+    python3 src/scripts/main_model_inference_test.py 700 800
+    echo "End time: $(date)"
+'

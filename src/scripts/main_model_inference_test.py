@@ -46,7 +46,11 @@ from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
 import torch
 #import argparse
 import sys
-    
+import os
+
+# Add Hugging Face cache to sys.path
+hf_cache_dir = os.path.expanduser("~/.cache/huggingface/modules/transformers_modules/")
+sys.path.append(hf_cache_dir)
 
 def load_configs():
     '''
@@ -95,13 +99,10 @@ def construct_model_input(bp_obj):
     system_role = prompt_structure["system_role"]
     content_template = prompt_structure["content_template"]
 
-    print(type(pv_obj))
-
     bp_str = bp_obj.get_prompt_str()
 
-    print(f"Prompt variation string: {bp_str}")
-    print(f'Pv str type: {type(bv_str)}')
-    content = content_template.format(bp_str_template = bp_str)
+    print(f"Base prompt string: {bp_str}")
+    content = content_template.format(pv_str_template = bp_str)
 
     full_prompt = [
         {
@@ -127,9 +128,13 @@ def collect_base_prompts(bp_idx_start, bp_idx_end):
 
     for i in range(bp_idx_start, bp_idx_end):
         prompt = bp_data_handler.fetch_prompt(i)
+        if not prompt:
+            print(f"DEBUG: No prompt found for bp_idx {i}. Skipping.")
+            continue
         bp_obj = BasePrompt(i)
         bps.append(bp_obj)
 
+    print(f"DEBUG: Collected {len(bps)} base prompts.")
     return bps
 
 def main_model_inference_for_bps(bp_idx_start, bp_idx_end, pipe, configs):
@@ -150,10 +155,14 @@ def main_model_inference_for_bps(bp_idx_start, bp_idx_end, pipe, configs):
         "return_full_text": False
     }
 
-    for i in range(bp_idx_start, bp_idx_end, batch_size):
+    for i in range(0, len(bps), batch_size):  # Use len(bps) instead of bp_idx_end
         mo_parquet = ModelOutputParquet(i, MODEL_TEST_OUTPUTS)
 
         batch_bps = bps[i:i+batch_size]
+        if not batch_bps:
+            print(f"DEBUG: Skipping empty batch for indices {i} to {i+batch_size}.")
+            continue
+
         prompts = [construct_model_input(bp) for bp in batch_bps]
         outputs = pipe(prompts, **generation_args)
         
@@ -166,10 +175,10 @@ def main_model_inference_for_bps(bp_idx_start, bp_idx_end, pipe, configs):
             model_output = output['generated_text']
             all_bp_outputs.append((bp.bp_idx, model_output))
 
-        print(f"Processed batch {i // batch_size + 1} of bp_idx {bp_idx}")
+        print(f"Processed batch {i // batch_size + 1} of bp_idx {bp_idx_start} to {bp_idx_end}.")
 
         mo_parquet.insert_model_outputs(all_bp_outputs)
-        print(f"Completed bp_idx {bp_idx} with {len(all_bp_outputs)} outputs.")
+        print(f"Completed batch {i // batch_size + 1} with {len(all_bp_outputs)} outputs.")
 
 
 if __name__ == "__main__":
@@ -182,8 +191,7 @@ if __name__ == "__main__":
     pipe = load_model()
     configs = load_configs()
 
-    for bp_idx in range(start_idx, end_idx):
-        main_model_inference_per_base_prompt(bp_idx, pipe, configs)
-        print(f"Finished inference for base prompt index {bp_idx}.")
+    main_model_inference_for_bps(start_idx, end_idx, pipe, configs)
+    print(f"Starting inference for base prompt indices from {start_idx} to {end_idx}...")
 
     print("All inferences have been completed.")
