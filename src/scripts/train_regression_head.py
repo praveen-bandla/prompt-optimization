@@ -76,7 +76,7 @@ def objective(trial):
     batch_size=trial.suggest_categorical("batch_size", [8, 16, 32])
 
     # Load model and tokenizer
-    tokenizer = AutoTokenizer.from_pretrained(PROMPT_OPT_BASE_MODEL_ID, use_safetensors=True) # must be base model
+    tokenizer = AutoTokenizer.from_pretrained(REGRESSION_HEAD_BASE_MODEL_ID, use_safetensors=True) # must be base model
     tokenizer.pad_token = tokenizer.eos_token
     tokenizer.pad_token_id = tokenizer.eos_token_id # Set pad token to eos token for causal LM
     # Alternatively, can use: tokenizer.add_special_tokenz({"pad_token": "[PAD]"})
