@@ -20,7 +20,7 @@ module load singularity/3.7.4
 # Run inside Singularity container with overlay and Conda
 singularity exec --nv \
   --bind /scratch \
-  --overlay /scratch/ic2664/overlay-25GB-500K.ext3:ro \
+  --overlay /scratch/ic2664/overlay-25GB-500K.ext3:rw \
   /scratch/ic2664/cuda11.8.86-cudnn8.7-devel-ubuntu22.04.2.sif \
   /bin/bash -c "
     cd /scratch/ic2664/prompt-optimization/
