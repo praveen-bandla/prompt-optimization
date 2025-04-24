@@ -25,7 +25,7 @@ singularity exec --nv \
   /bin/bash -c "
     cd /scratch/ic2664/prompt-optimization/
     source venv-bella/bin/activate
-    export PYTHONPATH=$(pwd)
+    export PYTHONPATH='$(pwd)'
     echo "PYTHONPATH: $PYTHONPATH"
     export HF_HOME=/scratch/ic2664/huggingface_cache
     echo 'Start time: ' \$(date)
