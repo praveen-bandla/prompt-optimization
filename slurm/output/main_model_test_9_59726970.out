@@ -1,0 +1,3 @@
+PYTHONPATH: /scratch/ic2664/prompt-optimization
+Start time: Thu Apr 24 14:50:35 EDT 2025
+Running main model inference for bp_idx [1300, 1301, ..., 1399]
