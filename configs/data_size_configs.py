@@ -18,7 +18,7 @@ SECTION_WEIGHTS = {
     'section_4': 2.0,
     'section_5': 0.5
 }
-NUM_VALIDATOR_MODELS = 3
+NUM_VALIDATOR_MODELS = 2
 
 # Map model aliases to model names
 # commenting out for now
@@ -55,22 +55,22 @@ VAL_MODEL_DICT = {
                 "content": ""
             } 
         ]
-    #}
-    },
-    2:{
-        'model_name': 'qwen',
-        'huggingface_model_id': 'Qwen/Qwen2.5-7B-Instruct',
-        'prompt_structure':[
-            {
-                "role": "system",
-                "content": ""
-            },
-            {
-                "role": "user",
-                "content": ""
-            }
-        ]
     }
+#     },
+#     2:{
+#         'model_name': 'qwen',
+#         'huggingface_model_id': 'Qwen/Qwen2.5-7B-Instruct',
+#         'prompt_structure':[
+#             {
+#                 "role": "system",
+#                 "content": ""
+#             },
+#             {
+#                 "role": "user",
+#                 "content": ""
+#             }
+#         ]
+#     }
 }
 
 # MODEL_ALIASES = {

@@ -82,13 +82,11 @@ def parse_model_output(model_output):
     '''
     Model output is a list of integers returned as a string. This function parses the string and returns a list of integers.
     '''
-    # # Split the string by commas and convert to integers
-    # parsed_list = [int(x.strip()) for x in model_output.split(',') if x.strip().isdigit()]
-    parsed_list = json.loads(model_output)
-
-    print(parsed_list)
-
-    return parsed_list
+    try:
+        parsed_list = json.loads(model_output)
+        return parsed_list
+    except (json.JSONDecodeError, TypeError):
+        return []
 
 def load_configs():
     '''
@@ -360,8 +358,16 @@ def validator_model_inference_per_prompt_variation(base_prompt_str, main_model_o
         # Step 3e: Parse and store the model output
         parsed_list = parse_model_output(generated_text)
 
-        if len(parsed_list) != NUM_RUBRIC_SECTIONS:
-            raise ValueError(f"Parsed list length {len(parsed_list)} does not match expected number of sections {NUM_RUBRIC_SECTIONS}")
+        counter = 0
+        while len(parsed_list) != NUM_RUBRIC_SECTIONS:
+            counter += 1
+            print(f'error caught with model generation')
+            output = pipe(full_prompt, **generation_args)
+            generated_text = output[0]['generated_text']
+            parsed_list = parse_model_output(generated_text)
+            #raise ValueError(f"Parsed list length {len(parsed_list)} does not match expected number of sections {NUM_RUBRIC_SECTIONS}")
+            if counter == 5:
+                parsed_list = [0]* NUM_RUBRIC_SECTIONS
         
         for i, score in enumerate(parsed_list):
             scores[f"section_{i + 1}"][idx] = score
@@ -402,7 +408,10 @@ def validator_model_inference_per_base_prompt(model_dict, configs, mo_parquet, v
     # models_dict = load_models()
     # configs = load_configs()
 
-    for idx in range(-1, NUM_PROMPT_VARIATIONS):
+    num_mos = mo_parquet.get_num_modeloutputs()
+
+    for idx in range(-1, num_mos):
+        print(f'Prompt Variation id = {idx}')
     # for idx in range(-1,4):
         # Load the main model output string for the given bpv_idx
         model_output_obj = MainModelOutput((bp_idx, idx), mo_parquet)

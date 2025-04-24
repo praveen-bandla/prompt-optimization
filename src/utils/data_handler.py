@@ -631,6 +631,11 @@ class ModelOutputParquet:
         self._initialize_parquet()
         return pd.read_parquet(self.file_path)
 
+    def get_num_modeloutputs(self):
+        num_mos = len(self.df) - 1
+        return num_mos
+
+
     def insert_model_outputs(self, model_outputs):
         '''
         Inserts a batch of model outputs into the respective parquet file. Assumes that the first model output of this batch is the base prompt model output.
