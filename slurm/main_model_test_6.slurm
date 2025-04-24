@@ -1,8 +1,8 @@
 #!/bin/bash
 
 #SBATCH --job-name=main_model_test_6
-#SBATCH --output=slurm/output/main_model_test_6_%j.out
-#SBATCH --error=slurm/output/main_model_test_6_%j.err
+#SBATCH --output=output/main_model_test_6_%j.out
+#SBATCH --error=output/main_model_test_6_%j.err
 #SBATCH --partition=rtx8000
 #SBATCH --gres=gpu:rtx8000:1
 #SBATCH --cpus-per-task=4
