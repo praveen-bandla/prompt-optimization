@@ -619,6 +619,31 @@ class ModelOutputParquet:
         '''
         self._initialize_parquet()
         return pd.read_parquet(self.file_path)
+    
+    def insert_test_model_outputs(self, model_outputs):
+        '''
+        Inserts a batch of model outputs into the respective parquet file. Assumes that the first model output of this batch is the base prompt model output.
+
+        Args:
+            - model outputs (list of tuples): A list of tuples where each tuple contains (bpv_idx, model_output_string). THESE HAVE TO BE SPECIFIC TO A BASE PROMPT INDEX. CANNOT MIX PROMPT VARIATIONS FOR DIFFERENT BASE PROMPTS. 
+
+        Raises:
+            - ValueError: If the prompt variations are not specific to a single base prompt index.
+        '''
+        # Check if all model outputs are specific to a single base prompt index
+        base_prompt_indexes = list(set([x[0] for x in model_outputs]))
+        # if len(base_prompt_indexes) > 1:
+        #     raise ValueError("All model outputs must be specific to a single base prompt index.")
+        # if base_prompt_indexes[0] != self.bp_idx:
+        #     raise ValueError("All model outputs must be specific to the base prompt index provided during initialization of the ModelOutputParquet Object.")
+        
+        # df = self._access_parquet(self.bp_idx)
+
+        # new_data = pd.DataFrame(model_outputs, columns=["bp_idx", "model_output_string"])
+        # df = pd.concat([self.df, new_data], ignore_index=True)
+        df = pd.DataFrame(model_outputs, columns=["bp_idx", "model_output_string"])
+        self.reset_parquet()
+        df.to_parquet(self.file_path, index=False)
 
     def insert_model_outputs(self, model_outputs):
         '''
@@ -631,7 +656,7 @@ class ModelOutputParquet:
             - ValueError: If the prompt variations are not specific to a single base prompt index.
         '''
         # Check if all model outputs are specific to a single base prompt index
-        base_prompt_indexes = list(set([x[0][0] for x in model_outputs]))
+        base_prompt_indexes = list(set([x[0] for x in model_outputs]))
         if len(base_prompt_indexes) > 1:
             raise ValueError("All model outputs must be specific to a single base prompt index.")
         if base_prompt_indexes[0] != self.bp_idx:
@@ -639,7 +664,7 @@ class ModelOutputParquet:
         
         # df = self._access_parquet(self.bp_idx)
 
-        # new_data = pd.DataFrame(model_outputs, columns=["bpv_idx", "model_output_string"])
+        # new_data = pd.DataFrame(model_outputs, columns=["bp_idx", "model_output_string"])
         # df = pd.concat([self.df, new_data], ignore_index=True)
         df = pd.DataFrame(model_outputs, columns=["bpv_idx", "model_output_string"])
         self.reset_parquet()

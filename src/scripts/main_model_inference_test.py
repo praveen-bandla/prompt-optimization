@@ -177,7 +177,7 @@ def main_model_inference_for_bps(bp_idx_start, bp_idx_end, pipe, configs):
 
         print(f"Processed batch {i // batch_size + 1} of bp_idx {bp_idx_start} to {bp_idx_end}.")
 
-        mo_parquet.insert_model_outputs(all_bp_outputs)
+        mo_parquet.insert_test_model_outputs(all_bp_outputs)
         print(f"Completed batch {i // batch_size + 1} with {len(all_bp_outputs)} outputs.")
 
 
