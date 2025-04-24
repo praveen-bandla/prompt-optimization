@@ -1,1 +1,0 @@
-FATAL:   while loading overlay images: failed to open overlay image /scratch/dj2565/overlay-25GB-500K.ext3: while locking ext3 partition from /scratch/dj2565/overlay-25GB-500K.ext3: can't open /scratch/dj2565/overlay-25GB-500K.ext3 for writing, currently in use by another process

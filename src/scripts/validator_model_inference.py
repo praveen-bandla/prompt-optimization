@@ -40,7 +40,7 @@ Dependencies:
 from src.utils.prompt import *
 from src.utils.data_handler import *
 from configs.root_paths import *
-from configs.data_size_configs import MODEL_ALIASES
+#from configs.data_size_configs import MODEL_ALIASES
 import yaml
 import json
 import os

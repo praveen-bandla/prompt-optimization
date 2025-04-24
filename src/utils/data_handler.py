@@ -230,19 +230,30 @@ class BasePromptDB:
         self.delete_database()
         self._initialize_db()
 
+    def fetch_prompt_by_rownum(self, rownum):
+        query = f"SELECT * FROM base_prompts LIMIT 1 OFFSET {rownum};"
+        cursor = self.conn.cursor()
+        cursor.execute(query)
+        row = cursor.fetchone()
+        if row:
+            return row['base_prompt_string'], row['bp_idx']
+        else:
+            return None, None
+
 
 class PromptVariationParquet:
     '''
     Class used to manage the Prompt Variations in Parquet format as we discussed and is in README. This class will be initialized with a bp_idx and will have methods to access, write, read prompt variations. It will be similar to the BasePromptDB class, but will have to handle different Parquet files indexed by base prompt, as opposed to a single SQLite database.
     '''
 
-    def __init__(self, bp_idx, parquet_root_path = PROMPT_VARIATIONS):
+    def __init__(self, bp_idx, parquet_root_path = PROMPT_VARIATIONS, suffix=""):
         '''
-        Initializes the PromptVariationParquet class. This is base prompt specific. When needing to access prompt variations for a specific base prompt, the bp_idx will be passed to the methods of this class.
+        Initializes the PromptVariationParquet class with an optional suffix for the filename.
         '''
         self.parquet_root_path = parquet_root_path
         self.bp_idx = bp_idx
-        self.file_path = f'{self.parquet_root_path}/{bp_idx}_prompt_variation.parquet'
+        self.suffix = suffix
+        self.file_path = f'{self.parquet_root_path}/{bp_idx}_prompt_variation{self.suffix}.parquet'
         self.df = self._access_parquet()
 
     def _initialize_parquet(self): 

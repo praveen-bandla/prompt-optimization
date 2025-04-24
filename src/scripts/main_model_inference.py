@@ -473,34 +473,5 @@ if __name__ == "__main__":
         print(f"Finished inference for base prompt index {bp_idx}.")
     print("All inferences have been completed.")
 
-
-
-
-    
-
-
-
     mo_parquet.insert_model_outputs(all_pv_outputs)
     print(f"✅ Completed bp_idx {bp_idx} with {len(all_pv_outputs)} outputs.")
-
-
-if __name__ == "__main__":
-    if len(sys.argv) != 3:
-        raise ValueError("Please provide a list of base prompt indices.")
-
-    start_idx = int(sys.argv[1])
-    end_idx = int(sys.argv[2])
-
-    pipe = load_model()
-    configs = load_configs()
-
-    for bp_idx in range(start_idx, end_idx):
-        main_model_inference_per_base_prompt(bp_idx, pipe, configs)
-        print(f"Finished inference for base prompt index {bp_idx}.")
-    print("All inferences have been completed.")
-
-
-
-
-    
-

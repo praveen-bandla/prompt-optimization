@@ -1,30 +1,0 @@
-2025-04-20 09:09:29.486620: I tensorflow/core/util/port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
-2025-04-20 09:09:30.648328: E external/local_xla/xla/stream_executor/cuda/cuda_fft.cc:467] Unable to register cuFFT factory: Attempting to register factory for plugin cuFFT when one has already been registered
-WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
-E0000 00:00:1745154570.994936 3413416 cuda_dnn.cc:8579] Unable to register cuDNN factory: Attempting to register factory for plugin cuDNN when one has already been registered
-E0000 00:00:1745154571.017755 3413416 cuda_blas.cc:1407] Unable to register cuBLAS factory: Attempting to register factory for plugin cuBLAS when one has already been registered
-W0000 00:00:1745154571.729597 3413416 computation_placer.cc:177] computation placer already registered. Please check linkage and avoid linking the same target more than once.
-W0000 00:00:1745154571.729655 3413416 computation_placer.cc:177] computation placer already registered. Please check linkage and avoid linking the same target more than once.
-W0000 00:00:1745154571.729661 3413416 computation_placer.cc:177] computation placer already registered. Please check linkage and avoid linking the same target more than once.
-W0000 00:00:1745154571.729665 3413416 computation_placer.cc:177] computation placer already registered. Please check linkage and avoid linking the same target more than once.
-2025-04-20 09:09:31.738277: I tensorflow/core/platform/cpu_feature_guard.cc:210] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
-To enable the following instructions: AVX2 AVX512F AVX512_VNNI FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
-Downloading shards:   0%|          | 0/4 [00:00<?, ?it/s]Downloading shards:  25%|██▌       | 1/4 [00:06<00:20,  6.70s/it]Downloading shards:  50%|█████     | 2/4 [00:13<00:13,  6.95s/it]Downloading shards:  75%|███████▌  | 3/4 [00:21<00:07,  7.29s/it]Downloading shards: 100%|██████████| 4/4 [00:23<00:00,  5.29s/it]Downloading shards: 100%|██████████| 4/4 [00:23<00:00,  5.94s/it]
-Loading checkpoint shards:   0%|          | 0/4 [00:00<?, ?it/s]Loading checkpoint shards:  25%|██▌       | 1/4 [00:05<00:17,  5.73s/it]Loading checkpoint shards:  50%|█████     | 2/4 [00:11<00:11,  5.70s/it]Loading checkpoint shards:  75%|███████▌  | 3/4 [00:16<00:05,  5.65s/it]Loading checkpoint shards: 100%|██████████| 4/4 [00:18<00:00,  4.01s/it]Loading checkpoint shards: 100%|██████████| 4/4 [00:18<00:00,  4.62s/it]
-The attention mask and the pad token id were not set. As a consequence, you may observe unexpected behavior. Please pass your input's `attention_mask` to obtain reliable results.
-Setting `pad_token_id` to `eos_token_id`:None for open-end generation.
-The attention mask is not set and cannot be inferred from input because pad token is same as eos token. As a consequence, you may observe unexpected behavior. Please pass your input's `attention_mask` to obtain reliable results.
-Starting from v4.46, the `logits` model output will have the same type as the model (except at train time, where it will always be FP32)
-Traceback (most recent call last):
-  File "/scratch/dj2565/prompt-optimization/./src/scripts/generate_base_prompts_new.py", line 343, in <module>
-    main()
-  File "/scratch/dj2565/prompt-optimization/./src/scripts/generate_base_prompts_new.py", line 331, in main
-    formatted_base_prompts = parse_model_output_as_bp_objects(model_output)
-                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/scratch/dj2565/prompt-optimization/./src/scripts/generate_base_prompts_new.py", line 304, in parse_model_output_as_bp_objects
-    return [(new_idx, base_prompts[random_idx]) for new_idx, random_idx in enumerate(random_indices)]
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/scratch/dj2565/prompt-optimization/./src/scripts/generate_base_prompts_new.py", line 304, in <listcomp>
-    return [(new_idx, base_prompts[random_idx]) for new_idx, random_idx in enumerate(random_indices)]
-                      ~~~~~~~~~~~~^^^^^^^^^^^^
-IndexError: list index out of range
