@@ -238,41 +238,111 @@ def objective(trial):
     # Return the average validation loss
     return model, tokenizer, sum(val_losses) / len(val_losses)
 
-# Run the hyperparameter optimiztion
-best_model = None
-best_tokenizer = None
+# # Run the hyperparameter optimiztion
+# best_model = None
+# best_tokenizer = None
+
+# def wrapped_objective(trial):
+#     global best_model, best_tokenizer
+#     model, tokenizer, val_loss = objective(trial)
+#     best_model = model
+#     best_tokenizer = tokenizer
+#     return val_loss
+
+# study = optuna.create_study(direction='minimize')
+# study.optimize(wrapped_objective, n_trials=10)
+
+
+# # Save model
+# # PRAVEEN: commenting out for now just to test the training code
+# # Save the best model
+# best_trial = study.best_trial
+# print(f"Best trial: {best_trial.number}, Best trials params: {best_trial.params}")
+
+# # Reload tokenizer and prompt generator for saving
+# save_path = f"{LORA_REGRESSION_HEAD_PATH}_best_trial"
+# os.makedirs(save_path, exist_ok=True)
+# best_tokenizer.save_pretrained(save_path)
+# best_model.save_pretrained(save_path)
+# print(f"Trained regression head saved to {save_path}")
+
+# reloaded_model = AutoModelForCausalLM.from_pretrained(save_path)
+# reloaded_tokenizer = AutoTokenizer.from_pretrained(save_path)
+# print("Reloaded model and tokenizer successfully.")
+
+# # BECCA: Old save code below
+# # save_path = f"{LORA_REGRESSION_HEAD_PATH}_trial_{study.best_trial.number}"
+
+# # os.makedirs(save_path, exist_ok=True)
+# # model.save_pretrained(save_path)
+# # print(f"Model saved to {save_path}")
 
 def wrapped_objective(trial):
+    """
+    Wrapper for the Optuna objective function to store the best model and tokenizer globally.
+    """
     global best_model, best_tokenizer
     model, tokenizer, val_loss = objective(trial)
     best_model = model
     best_tokenizer = tokenizer
     return val_loss
 
-study = optuna.create_study(direction='minimize')
-study.optimize(wrapped_objective, n_trials=10)
+
+def main():
+    """
+    Main function to run hyperparameter optimization and save the best model.
+    """
+    global best_model, best_tokenizer
+
+    # Run the hyperparameter optimization
+    study = optuna.create_study(direction='minimize')
+    study.optimize(wrapped_objective, n_trials=10)
+
+    # Save the best model
+    best_trial = study.best_trial
+    print(f"Best trial: {best_trial.number}, Best trial params: {best_trial.params}")
+
+    # Define save path
+    save_path = f"{LORA_REGRESSION_HEAD_PATH}_best_trial"
+    os.makedirs(save_path, exist_ok=True)
+
+    # Save tokenizer and model
+    best_tokenizer.save_pretrained(save_path)
+    best_model.save_pretrained(save_path)
+    print(f"Trained regression head saved to {save_path}")
+
+    # Reload the model and tokenizer to verify saving
+    reloaded_model = AutoModelForCausalLM.from_pretrained(save_path).to(device)  # Move model to GPU
+    reloaded_model.config.output_hidden_states = True  # Enable hidden states
+    reloaded_tokenizer = AutoTokenizer.from_pretrained(save_path)
+    print("Reloaded model and tokenizer successfully.")
+
+    # Test inference
+    print("\nRunning inference on a sample input...")
+    sample_base_prompt = "Create a learning guide for third graders on how to write a story."
+    sample_prompt_variation = "Provide a detailed and step-by-step learning guide on how to write a story for third graders. Be sure to include examples and structure."
+    combined_input = f"{sample_base_prompt} {sample_prompt_variation}"
+
+    # Tokenize the input
+    inputs = reloaded_tokenizer(
+        combined_input,
+        return_tensors="pt",
+        padding=True,
+        truncation=True,
+        max_length=512
+    ).to(device)  # Move inputs to the same device as the model
+
+    # Perform inference
+    with torch.no_grad():
+        outputs = reloaded_model(**inputs)
+        hidden_states = outputs.hidden_states[-1]  # Extract the last hidden states
+        pooled_output = hidden_states.mean(dim=1).to(torch.float16).to(device)  # Average pooling
+        logits = best_model.regression_head(pooled_output)  # Pass through regression head
+        prediction = logits.squeeze(-1).cpu().item()  # Convert to scalar
+
+    print(f"Sample Input: {combined_input}")
+    print(f"Predicted Score: {prediction}")
 
 
-# Save model
-# PRAVEEN: commenting out for now just to test the training code
-# Save the best model
-best_trial = study.best_trial
-print(f"Best trial: {best_trial.number}, Best trials params: {best_trial.params}")
-
-# Reload tokenizer and prompt generator for saving
-save_path = f"{LORA_REGRESSION_HEAD_PATH}_best_trial"
-os.makedirs(save_path, exist_ok=True)
-best_tokenizer.save_pretrained(save_path)
-best_model.save_pretrained(save_path)
-print(f"Trained regression head saved to {save_path}")
-
-reloaded_model = AutoModelForCausalLM.from_pretrained(save_path)
-reloaded_tokenizer = AutoTokenizer.from_pretrained(save_path)
-print("Reloaded model and tokenizer successfully.")
-
-# BECCA: Old save code below
-# save_path = f"{LORA_REGRESSION_HEAD_PATH}_trial_{study.best_trial.number}"
-
-# os.makedirs(save_path, exist_ok=True)
-# model.save_pretrained(save_path)
-# print(f"Model saved to {save_path}")
+if __name__ == "__main__":
+    main()
