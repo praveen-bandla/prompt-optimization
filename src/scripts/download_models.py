@@ -31,18 +31,18 @@ import os
 ### Prompt Optimizer Section ###
 
 # Shared tokenizer
-regression_head_tokenizer = AutoTokenizer.from_pretrained(REGRESSION_HEAD_BASE_MODEL_ID)
-prompt_gen_tokenizer = AutoTokenizer.from_pretrained(PROMPT_GEN_BASE_MODEL_ID)
+# regression_head_tokenizer = AutoTokenizer.from_pretrained(REGRESSION_HEAD_BASE_MODEL_ID)
+# prompt_gen_tokenizer = AutoTokenizer.from_pretrained(PROMPT_GEN_BASE_MODEL_ID)
 
-# Load regression head model base
-regression_head_base = AutoModelForCausalLM.from_pretrained(
-    REGRESSION_HEAD_BASE_MODEL_ID,
-    torch_dtype = torch.float16,
-    device_map="auto",
-    cache_dir = REGRESSION_HEAD_BASE_PATH
-)
-regression_head_base.save_pretrained(LORA_REGRESSION_HEAD_PATH)
-print("Base model for regression head saved to:", LORA_REGRESSION_HEAD_PATH)
+# # Load regression head model base
+# regression_head_base = AutoModelForCausalLM.from_pretrained(
+#     REGRESSION_HEAD_BASE_MODEL_ID,
+#     torch_dtype = torch.float16,
+#     device_map="auto",
+#     cache_dir = REGRESSION_HEAD_BASE_PATH
+# )
+# regression_head_base.save_pretrained(LORA_REGRESSION_HEAD_PATH)
+# print("Base model for regression head saved to:", LORA_REGRESSION_HEAD_PATH)
 
 # Load prompt generator model base
 prompt_gen_base = AutoModelForCausalLM.from_pretrained(

@@ -653,20 +653,43 @@ class RegressionHeadDataset(torch.utils.data.Dataset):
         '''
         Loads the parquet files for prompt variations and validation scores, and uses the training splits to create the train, test, val splits.
         '''
+        # # Retrieve the prompt variations and validation scores files
+        # prompt_variation_files = [os.path.join(self.prompt_variations_path, f) for f in os.listdir(self.prompt_variations_path) if f.endswith('.parquet')]
+        # validation_score_files = [os.path.join(self.validation_scores_path, f) for f in os.listdir(self.validation_scores_path) if f.endswith('.parquet')]
+
+        # # Sort the files by their numeric index extracted from the filenames
+        # prompt_variation_files.sort(key=lambda x: int(os.path.basename(x).split('_')[0]))
+        # validation_score_files.sort(key=lambda x: int(os.path.basename(x).split('_')[0]))
+
+        # # # For testing purposes, limit the number of files to 10
+        # # prompt_variation_files = prompt_variation_files[:10]
+        # # validation_score_files = validation_score_files[:10]
+
+        # train_data = []
+        # test_data = []
+        # val_data = []
+
+        # for pv_file, vs_file in zip(prompt_variation_files, validation_score_files):
+        #     # Load Parquet files
         # Retrieve the prompt variations and validation scores files
         prompt_variation_files = [os.path.join(self.prompt_variations_path, f) for f in os.listdir(self.prompt_variations_path) if f.endswith('.parquet')]
         validation_score_files = [os.path.join(self.validation_scores_path, f) for f in os.listdir(self.validation_scores_path) if f.endswith('.parquet')]
 
-        # Sort the files by their numeric index extracted from the filenames
-        prompt_variation_files.sort(key=lambda x: int(os.path.basename(x).split('_')[0]))
-        validation_score_files.sort(key=lambda x: int(os.path.basename(x).split('_')[0]))
+        # Extract numeric IDs from filenames and create dictionaries for matching
+        prompt_variation_dict = {int(os.path.basename(f).split('_')[0]): f for f in prompt_variation_files}
+        validation_score_dict = {int(os.path.basename(f).split('_')[0]): f for f in validation_score_files}
+
+        # Find common IDs between the two sets of files
+        common_ids = set(prompt_variation_dict.keys()).intersection(validation_score_dict.keys())
+
+        # Match files with the same ID
+        matched_files = [(prompt_variation_dict[id], validation_score_dict[id]) for id in sorted(common_ids)]
 
         train_data = []
         test_data = []
         val_data = []
 
-        for pv_file, vs_file in zip(prompt_variation_files, validation_score_files):
-            # Load Parquet files
+        for pv_file, vs_file in matched_files:
             prompt_variations = pd.read_parquet(pv_file)
             validation_scores = pd.read_parquet(vs_file)
 
@@ -675,6 +698,12 @@ class RegressionHeadDataset(torch.utils.data.Dataset):
 
             # Merge on bpv_idx
             merged = pd.merge(prompt_variations, validation_scores, on="bpv_idx")
+
+            if merged.empty:
+                print(f"Warning: Merged DataFrame is empty for files {pv_file} and {vs_file}.")
+                print(f'length of prompt variations: {len(prompt_variations)}')
+                print(f'length of validation scores: {len(validation_scores)}')
+                continue
 
             # Extract the prompt_variation_id from bpv_idx
             merged['prompt_variation_id'] = merged['bpv_idx'].apply(lambda x: x[1])
