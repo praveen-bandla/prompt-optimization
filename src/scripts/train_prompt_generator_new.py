@@ -51,9 +51,8 @@ def format_prompt_with_instruction(base_prompt):
         f"Rewrite the following base instruction to create an alternative LLM prompt phrasing. Adjust the wording and structure of the prompt and include cues to create guidance for a model to generate a higher quality response."
         f"The rewritten prompt MUST include the EXACT phrase 'learning guide' and the word 'third-grade' or 'third-grader'. "
         f"Do not include any additional text or explanation. Return only the rewritten prompt.\n\n"
-        f"Example:\n"
-        f"Base Instruction: {example_base_prompt}\n"
-        f"Rewritten Prompt: {example_variation}\n\n"
+        f"Example Base Instruction: {example_base_prompt}\n"
+        f"Example Rewritten Prompt: {example_variation}\n\n"
         f"Now, rewrite the following base instruction:\n"
         f"Base Instruction: {base_prompt}\n"
         f"Rewritten Prompt:"
@@ -154,19 +153,33 @@ def parse_model_output(generated_text):
             return line.replace("Rewritten Prompt:", "").strip()
 
 def load_regression_head_model():
-    '''
+    """
     Load the regression head model for scoring the generated prompt variations.
-    '''
+    Returns:
+        regression_head_model (AutoModelForCausalLM): The regression head model.
+        tokenizer (AutoTokenizer): The tokenizer for the regression head model.
+    """
     # Load the regression head model
     regression_head_model = AutoModelForCausalLM.from_pretrained(
         BEST_LORA_REGRESSION_HEAD_PATH
     ).to(device)
 
     regression_head_model.config.output_hidden_states = True
+
+    regression_head_model.regression_head = torch.nn.Linear(
+        regression_head_model.config.hidden_size,
+        1
+    ).to(device).to(torch.float16)
+    # Load the tokenizer
     tokenizer = AutoTokenizer.from_pretrained(
         REGRESSION_HEAD_BASE_MODEL_ID,
         use_safetensors=True
     )
+
+    # Set the pad_token to eos_token if not already set
+    if tokenizer.pad_token is None:
+        tokenizer.pad_token = tokenizer.eos_token
+        tokenizer.pad_token_id = tokenizer.eos_token_id
 
     return regression_head_model, tokenizer
 

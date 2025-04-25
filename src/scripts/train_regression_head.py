@@ -309,12 +309,23 @@ def main():
     # Save tokenizer and model
     best_tokenizer.save_pretrained(save_path)
     best_model.save_pretrained(save_path)
+
+    torch.save(best_model.regression_head.state_dict(), REGRESSION_HEAD_PATH)
     print(f"Trained regression head saved to {save_path}")
 
     # Reload the model and tokenizer to verify saving
     reloaded_model = AutoModelForCausalLM.from_pretrained(save_path).to(device)  # Move model to GPU
     reloaded_model.config.output_hidden_states = True  # Enable hidden states
     reloaded_tokenizer = AutoTokenizer.from_pretrained(save_path)
+
+    # Re-add the regression head
+    reloaded_model.regression_head = torch.nn.Linear(
+        reloaded_model.config.hidden_size, 1
+    ).to(device).to(torch.float16)
+
+    # Load the saved regression head weights
+    reloaded_model.regression_head.load_state_dict(torch.load(REGRESSION_HEAD_PATH))
+
     print("Reloaded model and tokenizer successfully.")
 
     # Test inference
@@ -337,7 +348,7 @@ def main():
         outputs = reloaded_model(**inputs)
         hidden_states = outputs.hidden_states[-1]  # Extract the last hidden states
         pooled_output = hidden_states.mean(dim=1).to(torch.float16).to(device)  # Average pooling
-        logits = best_model.regression_head(pooled_output)  # Pass through regression head
+        logits = reloaded_model.regression_head(pooled_output)  # Pass through regression head
         prediction = logits.squeeze(-1).cpu().item()  # Convert to scalar
 
     print(f"Sample Input: {combined_input}")

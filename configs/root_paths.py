@@ -62,3 +62,5 @@ REGRESSION_HEAD_CONFIG_PATH = os.path.join(MODEL_CONFIGS, 'regression_head.yaml'
 BEST_LORA_REGRESSION_HEAD_PATH = os.path.join(MODELS_PATH, 'lora_regression_head_best_trial')
 BEST_LORA_PROMPT_GEN_PATH = os.path.join(MODELS_PATH, 'lora_prompt_gen_best_trial')
 PROMPT_GENERATOR_MODEL_INPUT = os.path.join(MODEL_INPUT_PATH, 'prompt_optimizer_input.json')
+SAVE_PATH = f"{LORA_REGRESSION_HEAD_PATH}_best_trial"
+REGRESSION_HEAD_PATH = os.path.join(SAVE_PATH, 'regression_head.pth')
