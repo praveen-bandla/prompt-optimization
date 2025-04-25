@@ -706,6 +706,19 @@ class ModelOutputParquet:
         result = self.df[self.df["bpv_idx"] == bpv_idx]['model_output_string']
         return result.iloc[0] if not result.empty else None
     
+    def fetch_model_output_test(self, bp_idx):
+        '''
+        Returns the model output string for the given bp_id for tests.
+
+        Inputs:
+            - bp_idx (int): The base prompt index.
+
+        Returns:
+            - str: The model output string if found, else None.
+        '''
+        result = self.df[self.df["bp_idx"] == bp_idx]['model_output_string']
+        return result.iloc[0] if not result.empty else None
+    
     def get_bp_idx(self):
         '''
         Returns the base prompt index associated with this object.
