@@ -155,8 +155,9 @@ def main_model_inference_for_bps(bp_idx_start, bp_idx_end, pipe, configs):
         "return_full_text": False
     }
 
+    mo_parquet = ModelOutputParquet(bp_idx_start, MODEL_TEST_OUTPUTS)
+
     for i in range(0, len(bps), batch_size):  # Use len(bps) instead of bp_idx_end
-        mo_parquet = ModelOutputParquet(i, MODEL_TEST_OUTPUTS)
 
         batch_bps = bps[i:i+batch_size]
         if not batch_bps:
@@ -177,8 +178,8 @@ def main_model_inference_for_bps(bp_idx_start, bp_idx_end, pipe, configs):
 
         print(f"Processed batch {i // batch_size + 1} of bp_idx {bp_idx_start} to {bp_idx_end}.")
 
-        mo_parquet.insert_test_model_outputs(all_bp_outputs)
-        print(f"Completed batch {i // batch_size + 1} with {len(all_bp_outputs)} outputs.")
+    mo_parquet.insert_test_model_outputs(all_bp_outputs)
+    print("Prompts added to the Parquet file successfully.")
 
 
 if __name__ == "__main__":
@@ -191,7 +192,7 @@ if __name__ == "__main__":
     pipe = load_model()
     configs = load_configs()
 
-    main_model_inference_for_bps(start_idx, end_idx, pipe, configs)
     print(f"Starting inference for base prompt indices from {start_idx} to {end_idx}...")
+    main_model_inference_for_bps(start_idx, end_idx, pipe, configs)
 
     print("All inferences have been completed.")
