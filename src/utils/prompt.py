@@ -166,24 +166,38 @@ class ValidationScore: # instantiated for each bpv_idx
     It also calculates aggregated scores across rubric sections.
     '''
 
-    def __init__(self, bpv_idx, vs_parquet: ValidationScoreParquet, scores = None):
+    def __init__(self, vs_parquet, bp_idx=None, bpv_idx=None, scores = None):
         '''
         Initialize a validation score with a base prompt index, for all prompt variations of that base prompt.
 
         Args:
             - bpv_idx (tuple of ints): The base prompt variation index.
         '''
-        self.bpv_idx = bpv_idx # Use this to derive the bp_idx for file name
+        self.bpv_idx = bpv_idx 
+
+        if bp_idx is None:
+            self.bp_idx = bpv_idx[0]
+        else:
+            self.bp_idx = bp_idx
+
         self.vs_parquet = vs_parquet
         self.scores = scores # Initialize scores to None
         # self.scores = {f'section_{i+1}': [] for i in range(NUM_RUBRIC_SECTIONS)} # Initialize scores for each rubric section
-
+    
     def get_scores(self):
         """Returns the validation scores if they exist, or intiializes the dictionary for storing scores if not."""
         if self.scores is not None:
             return self.scores
         else:
             self.scores = self.vs_parquet.fetch_bpv_validation_scores(self.bpv_idx)
+            return self.scores
+    
+    def get_scores_test(self):
+        """Returns the validation scores if they exist, or intiializes the dictionary for storing scores if not."""
+        if self.scores is not None:
+            return self.scores
+        else:
+            self.scores = self.vs_parquet.fetch_bp_validation_scores(self.bp_idx)
             return self.scores
 
     # def parse_model_output(self, model_output : str):
@@ -231,6 +245,15 @@ class ValidationScore: # instantiated for each bpv_idx
             - tuple of ints: The base prompt variation index.
         '''
         return self.bpv_idx
+    
+    def get_bp_idx(self):
+        '''
+        Returns the base prompt index from the corresponding parquet file.
+
+        Returns:
+            - int: The base prompt index.
+        '''
+        return self.bp_idx
     
     def fetch_base_prompt(self):
         '''
@@ -318,7 +341,7 @@ class MainModelOutput:
     We are assuming that a ModelOutputParquet object has been created before an instantiation of this class is created.
     '''
 
-    def __init__(self, bpv_idx, mo_parquet, model_output_str=None):
+    def __init__(self, mo_parquet, bpv_idx=None, bp_idx=None, model_output_str=None):
         '''
         Initialize a main model output with a base prompt variation index.
 
@@ -328,7 +351,10 @@ class MainModelOutput:
             - model_output_str (str, optional): The main model output string
         '''
         self.bpv_idx = bpv_idx
-        self.bp = bpv_idx[0]
+        if bp_idx is None:
+            self.bp_idx = bpv_idx[0]
+        else:
+            self.bp_idx = bp_idx
         self.model_output_str = model_output_str
         self.mo_parquet = mo_parquet
     
@@ -344,6 +370,20 @@ class MainModelOutput:
             return self.model_output_str
         else:
             fetched_output = self.mo_parquet.fetch_model_output(self.bpv_idx)
+            return fetched_output
+    
+    def get_output_str_test(self):
+        '''
+        Fetches the main model output from the stored Parquet database. 
+
+        Returns:
+            - str: The main model output.
+        '''
+        
+        if self.model_output_str is not None:
+            return self.model_output_str
+        else:
+            fetched_output = self.mo_parquet.fetch_model_output_test(self.bp_idx)
             return fetched_output
     
     def get_bpv_idx(self):

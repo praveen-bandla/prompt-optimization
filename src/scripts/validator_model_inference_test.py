@@ -31,6 +31,10 @@ from copy import deepcopy
 
 from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
 
+from huggingface_hub import login
+
+login(token='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')
+
 def generate_empty_scores_dict(num_sections = NUM_RUBRIC_SECTIONS, num_models = NUM_VALIDATOR_MODELS):
     blank_dict = {}
 
@@ -115,7 +119,7 @@ def construct_model_input(base_prompt_str, main_model_output_str):
 
     Args:
     - base_prompt_str (str): The base prompt string.
-    - main_model_output_str (str): The main model output string for the given bpv_idx.
+    - main_model_output_str (str): The main model output string for the given bp_idx.
     '''
 
     # Load the rubric text from the rubric.txt file
@@ -188,26 +192,20 @@ def validator_model_inference_per_bp(base_prompt_str, main_model_output_str, mod
     # Step 1: Retrieve global prompt information
     system_role, content = construct_model_input(base_prompt_str, main_model_output_str)
 
-    # # Step 2a: Load models_dict and configs
-    # models_dict = load_models()
-    # configs = load_configs()
-    # print(configs)
-
     # Step 2b: Initialize validation scores
     scores = generate_empty_scores_dict()
 
     # Step 3: For each model, run inference
     for idx, model_info in models_dict.items():
         # Step 3a: load model specific hyperparameters from configs
-
         model_configs = configs.get(str(model_info['model_name']))
 
         generation_args = {
-            "temperature": model_configs.get("temperature"),
-            "top_p": model_configs.get("top_p"),
-            "top_k": model_configs.get("top_k"),
-            "max_new_tokens": model_configs.get("max_new_tokens"),
-            "do_sample": model_configs.get("do_sample")
+            "temperature": model_configs.get("temperature", 0.7),
+            "top_p": model_configs.get("top_p", 0.9),
+            "top_k": model_configs.get("top_k", 50),
+            "max_new_tokens": model_configs.get("max_new_tokens", 100),
+            "do_sample": model_configs.get("do_sample", True)
         }
 
         # Step 3b: Construct the prompt based on the model's requirements
@@ -221,13 +219,20 @@ def validator_model_inference_per_bp(base_prompt_str, main_model_output_str, mod
             model=models_dict[idx]['model'], 
             tokenizer=models_dict[idx]['tokenizer'],
             device_map="auto",  # Use GPU
-            return_full_text = False
+            return_full_text=False
         )
 
         # Step 3d: Run inference
+        print(f"DEBUG: Full prompt: {full_prompt}")
+        print(f"DEBUG: Generation args: {generation_args}")
         output = pipe(full_prompt, **generation_args)
-        generated_text = output[0]['generated_text']
+        print(f"DEBUG: Raw model output: {output}")
 
+        if not output or not output[0].get('generated_text'):
+            print(f"WARNING: Model failed to generate output for the prompt. Using default scores.")
+            return generate_empty_scores_dict()
+
+        generated_text = output[0]['generated_text']
         print(f"Generated text: {generated_text}")
 
         # Step 3e: Parse and store the model output
@@ -266,14 +271,13 @@ def validator_model_inference_for_bps(model_dict, configs, mo_parquet, vs_parque
     bp_obj = BasePrompt(bp_idx, bp_db)
     base_prompt_str = bp_obj.get_prompt_str()
 
-    model_output_obj = MainModelOutput((bp_idx, -1), mo_parquet)
-    main_model_output_str = model_output_obj.get_output_str()
+    model_output_obj = MainModelOutput(bp_idx=bp_idx, mo_parquet=mo_parquet)
+    main_model_output_str = model_output_obj.get_output_str_test()
 
-    score = validator_model_inference_per_bp(base_prompt_str, main_model_output_str, model_dict, configs)
+    scores = validator_model_inference_per_bp(base_prompt_str, main_model_output_str, model_dict, configs)
 
-    # Create a new ValidationScore object
-    vs_obj = ValidationScore((bp_idx, -1), vs_parquet, scores)
-    print(f"DEBUG: Validation score for base prompt {bp_idx}: {score}")
+    vs_obj = ValidationScore(bp_idx=bp_idx, vs_parquet=vs_parquet, scores=scores)
+    print(f"DEBUG: Validation scores for base prompt {bp_idx}: {scores}")
 
     return vs_obj
 
@@ -286,7 +290,7 @@ def write_validation_scores_to_parquet(vs_parquet, vs_objs):
     Args:
     - vs_objs (list): List of ValidationScore objects.
     '''
-    vs_parquet.insert_validation_scores(vs_objs)
+    vs_parquet.insert_validation_scores_test(vs_objs)
 
 
 if __name__ == "__main__":
@@ -301,11 +305,11 @@ if __name__ == "__main__":
     all_vs = []
     # Run inference for the given base prompt index
     for bp_idx in range(start_idx, end_idx):
-        mo_parquet = ModelOutputParquet(bp_idx)
-        vs_parquet = ValidationScoreParquet(bp_idx, VALIDATION_TEST_SCORES)
+        mo_parquet = ModelOutputParquet(bp_idx, MODEL_TEST_OUTPUTS)
+        vs_parquet = ValidationScoreParquet(bp_idx=bp_idx, test=True, parquet_root_path=VALIDATION_TEST_SCORES)
 
         all_vs.append(validator_model_inference_for_bps(models_dict, configs, mo_parquet, vs_parquet, bp_idx))
-        
+    
     # Write the validation scores to Parquet
     write_validation_scores_to_parquet(vs_parquet, all_vs)
     

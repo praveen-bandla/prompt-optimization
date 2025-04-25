@@ -358,13 +358,14 @@ class ValidationScoreParquet:
     Class used to manage the Prompt Variations in Parquet format as we discussed and is in README. This class will be initialized with a base prompt index and will have methods to access, write, read prompt variations. It will be similar to the BasePromptDB class, but will have to handle different Parquet files indexed by base prompt, as opposed to a single SQLite database.
     '''
 
-    def __init__(self, bp_idx, parquet_root_path = VALIDATION_SCORES): 
+    def __init__(self, bp_idx, test=False, parquet_root_path = VALIDATION_SCORES): 
         '''
         Initializes the ValidationScoreParquet class. This is not base prompt specific. 
         It will be used to manage all validation scores in the project. 
         When needing to access validation scores for a specific base prompt, the bpv_idx will be passed to the methods of this class.
         '''
         self.bp_idx = bp_idx
+        self.test = test
         self.parquet_root_path = parquet_root_path
         self.file_path = f'{self.parquet_root_path}/{self.bp_idx}_validation_score.parquet'
         # self.df =  pd.DataFrame(columns = ['bpv_idx'] + [f'section_{i+1}' for i in range(NUM_RUBRIC_SECTIONS)] + ['total_score'])
@@ -383,8 +384,14 @@ class ValidationScoreParquet:
         Initializes the Parquet file for the base prompt index if it doesn't exist. Otherwise, it does nothing.
         '''
 
-        if not os.path.exists(self.file_path):
+        if not os.path.exists(self.file_path) and self.test == False:
             df = pd.DataFrame(columns = ['bpv_idx'] + [f'section_{i+1}' for i in range(NUM_RUBRIC_SECTIONS)] + [f'section_{i+1}_avg' for i in range(NUM_RUBRIC_SECTIONS)] + ['total_score'])
+            df.to_parquet(self.file_path, index=False)
+            print(f"Created new ValidationScoreParquet file at {self.file_path}")
+            # PRAVEEN: adding this line such that we store the updated df
+            self.df = df
+        elif not os.path.exists(self.file_path) and self.test == True:
+            df = pd.DataFrame(columns = ['bp_idx'] + [f'section_{i+1}' for i in range(NUM_RUBRIC_SECTIONS)] + [f'section_{i+1}_avg' for i in range(NUM_RUBRIC_SECTIONS)] + ['total_score'])
             df.to_parquet(self.file_path, index=False)
             print(f"Created new ValidationScoreParquet file at {self.file_path}")
             # PRAVEEN: adding this line such that we store the updated df
@@ -476,6 +483,36 @@ class ValidationScoreParquet:
         # save the updated DataFrame to the Parquet file
         self.df.to_parquet(self.file_path, index=False)
 
+    def insert_validation_scores_test(self, vs_objs_lst):
+        '''
+        For self.bp_idx, this method inserts validation scores for each prompt variation. 
+
+        Args:
+            vs_objs_lst: a list of vs_objs 
+        '''
+        # if there is already data, reset it
+        self.reset_parquet()
+
+        scores_list = []
+
+        for vs_obj in vs_objs_lst:
+            # retrieve the scores from the vs_obj
+            scores_dict = vs_obj.get_scores()
+            
+            # add bpv_idx to the scores_dict
+            scores_dict['bp_idx'] = vs_obj.get_bp_idx()
+
+            scores_list.append(scores_dict)
+
+        # convert the list of dictionaries to a DataFrame
+        new_data = pd.DataFrame(scores_list, columns = ['bp_idx'] + [f'section_{i+1}' for i in range(NUM_RUBRIC_SECTIONS)] + [f'section_{i+1}_avg' for i in range(NUM_RUBRIC_SECTIONS)] + ['total_score'])
+
+        # update self.df with the new data
+        self.df = pd.concat([self.df, new_data], ignore_index=True)
+
+        # save the updated DataFrame to the Parquet file
+        self.df.to_parquet(self.file_path, index=False)
+
 
 
     def fetch_all_validation_scores(self):
@@ -538,6 +575,22 @@ class ValidationScoreParquet:
         result = self.df[self.df["bpv_idx"] == bpv_idx]
         # Drop the bpv_idx column and convert the remaining DataFrame to a dictionary
         result_dict = result.drop(columns=["bpv_idx"]).iloc[0].to_dict()
+        
+        return result_dict
+    
+    def fetch_bp_validation_scores(self, bp_idx):
+        '''
+        Return the validation scores for the given bp_idx.
+        
+        Inputs:
+            - bp_idx (tuple of ints): The base prompt index.
+
+        Returns:
+            - pd.DataFrame: A DataFrame containing the validation scores for the given bp_idx.
+        '''
+        result = self.df[self.df["bp_idx"] == bp_idx]
+        # Drop the bpv_idx column and convert the remaining DataFrame to a dictionary
+        result_dict = result.drop(columns=["bp_idx"]).iloc[0].to_dict()
         
         return result_dict
     
