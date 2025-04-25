@@ -1,8 +1,8 @@
 #!/bin/bash
 
 #SBATCH --job-name=validator_test_5
-#SBATCH --output=slurm/output/validator_test_5_%j.out
-#SBATCH --error=slurm/output/validator_test_5_%j.err
+#SBATCH --output=output/validator_test_5_%j.out
+#SBATCH --error=output/validator_test_5_%j.err
 #SBATCH --partition=rtx8000
 #SBATCH --gres=gpu:rtx8000:1
 #SBATCH --cpus-per-task=4
