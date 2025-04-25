@@ -20,16 +20,16 @@ module load singularity/3.7.4
 # Run inside Singularity container with overlay and Conda
 singularity exec --nv \
   --bind /scratch \
-  --overlay /scratch/ic2664/overlay-25GB-500K.ext3:ro \
+  --overlay /scratch/ic2664/overlay-25GB-500K.ext3:rw \
   /scratch/ic2664/cuda11.8.86-cudnn8.7-devel-ubuntu22.04.2.sif \
-  /bin/bash -c "
-    source /ext3/miniconda3/etc/profile.d/conda.sh
-    conda activate venv-bella
+  /bin/bash -c '
     cd /scratch/ic2664/prompt-optimization/
-    export PYTHONPATH=\$PYTHONPATH:/scratch/ic2664/prompt-optimization/
+    source venv-bella/bin/activate
+    export PYTHONPATH=$(pwd)
+    echo "PYTHONPATH: $PYTHONPATH"
     export HF_HOME=/scratch/ic2664/huggingface_cache
-    echo 'Start time: ' \$(date)
-    echo 'Running validator scoring for bp_idx [1400, 1401, ..., 1499]'
-    python src/scripts/validator_model_inference.py 1400 1500
-    echo 'End time: ' \$(date)
-"
+    echo "Start time: $(date)"
+    echo "Running validator score inference for bp_idx [1400, 1401, ..., 1499]"
+    python3 src/scripts/validator_model_inference_test.py 1400 1500
+    echo "End time: $(date)"
+'
