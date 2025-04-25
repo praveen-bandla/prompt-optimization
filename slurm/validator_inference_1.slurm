@@ -1,8 +1,8 @@
 #!/bin/bash
 
-#SBATCH --job-name=validator_test_1_RTX8000
-#SBATCH --output=slurm/output/validator_test_1_RTX8000_%j.out
-#SBATCH --error=slurm/output/validator_test_1_RTX8000_%j.err
+#SBATCH --job-name=validator_test_1
+#SBATCH --output=slurm/output/validator_test_1_%j.out
+#SBATCH --error=slurm/output/validator_test_1_%j.err
 #SBATCH --partition=rtx8000
 #SBATCH --gres=gpu:rtx8000:1
 #SBATCH --cpus-per-task=4
@@ -29,7 +29,7 @@ singularity exec --nv \
     export PYTHONPATH=\$PYTHONPATH:/scratch/dj2565/prompt-optimization/
     export HF_HOME=/scratch/dj2565/huggingface_cache
     echo 'Start time: ' \$(date)
-    echo 'Running validator scoring for bp_idx [0, 1, ..., 50]'
-    python src/scripts/validator_model_inference.py 0 50
+    echo 'Running validator scoring for bp_idx [200, 201, ..., 264]'
+    python src/scripts/validator_model_inference.py 200 265
     echo 'End time: ' \$(date)
 "

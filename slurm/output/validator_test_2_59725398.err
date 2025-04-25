@@ -1,0 +1,26 @@
+2025-04-24 14:50:00.705566: I tensorflow/core/util/port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+2025-04-24 14:50:01.500255: E external/local_xla/xla/stream_executor/cuda/cuda_fft.cc:467] Unable to register cuFFT factory: Attempting to register factory for plugin cuFFT when one has already been registered
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+E0000 00:00:1745520601.789587 2035070 cuda_dnn.cc:8579] Unable to register cuDNN factory: Attempting to register factory for plugin cuDNN when one has already been registered
+E0000 00:00:1745520601.809975 2035070 cuda_blas.cc:1407] Unable to register cuBLAS factory: Attempting to register factory for plugin cuBLAS when one has already been registered
+W0000 00:00:1745520602.464536 2035070 computation_placer.cc:177] computation placer already registered. Please check linkage and avoid linking the same target more than once.
+W0000 00:00:1745520602.464634 2035070 computation_placer.cc:177] computation placer already registered. Please check linkage and avoid linking the same target more than once.
+W0000 00:00:1745520602.464649 2035070 computation_placer.cc:177] computation placer already registered. Please check linkage and avoid linking the same target more than once.
+W0000 00:00:1745520602.464660 2035070 computation_placer.cc:177] computation placer already registered. Please check linkage and avoid linking the same target more than once.
+2025-04-24 14:50:02.476911: I tensorflow/core/platform/cpu_feature_guard.cc:210] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: AVX2 AVX512F AVX512_VNNI FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards:  50%|█████     | 1/2 [00:14<00:14, 14.92s/it]Loading checkpoint shards: 100%|██████████| 2/2 [00:18<00:00,  8.40s/it]Loading checkpoint shards: 100%|██████████| 2/2 [00:18<00:00,  9.38s/it]
+Loading checkpoint shards:   0%|          | 0/4 [00:00<?, ?it/s]Loading checkpoint shards:  25%|██▌       | 1/4 [00:12<00:37, 12.58s/it]Loading checkpoint shards:  50%|█████     | 2/4 [00:27<00:27, 13.89s/it]Loading checkpoint shards:  75%|███████▌  | 3/4 [00:41<00:14, 14.15s/it]Loading checkpoint shards: 100%|██████████| 4/4 [00:52<00:00, 12.92s/it]Loading checkpoint shards: 100%|██████████| 4/4 [00:52<00:00, 13.22s/it]
+Starting from v4.46, the `logits` model output will have the same type as the model (except at train time, where it will always be FP32)
+The 'max_batch_size' argument of HybridCache is deprecated and will be removed in v4.46. Use the more precisely named 'batch_size' argument instead.
+Starting from v4.46, the `logits` model output will have the same type as the model (except at train time, where it will always be FP32)
+Traceback (most recent call last):
+  File "/scratch/dj2565/prompt-optimization/src/scripts/validator_model_inference.py", line 525, in <module>
+    vs_objs = validator_model_inference_per_base_prompt(models_dict, configs, mo_parquet, vs_parquet, bp_idx)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/dj2565/prompt-optimization/src/scripts/validator_model_inference.py", line 412, in validator_model_inference_per_base_prompt
+    scores = validator_model_inference_per_prompt_variation(base_prompt_str, main_model_output_str, models_dict, configs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/dj2565/prompt-optimization/src/scripts/validator_model_inference.py", line 364, in validator_model_inference_per_prompt_variation
+    raise ValueError(f"Parsed list length {len(parsed_list)} does not match expected number of sections {NUM_RUBRIC_SECTIONS}")
+ValueError: Parsed list length 0 does not match expected number of sections 5
