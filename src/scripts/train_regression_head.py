@@ -26,9 +26,28 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error
 import pandas as pd
 from sklearn.metrics import mean_squared_error, mean_absolute_percentage_error
-
+import json
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
+
+def prepare_metrics_for_json(metrics):
+    """
+    Prepare the metrics dictionary for JSON serialization by converting all numerical values to float.
+    Args:
+        metrics (dict): The metrics dictionary to prepare.
+    Returns:
+        dict: A JSON-serializable dictionary.
+    """
+    prepared_metrics = {}
+    for key, value in metrics.items():
+        if isinstance(value, list):
+            # Convert all elements in the list to float
+            prepared_metrics[key] = [float(v) for v in value]
+        elif isinstance(value, (int, float)):  # Handle scalar values
+            prepared_metrics[key] = float(value)
+        else:
+            prepared_metrics[key] = value  # Leave non-numerical values as-is
+    return prepared_metrics
 
 # Load dataset
 # Below is a dummy dataset
@@ -87,7 +106,7 @@ def objective(trial):
         use_safetensors=True,
         output_hidden_states=True,
         return_dict_in_generate =True,
-        torch_dtype=torch.float16,
+        torch_dtype=torch.float32,
         device_map="auto"
         )
     #regression_head_model.config.return_dict_in_generate = True
@@ -102,13 +121,7 @@ def objective(trial):
     )
     model = get_peft_model(regression_head_model, lora_config)
 
-    model.regression_head = nn.Linear(model.config.hidden_size, 1).to(device).to(torch.float16)
-
-    # BECCA: Skipping quantization step for now
-    # Quantize model
-    # model = torch.quantization.quantize_dynamic( # POTENTIAL ISSUE: Not all models/layers are compatible with dynamic quantization
-    #     model, {torch.nn.Linear}, dtype=torch.qint8
-    # )
+    model.regression_head = nn.Linear(model.config.hidden_size, 1).to(device).to(torch.float32)
 
     # Training setup
     train_loader = DataLoader(
@@ -132,12 +145,25 @@ def objective(trial):
     optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate)
     loss_fn = torch.nn.MSELoss()
 
+    metrics = {
+        "train_rmse": [],
+        "val_rmse": [],
+        "test_rmse": [],
+        "train_loss": [],
+        "val_loss": [],
+        "test_loss": []
+    }
+
     # Training loop
     for epoch in range(3):
         model.train()
+        train_losses = []
+        train_preds = []
+        train_labels = []
+
         for batch in train_loader:
             inputs = {key: val.to(device) for key, val in batch.items() if key != "labels"}
-            labels = batch["labels"].to(device).to(torch.float16)
+            labels = batch["labels"].to(device).to(torch.float32)
 
             outputs = model(**inputs)
             # Extract hidden states and pass through regression head
@@ -146,34 +172,34 @@ def objective(trial):
             pooled_output = hidden_states.mean(dim=1).to(device)  # Shape: [batch_size, hidden_size] 
             logits = model.regression_head(pooled_output)  # Shape: [batch_size, 1]
 
-            loss = loss_fn(logits, labels).to(torch.float16)
+            loss = loss_fn(logits, labels).to(torch.float32)
             loss.backward()
             optimizer.step()
             optimizer.zero_grad()
 
+            train_losses.append(loss.item())
+            train_preds.extend(logits.squeeze(-1).detach().cpu().numpy())
+            train_labels.extend(labels.squeeze(-1).detach().cpu().numpy())
+
+        train_rmse = mean_squared_error(train_labels, train_preds, squared=False)
+        metrics["train_rmse"].append(float(train_rmse))
+        metrics["train_loss"].append(float(sum(train_losses) / len(train_losses)))
+
         # Validation
         model.eval()
         val_losses = []
-        all_preds = []
-        all_labels = []
+        val_preds = []
+        val_labels = []
 
         with torch.no_grad():
             for batch in val_loader:
                 inputs = {key: val.to(device) for key, val in batch.items() if key != "labels"}
-                labels = batch["labels"].to(device).to(torch.float16)
+                labels = batch["labels"].to(device).to(torch.float32)
 
                 outputs = model(**inputs)
 
 
-                # PRAVEEN: Commenting this out for now, this is where the bug is
-                # logits = outputs.logits
-                # logits = logits.mean(dim=1)
-
-                # Extract hidden states
                 hidden_states = outputs.hidden_states[-1]  # Shape: [batch_size, sequence_length, hidden_size]
-
-                # Use the first token's hidden state (e.g., [CLS] token) as the pooled representation
-                # pooled_output = hidden_states[:, 0, :]  # Shape: [batch_size, hidden_size]
                 pooled_output = hidden_states.mean(dim=1).to(device)  # Shape: [batch_size, hidden_size]
 
                 # Pass through the regression head
@@ -181,62 +207,67 @@ def objective(trial):
 
                 val_loss = loss_fn(logits, labels)
                 val_losses.append(val_loss.item())
-                
+                val_preds.extend(logits.squeeze(-1).detach().cpu().numpy())
+                val_labels.extend(labels.squeeze(-1).detach().cpu().numpy())
+
+        val_rmse = mean_squared_error(val_labels, val_preds, squared=False)
+        metrics["val_rmse"].append(float(val_rmse))
+        metrics["val_loss"].append(float(sum(val_losses) / len(val_losses)))
+
+        print(f"Epoch {epoch + 1}, Train RMSE: {train_rmse}, Val RMSE: {val_rmse}")
+
+        # Test Evaluation
+        model.eval()
+        test_losses = []
+        test_preds = []
+        test_labels = []
+
+        with torch.no_grad():
+            for batch in test_loader:
+                inputs = {key: val.to(device) for key, val in batch.items() if key != "labels"}
+                labels = batch["labels"].to(device).to(torch.float32)
+
+                outputs = model(**inputs)
+
+                # Extract hidden states and pass through regression head
+                hidden_states = outputs.hidden_states[-1]  # Get the last layer's hidden states
+
+                pooled_output = hidden_states.mean(dim=1).to(device)  # Shape: [batch_size, hidden_size]
+                logits = model.regression_head(pooled_output)  # Shape: [batch_size, 1]
+
+                # Compute test loss
+                test_loss = loss_fn(logits, labels)
+                test_losses.append(test_loss.item())
+
                 # Collect predictions and labels for metrics
-                all_preds.extend(logits.squeeze(-1).cpu().numpy())  # Ensure 1D array
-                all_labels.extend(labels.squeeze(-1).cpu().numpy())  # Ensure 1D array
+                test_preds.extend(logits.squeeze(-1).detach().cpu().numpy())  # Ensure 1D array
+                test_labels.extend(labels.squeeze(-1).detach().cpu().numpy())  # Ensure 1D array
 
-                # val_loss = loss_fn(logits, labels)
-                # val_losses.append(val_loss.item())
+        test_rmse = mean_squared_error(test_labels, test_preds, squared=False)
+        metrics["test_rmse"].append(float(test_rmse))
+        metrics["test_loss"].append(float(sum(test_losses) / len(test_losses)))
 
-        # compute metrics
-        rmse = mean_squared_error(all_labels, all_preds, squared=False)
-        mape = mean_absolute_percentage_error(all_labels, all_preds)
+        print(f"Test RMSE: {test_rmse}, Test Loss: {metrics['test_loss']}")
 
+    print("Metrics:")
+    for key, value in metrics.items():
+        print(f"{key}: {value}")
 
-        # Print validation loss
-        print(f"Epoch {epoch + 1}, Validation Loss: {sum(val_losses) / len(val_losses)}")
-        print(f"Epoch {epoch + 1}, RMSE: {rmse}")
-        print(f"Epoch {epoch + 1}, MAPE: {mape}")
+    # Save metrics to JSON
+    test_results_dir = os.path.join(ROOT_PATH, "test_results")
+    os.makedirs(test_results_dir, exist_ok=True)
+    results_file = os.path.join(test_results_dir, f"trial_{trial.number}_metrics.json")
 
-    # Test Evaluation
-    model.eval()
-    test_losses = []
-    test_preds = []
-    test_labels = []
+    # Convert float16 values to float
+    #metrics = prepare_metrics_for_json(metrics)
 
-    with torch.no_grad():
-        for batch in test_loader:
-            inputs = {key: val.to(device) for key, val in batch.items() if key != "labels"}
-            labels = batch["labels"].to(device)
+    with open(results_file, "w") as f:
+        json.dump(metrics, f, indent=4)
 
-            outputs = model(**inputs)
-
-            # Extract hidden states and pass through regression head
-            hidden_states = outputs.hidden_states[-1]  # Get the last layer's hidden states
-            # pooled_output = hidden_states[:, 0, :]  # Use the first token's hidden state
-            pooled_output = hidden_states.mean(dim=1).to(device)  # Shape: [batch_size, hidden_size]
-            logits = model.regression_head(pooled_output)  # Shape: [batch_size, 1]
-
-            # Compute test loss
-            test_loss = loss_fn(logits, labels)
-            test_losses.append(test_loss.item())
-
-            # Collect predictions and labels for metrics
-            test_preds.extend(logits.squeeze(-1).cpu().numpy())  # Ensure 1D array
-            test_labels.extend(labels.squeeze(-1).cpu().numpy())  # Ensure 1D array
-
-    # Compute RMSE and MAPE for the test set
-    test_rmse = mean_squared_error(test_labels, test_preds, squared=False)  # RMSE
-    test_mape = mean_absolute_percentage_error(test_labels, test_preds)  # MAPE
-
-    # Print test results
-    print(f"Test Loss: {sum(test_losses) / len(test_losses)}")
-    print(f"Test RMSE: {test_rmse}")
-    print(f"Test MAPE: {test_mape}")
+    print(f"Metrics saved to {results_file}")
 
     # Return the average validation loss
-    return model, tokenizer, sum(val_losses) / len(val_losses)
+    return sum(metrics["val_loss"]) / len(metrics["val_loss"])
 
 # # Run the hyperparameter optimiztion
 # best_model = None
@@ -321,7 +352,7 @@ def main():
     # Re-add the regression head
     reloaded_model.regression_head = torch.nn.Linear(
         reloaded_model.config.hidden_size, 1
-    ).to(device).to(torch.float16)
+    ).to(device).to(torch.float32)
 
     # Load the saved regression head weights
     reloaded_model.regression_head.load_state_dict(torch.load(REGRESSION_HEAD_PATH))
@@ -347,7 +378,7 @@ def main():
     with torch.no_grad():
         outputs = reloaded_model(**inputs)
         hidden_states = outputs.hidden_states[-1]  # Extract the last hidden states
-        pooled_output = hidden_states.mean(dim=1).to(torch.float16).to(device)  # Average pooling
+        pooled_output = hidden_states.mean(dim=1).to(torch.float32).to(device)  # Average pooling
         logits = reloaded_model.regression_head(pooled_output)  # Pass through regression head
         prediction = logits.squeeze(-1).cpu().item()  # Convert to scalar
 

@@ -1,0 +1,32 @@
+{
+    "train_rmse": [
+        NaN,
+        NaN,
+        NaN
+    ],
+    "val_rmse": [
+        NaN,
+        NaN,
+        NaN
+    ],
+    "test_rmse": [
+        NaN,
+        NaN,
+        NaN
+    ],
+    "train_loss": [
+        NaN,
+        NaN,
+        NaN
+    ],
+    "val_loss": [
+        NaN,
+        NaN,
+        NaN
+    ],
+    "test_loss": [
+        NaN,
+        NaN,
+        NaN
+    ]
+}
