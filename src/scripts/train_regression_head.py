@@ -82,7 +82,7 @@ def tokenize_function(batch, tokenizer, max_length=512):
     # Add labels
     #total_scores = [item["total_score"] for item in batch]
     total_scores = [item[2] for item in batch]  # Extract total_score
-    encodings["labels"] = torch.tensor(total_scores, dtype=torch.float32).unsqueeze(1)
+    encodings["labels"] = torch.tensor(total_scores, dtype=torch.float16).unsqueeze(1)
 
     return encodings
 
@@ -106,7 +106,7 @@ def objective(trial):
         use_safetensors=True,
         output_hidden_states=True,
         return_dict_in_generate =True,
-        torch_dtype=torch.float32,
+        torch_dtype=torch.float16,
         device_map="auto"
         )
     #regression_head_model.config.return_dict_in_generate = True
@@ -121,7 +121,7 @@ def objective(trial):
     )
     model = get_peft_model(regression_head_model, lora_config)
 
-    model.regression_head = nn.Linear(model.config.hidden_size, 1).to(device).to(torch.float32)
+    model.regression_head = nn.Linear(model.config.hidden_size, 1).to(device).to(torch.float16)
 
     # Training setup
     train_loader = DataLoader(
@@ -163,7 +163,7 @@ def objective(trial):
 
         for batch in train_loader:
             inputs = {key: val.to(device) for key, val in batch.items() if key != "labels"}
-            labels = batch["labels"].to(device).to(torch.float32)
+            labels = batch["labels"].to(device).to(torch.float16)
 
             outputs = model(**inputs)
             # Extract hidden states and pass through regression head
@@ -172,7 +172,7 @@ def objective(trial):
             pooled_output = hidden_states.mean(dim=1).to(device)  # Shape: [batch_size, hidden_size] 
             logits = model.regression_head(pooled_output)  # Shape: [batch_size, 1]
 
-            loss = loss_fn(logits, labels).to(torch.float32)
+            loss = loss_fn(logits, labels).to(torch.float16)
             loss.backward()
             optimizer.step()
             optimizer.zero_grad()
@@ -194,7 +194,7 @@ def objective(trial):
         with torch.no_grad():
             for batch in val_loader:
                 inputs = {key: val.to(device) for key, val in batch.items() if key != "labels"}
-                labels = batch["labels"].to(device).to(torch.float32)
+                labels = batch["labels"].to(device).to(torch.float16)
 
                 outputs = model(**inputs)
 
@@ -225,7 +225,7 @@ def objective(trial):
         with torch.no_grad():
             for batch in test_loader:
                 inputs = {key: val.to(device) for key, val in batch.items() if key != "labels"}
-                labels = batch["labels"].to(device).to(torch.float32)
+                labels = batch["labels"].to(device).to(torch.float16)
 
                 outputs = model(**inputs)
 
@@ -267,7 +267,7 @@ def objective(trial):
     print(f"Metrics saved to {results_file}")
 
     # Return the average validation loss
-    return sum(metrics["val_loss"]) / len(metrics["val_loss"])
+    return model, tokenizer, sum(metrics["val_loss"]) / len(metrics["val_loss"])
 
 # # Run the hyperparameter optimiztion
 # best_model = None
@@ -352,7 +352,7 @@ def main():
     # Re-add the regression head
     reloaded_model.regression_head = torch.nn.Linear(
         reloaded_model.config.hidden_size, 1
-    ).to(device).to(torch.float32)
+    ).to(device).to(torch.float16)
 
     # Load the saved regression head weights
     reloaded_model.regression_head.load_state_dict(torch.load(REGRESSION_HEAD_PATH))
@@ -378,7 +378,7 @@ def main():
     with torch.no_grad():
         outputs = reloaded_model(**inputs)
         hidden_states = outputs.hidden_states[-1]  # Extract the last hidden states
-        pooled_output = hidden_states.mean(dim=1).to(torch.float32).to(device)  # Average pooling
+        pooled_output = hidden_states.mean(dim=1).to(torch.float16).to(device)  # Average pooling
         logits = reloaded_model.regression_head(pooled_output)  # Pass through regression head
         prediction = logits.squeeze(-1).cpu().item()  # Convert to scalar
 
