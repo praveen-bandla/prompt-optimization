@@ -97,6 +97,7 @@ def format_prompt_with_instruction(base_prompt):
             "content": content
         }
     ]
+    print(f"Full prompt: {full_prompt}")
     return full_prompt
 
 
@@ -146,27 +147,43 @@ def train_prompt_generator(trial, train_dataset):
                 formatted_prompts = format_prompt_with_instruction(base_prompt)
 
                 # Generate prompt variations
-                # inputs = tokenizer(formatted_prompts, return_tensors="pt", padding=True, truncation=True).to(device)
-                input_tensor = tokenizer.apply_chat_template(formatted_prompts, add_generation_prompt = True, return_tensors='pt').to(device)
-                #  = tokenizer(inputs, return_tensors='pt').input_ids
-                outputs = prompt_generator.generate(**input_tensor, num_return_sequences=1, max_new_tokens=50) # eventually want to remove hard-coding num_return_sequences
-                
-                # Ensure the correct number of variations is generated
-                if len(outputs) != 3:
-                    raise ValueError(f"Expected 3 outputs, but got {len(outputs)} for bp_idx {bp_idx}")
-                
+                input_tensor = tokenizer.apply_chat_template(
+                    formatted_prompts, 
+                    add_generation_prompt=True, 
+                    return_tensors='pt'
+                ).to(device)
+
+                # Extract input_ids and attention_mask for the generate method
+                input_dict = {
+                    "input_ids": input_tensor["input_ids"],
+                    "attention_mask": input_tensor["attention_mask"]
+                }
+
+                # Generate one prompt variation
+                outputs = prompt_generator.generate(
+                    **input_dict, 
+                    num_return_sequences=1, 
+                    max_new_tokens=50
+                )
+
+                # Decode the single variation
                 variations = tokenizer.batch_decode(outputs, skip_special_tokens=False)
 
-                # Score each variation using the regression head
-                variation_inputs = tokenizer(variations, return_tensors="pt", padding=True, truncation=True).to(device)
+                # Score the variation using the regression head
+                variation_inputs = tokenizer(
+                    variations, 
+                    return_tensors="pt", 
+                    padding=True, 
+                    truncation=True
+                ).to(device)
                 scores = regression_head(
-                    input_ids = variation_inputs['input_ids'],
-                    attention_mask = variation_inputs['attention_mask']
-                ).logits.squeeze(dim=1) # Shape: (3,)
-                
+                    input_ids=variation_inputs['input_ids'],
+                    attention_mask=variation_inputs['attention_mask']
+                ).logits.squeeze(dim=1)  # Shape: (1,)
+
                 # Ensure correct number of scores is produced
-                if scores.shape[0] != 3:
-                    raise ValueError(f"Expected 3 scores, but got {scores.shape[0]} for bp_idx {bp_idx}")
+                if scores.shape[0] != 1:
+                    raise ValueError(f"Expected 1 score, but got {scores.shape[0]} for bp_idx {bp_idx}")
 
                 # Load total_score from the parquet file
                 filepath = f'{VALIDATION_SCORES}/{bp_idx}_validation_score.parquet'
@@ -174,30 +191,22 @@ def train_prompt_generator(trial, train_dataset):
                 total_score = validation_scores.loc[
                     validation_scores['bpv_idx'].apply(lambda x: list(x) == [bp_idx, -1]), 'total_score'].values[0]
 
-                # Calculate the rewards for each variation
-                rewards = scores - total_score # Shape: (3,)
+                # Calculate the reward for the variation
+                reward = scores.item() - total_score
 
-                # Maximize the rewards
-                loss = -torch.mean(rewards)
+                # Maximize the reward
+                loss = -reward
 
                 # Backpropagation
-
-                # Average reward across variations
-                # optimizer.zero_grad()
-                # loss.backward()
-                # optimizer.step()
-
-                # Variation-specific loss
                 optimizer.zero_grad()
-                for reward in rewards:
-                    loss = -reward
-                    loss.backward(retain_graph= True)
+                loss.backward()
                 optimizer.step()
 
                 # Output check
-                print(f"bp_idx: {bp_idx}, Base Prompt: {base_prompt}, Variations: {variations}")
-                print(f"bp_idx: {bp_idx}, Scores: {scores.tolist()}, Validator Score: {total_score}")
-                print(f"bp_idx: {bp_idx}, Loss: {loss.item()}, Rewards: {rewards.tolist()}")
+                print(f"bp_idx: {bp_idx}, Base Prompt: {base_prompt}, Variation: {variations[0]}")
+                print(f"bp_idx: {bp_idx}, Score: {scores.item()}, Validator Score: {total_score}")
+                print(f"bp_idx: {bp_idx}, Loss: {loss.item()}, Reward: {reward}")
+
 
         print(f"Epoch {epoch + 1} completed.")
     

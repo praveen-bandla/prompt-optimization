@@ -85,8 +85,12 @@ def objective(trial):
     regression_head_model = AutoModelForCausalLM.from_pretrained(
         LORA_REGRESSION_HEAD_PATH, 
         use_safetensors=True,
-        output_hidden_states=True
-        ).to(device)
+        output_hidden_states=True,
+        return_dict_in_generate =True,
+        torch_dtype=torch.float16,
+        device_map="auto"
+        )
+    #regression_head_model.config.return_dict_in_generate = True
 
     # Apply LoRA
     lora_config = LoraConfig(
@@ -98,7 +102,7 @@ def objective(trial):
     )
     model = get_peft_model(regression_head_model, lora_config)
 
-    model.regression_head = nn.Linear(model.config.hidden_size, 1).to(device)
+    model.regression_head = nn.Linear(model.config.hidden_size, 1).to(device).to(torch.float16)
 
     # BECCA: Skipping quantization step for now
     # Quantize model
@@ -133,15 +137,16 @@ def objective(trial):
         model.train()
         for batch in train_loader:
             inputs = {key: val.to(device) for key, val in batch.items() if key != "labels"}
-            labels = batch["labels"].to(device)
+            labels = batch["labels"].to(device).to(torch.float16)
 
             outputs = model(**inputs)
             # Extract hidden states and pass through regression head
             hidden_states = outputs.hidden_states[-1]  # Shape: [batch_size, sequence_length, hidden_size]
-            pooled_output = hidden_states[:, 0, :]  # Use the first token's hidden state
+            #pooled_output = hidden_states[:, 0, :]  # Use the first token's hidden state
+            pooled_output = hidden_states.mean(dim=1).to(device)  # Shape: [batch_size, hidden_size] 
             logits = model.regression_head(pooled_output)  # Shape: [batch_size, 1]
 
-            loss = loss_fn(logits, labels)
+            loss = loss_fn(logits, labels).to(torch.float16)
             loss.backward()
             optimizer.step()
             optimizer.zero_grad()
@@ -155,7 +160,7 @@ def objective(trial):
         with torch.no_grad():
             for batch in val_loader:
                 inputs = {key: val.to(device) for key, val in batch.items() if key != "labels"}
-                labels = batch["labels"].to(device)
+                labels = batch["labels"].to(device).to(torch.float16)
 
                 outputs = model(**inputs)
 
@@ -168,7 +173,8 @@ def objective(trial):
                 hidden_states = outputs.hidden_states[-1]  # Shape: [batch_size, sequence_length, hidden_size]
 
                 # Use the first token's hidden state (e.g., [CLS] token) as the pooled representation
-                pooled_output = hidden_states[:, 0, :]  # Shape: [batch_size, hidden_size]
+                # pooled_output = hidden_states[:, 0, :]  # Shape: [batch_size, hidden_size]
+                pooled_output = hidden_states.mean(dim=1).to(device)  # Shape: [batch_size, hidden_size]
 
                 # Pass through the regression head
                 logits = model.regression_head(pooled_output)  # Shape: [batch_size, 1]
@@ -208,7 +214,8 @@ def objective(trial):
 
             # Extract hidden states and pass through regression head
             hidden_states = outputs.hidden_states[-1]  # Get the last layer's hidden states
-            pooled_output = hidden_states[:, 0, :]  # Use the first token's hidden state
+            # pooled_output = hidden_states[:, 0, :]  # Use the first token's hidden state
+            pooled_output = hidden_states.mean(dim=1).to(device)  # Shape: [batch_size, hidden_size]
             logits = model.regression_head(pooled_output)  # Shape: [batch_size, 1]
 
             # Compute test loss
@@ -258,6 +265,10 @@ os.makedirs(save_path, exist_ok=True)
 best_tokenizer.save_pretrained(save_path)
 best_model.save_pretrained(save_path)
 print(f"Trained regression head saved to {save_path}")
+
+reloaded_model = AutoModelForCausalLM.from_pretrained(save_path)
+reloaded_tokenizer = AutoTokenizer.from_pretrained(save_path)
+print("Reloaded model and tokenizer successfully.")
 
 # BECCA: Old save code below
 # save_path = f"{LORA_REGRESSION_HEAD_PATH}_trial_{study.best_trial.number}"
