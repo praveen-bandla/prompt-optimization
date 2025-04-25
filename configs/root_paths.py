@@ -17,6 +17,7 @@ MODEL_CONFIGS = os.path.join(CONFIGS_PATH, 'model_configs')
 
 # Validation model related files
 VALIDATION_SCORES = os.path.join(DATA_PATH, 'validation_scores')
+VALIDATION_TEST_SCORES = os.path.join(DATA_PATH, 'validation_test_scores')
 VALIDATOR_MODEL_INPUT = os.path.join(MODEL_INPUT_PATH, 'validator_model_input.json')
 
 VALIDATOR_MODEL_CONFIGS = os.path.join(MODEL_CONFIGS, 'validator_model_config.yaml')

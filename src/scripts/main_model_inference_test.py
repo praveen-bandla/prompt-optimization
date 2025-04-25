@@ -1,39 +1,19 @@
 """
 Main Model Inference for Test
 
-This script will contain code to automate the procedure of running main model inference on test base prompts. It will take as input a start and end bp_idx, and will run inference on all prompt variations for each bp_idx that falls between the start and end. The output will be written to a Parquet file in the respective location for each bp_idx, as outlined in the README.
+This script will contain code to automate the procedure of running main model inference on test base prompts in batches. It will take as input a start and end bp_idx, and will run inference on all base prompts between start and end. The output will be written to a Parquet file in the respective location for each bp_idx, as outlined in the README.
 
 Inputs:
     - start_idx (int): The starting base prompt index. This is the first base prompt index for which inference will be run.
     - end_idx (int): The ending base prompt index. The script runs on all base prompt indices up to end_idx, excluding end_idx itself.
 
 Example usage:
-    # Run inference on all prompt variations for base prompt indices 0,1,2,3,4.
+    # Run inference on all prompts for base prompt indices 0,1,2,3,4.
     python main_model_inference.py 0 5
 
 
 Outputs:
-- Writes the generated output to a Parquet file named `{i]_model_outputs.parquet`, which contains results  for prompts indexed from `(i, -1)` to `(i, n)`, where `n` is the number of partitions. `i` is the index of the base prompt.
-  Example format of a single file:
-  | bpv_idx | main model output |
-  |---------|------------------|
-  | (0, -1)  | "Model output 1" |
-  | (0, 0)  | "Model output 2" |
-  | ...     | ...              |
-
-  This file would contain all model outputs for all prompt variations for bp_idx (base prompt index) 0.
-
-Process:
-1. Reads the bp_idx as a script parameter
-2. Collects the prompt variations for the given bp_idx
-3. Collects the model input text file and configuration file
-4. Performs inference using the provided prompt variations
-5. Opens or creates the corresponding Parquet file
-
-Dependencies:
-- `main_model_input.json`: A JSON file containing instructions for inference.
-- `main_model_config.yaml`: A YAML file specifying model parameters and settings.
-- `main_model_inference.py`: The script that performs the main model inference.
+- Writes the generated output to a Parquet file named `{i]_model_outputs.parquet`, which contains results for base prompts starting from i to i + 100, where `i` is the index of the base prompt.
 """
 
 from src.utils.prompt import *
@@ -44,7 +24,6 @@ import json
 
 from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
 import torch
-#import argparse
 import sys
 import os
 
