@@ -201,7 +201,7 @@ def parse_model_output(generated_text):
     lines = generated_text.split("\n")
     for line in lines:
         if line.startswith("Rewritten Prompt:"):
-            print("Found rewritten prompt line:", line)
+            #print("Found rewritten prompt line:", line)
             return line.replace("Rewritten Prompt:", "").strip()
 
 def load_regression_head_model():
@@ -276,15 +276,16 @@ def call_regression_head(regression_head_model, tokenizer, base_prompt, prompt_v
     return prediction
 
 
-def save_file(base_prompt_strs, base_prompt_scores, pv_str, pv_scores, file_path):
+def save_file(base_prompt_strs, base_prompt_scores, bp_regression_scores, pv_str, pv_scores, file_path):
     '''
     Turns the 4 lists into a pandas dataframe and saves it to a csv file in file path
     '''
     df = pd.DataFrame({
         'base_prompt': base_prompt_strs,
         'base_prompt_score': base_prompt_scores,
-        'generated_prompt': pv_str,
-        'score': pv_scores
+        'base_prompt_regression_score': bp_regression_scores,
+        'generated_pv': pv_str,
+        'generated_pv_score': pv_scores
     })
     df.to_csv(file_path, index=False)
     print(f"Results saved to {file_path}")
@@ -372,6 +373,8 @@ def main(file_path):
     base_prompts = load_test_base_prompts(list_of_start_indices)[0:12]
     base_prompt_scores = load_test_base_prompts_scores(list_of_start_indices)[0:12]
 
+    base_prompt_regression_scores = []
+
     prompt_variation_strs = []
     prompt_variations_scores = []
 
@@ -379,24 +382,27 @@ def main(file_path):
         raise ValueError('Base prompts and their scores do not match in length')
 
     for base_prompt in base_prompts:
-        print(f"Processing base prompt: {base_prompt}")
+        #print(f"Processing base prompt: {base_prompt}")
         # Format the base prompt with an instruction
         formatted_prompt = format_prompt_with_instruction(base_prompt)
 
         # Generate a prompt variation
         generated_text = generate_prompt_variation(prompt_generator, tokenizer, formatted_prompt)
         prompt_variation = parse_model_output(generated_text)
-        print(f"Generated prompt variation: {prompt_variation}")
+        #print(f"Generated prompt variation: {prompt_variation}")
 
         # Call the regression head model to get the score for the generated prompt variation
-        score = call_regression_head(regression_head_model, regression_head_tokenizer, base_prompt, prompt_variation)
+        pv_score = call_regression_head(regression_head_model, regression_head_tokenizer, base_prompt, prompt_variation)
+
+        bp_regression_score = call_regression_head(regression_head_model, regression_head_tokenizer, base_prompt, base_prompt)
+        base_prompt_regression_scores.append(bp_regression_score)
         
         # Append the score to the list
-        prompt_variation_strs.append(prompt_variation)
-        prompt_variations_scores.append(score)
+        prompt_variation_strs.append(base_prompt)
+        prompt_variations_scores.append(pv_score)
 
     # Save the results to a CSV file
-    save_file(base_prompts, base_prompt_scores, prompt_variation_strs, prompt_variations_scores, file_path)
+    save_file(base_prompts, base_prompt_scores, base_prompt_regression_scores,prompt_variation_strs, prompt_variations_scores, file_path)
 
 
 if __name__ == "__main__":
