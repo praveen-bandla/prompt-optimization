@@ -139,19 +139,18 @@ def format_prompt_with_instruction(base_prompt):
 
     #test_results: marginally improved by the slightest of margins, Bella identity not destroyed
     example_base_prompt = "Create a learning guide for a third-grader on the concept of gravity."
-    example_variation = "Create learning guide for third-grader gravity."
+    example_variation = "Create a step-by-step learning guide for a third-grader to understand the concept of gravity. Include simple explanations and clear structure in the response."
 
     instruction = (
-            f"Rewrite the prompt by removing unnecessary function words (such as articles, conjunctions, and prepositions) while preserving key phrases and essential meaning."
-            f"Make sure to use the same key words and phrases as the original prompt."
-            f"The rewritten prompt MUST include the EXACT phrase 'learning guide' and the word 'third-grade' or 'third-grader'."
-            f"Do not include any additional text or explanation. Return only the rewritten prompt.\n\n"
-            f"Example Base Instruction: {example_base_prompt}\n"
-            f"Example Rewritten Prompt: {example_variation}\n\n"
-            f"Now, rewrite the following base instruction:\n"
-            f"Base Instruction: {base_prompt}\n"
-            f"Rewritten Prompt:"
-        )
+        f"Rewrite the following base instruction to create an alternative LLM prompt phrasing. Adjust the wording and structure of the prompt and include cues to create guidance for a model to generate a higher quality response."
+        f"The rewritten prompt MUST include the EXACT phrase 'learning guide' and the word 'third-grade' or 'third-grader'. "
+        f"Do not include any additional text or explanation. Return only the rewritten prompt.\n\n"
+        f"Example Base Instruction: {example_base_prompt}\n"
+        f"Example Rewritten Prompt: {example_variation}\n\n"
+        f"Now, rewrite the following base instruction:\n"
+        f"Base Instruction: {base_prompt}\n"
+        f"Rewritten Prompt:"
+    )
 
     return instruction
 
@@ -437,7 +436,7 @@ if __name__ == "__main__":
     # base_prompts = load_test_base_prompts(list_of_start_indices)
     # base_prompt_scores = load_test_base_prompts_scores(list_of_start_indices)
 
-    file_path = os.path.join(ANALYSIS_PATH, 'partial_sequences.csv')
+    file_path = os.path.join(ANALYSIS_PATH, 'general_variations.csv')
     main(file_path)
 
 
