@@ -136,20 +136,21 @@ def format_prompt_with_instruction(base_prompt):
     Returns:
         str: A single formatted input string for the model.
     """
-    # Define the instruction and example
+
+    #test_results: marginally improved by the slightest of margins, Bella identity not destroyed
     example_base_prompt = "Create a learning guide for a third-grader on the concept of gravity."
-    example_variation = "CREATE A LEARNING GUIDE FOR A THIRD-GRADER ON THE CONCEPT OF GRAVITY."
+    example_variation = "Please create a learning guide for a third-grader on the concept of gravity. Thank you so much!"
 
     instruction = (
-        f"Make every letter of the following base prompt capitalized. Everything about the rewritten prompt should be the same as the original prompt, except for every letter being capitalized."
-        f"The rewritten prompt MUST include the EXACT phrases 'LEARNING GUIDE' and the word 'THIRD-GRADE' or 'THIRD-GRADER'. "
-        f"Do not include any additional text or explanation. Return only the rewritten prompt.\n\n"
-        f"Example Base Instruction: {example_base_prompt}\n"
-        f"Example Rewritten Prompt: {example_variation}\n\n"
-        f"Now, rewrite the following base instruction:\n"
-        f"Base Instruction: {base_prompt}\n"
-        f"Rewritten Prompt:"
-    )
+            f"Rewrite the following prompt with a polite tone, retaining the same semantics of the base prompt."
+            f"The rewritten prompt MUST include the EXACT phrase 'learning guide' and the word 'third-grade' or 'third-grader'."
+            f"Do not include any additional text or explanation. Return only the rewritten prompt.\n\n"
+            f"Example Base Instruction: {example_base_prompt}\n"
+            f"Example Rewritten Prompt: {example_variation}\n\n"
+            f"Now, rewrite the following base instruction:\n"
+            f"Base Instruction: {base_prompt}\n"
+            f"Rewritten Prompt:"
+        )
 
     return instruction
 
@@ -435,7 +436,7 @@ if __name__ == "__main__":
     # base_prompts = load_test_base_prompts(list_of_start_indices)
     # base_prompt_scores = load_test_base_prompts_scores(list_of_start_indices)
 
-    file_path = os.path.join(ANALYSIS_PATH, 'capitalization.csv')
+    file_path = os.path.join(ANALYSIS_PATH, 'politeness.csv')
     main(file_path)
 
 
