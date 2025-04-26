@@ -139,10 +139,11 @@ def format_prompt_with_instruction(base_prompt):
 
     #test_results: marginally improved by the slightest of margins, Bella identity not destroyed
     example_base_prompt = "Create a learning guide for a third-grader on the concept of gravity."
-    example_variation = "Please create a learning guide for a third-grader on the concept of gravity. Thank you so much!"
+    example_variation = "Create learning guide for third-grader gravity."
 
     instruction = (
-            f"Rewrite the following prompt with a polite tone, retaining the same semantics of the base prompt."
+            f"Rewrite the prompt by removing unnecessary function words (such as articles, conjunctions, and prepositions) while preserving key phrases and essential meaning."
+            f"Make sure to use the same key words and phrases as the original prompt."
             f"The rewritten prompt MUST include the EXACT phrase 'learning guide' and the word 'third-grade' or 'third-grader'."
             f"Do not include any additional text or explanation. Return only the rewritten prompt.\n\n"
             f"Example Base Instruction: {example_base_prompt}\n"
@@ -436,7 +437,7 @@ if __name__ == "__main__":
     # base_prompts = load_test_base_prompts(list_of_start_indices)
     # base_prompt_scores = load_test_base_prompts_scores(list_of_start_indices)
 
-    file_path = os.path.join(ANALYSIS_PATH, 'politeness.csv')
+    file_path = os.path.join(ANALYSIS_PATH, 'partial_sequences.csv')
     main(file_path)
 
 
