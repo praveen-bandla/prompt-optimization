@@ -13,7 +13,10 @@ Process:
 
 
 from configs.root_paths import *
+from src.utils.data_handler import *
 import torch
+import argparse
+import sys
 import optuna
 from transformers import AutoTokenizer, AutoModelForCausalLM, AutoModelForSequenceClassification
 from peft import get_peft_model, LoraConfig, TaskType
@@ -27,15 +30,62 @@ import json
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
-def load_test_base_prompts():
-    # PLACEHOLDER - TO BE WORKED ON. WANT TO RETURN LIST OF BASE PROMPTS
-    df = pd.read_parquet(os.path.join(DATA_PATH, 'base_prompts', 'base_prompts.parquet'))
-    return df['prompt'].tolist()
+def load_test_base_prompts(start_indices):
+    '''
+    Returns all the test base prompts
 
-def load_test_base_prompts_scores():
-    # PLACEHOLDER - TO BE WORKED ON. WANT TO RETURN LIST OF BASE PROMPTS
-    df = pd.read_parquet(os.path.join(DATA_PATH, 'base_prompts', 'base_prompts.parquet'))
-    return df['prompt'].tolist(), df['score'].tolist()
+    Args:
+        start_indices (list): List of start indices of the test base prompts to be used (example: [500, 800, 900])
+
+    Returns:
+        base_prompts (list): List of base prompts
+    '''
+
+    # create a data handler bp obj
+    # create a list of indices from start_indices: foo([500, 800, 900]) = [500, 501, 502, ..., 599, 800, 801, 802, ..., 899, 900, 901, 902, ..., 999]
+    # in data handler make a new function takes a list of indices and returns the base prompts corresponding to those indices
+    # call data handler function to get the base prompts
+    # return list
+
+    # creating data handler object
+    bp_db = BasePromptDB()
+    # creating a list of indices from start_indices
+    indices = []
+    for start_index in start_indices:
+        for i in range(start_index, start_index + 100):
+            indices.append(i)
+    
+    # call data handler function to get the base prompts
+    list_of_base_prompts = bp_db.fetch_list_of_prompts(indices)
+
+    # return list
+    return list_of_base_prompts
+
+
+def load_test_base_prompts_scores(indices):
+    '''
+    Returns all the test base prompts validator scores
+
+    Args:
+        indices (list): List of start indices of the test base prompts to be used (example: [700, 800, 900])
+    
+    Returns:
+        base_prompt_scores (list): List of base prompt scores
+    '''
+    # create vs_db object
+    # create a new file path for each start index
+    # for each file path, retrieve all of the aggregated scores
+    # return list
+
+    # file_paths = [os.path.join(VALIDATION_TEST_SCORES, f'{start_index}_validation_score.parquet') for start_index in indices]
+
+    aggregated_scores = []
+    for start_index in indices:
+        vs_obj = ValidationScoreParquet(start_index, VALIDATION_TEST_SCORES)
+        aggregated_scores.extend(vs_obj.fetch_all_agg_validation_scores())
+
+    return aggregated_scores
+
 
 def load_prompt_gen_model(lora_rank, lora_alpha, dropout_rate):
     """
@@ -172,6 +222,14 @@ def load_regression_head_model():
         regression_head_model.config.hidden_size,
         1
     ).to(device).to(torch.float16)
+    # Load the regression head weights
+    try:
+        regression_head_model.regression_head.load_state_dict(torch.load(REGRESSION_HEAD_PATH))
+        print("Regression head weights loaded successfully.")
+    except Exception as e:
+        print(f"Error loading regression head weights: {e}")
+        raise
+    
     # Load the tokenizer
     tokenizer = AutoTokenizer.from_pretrained(
         REGRESSION_HEAD_BASE_MODEL_ID,
@@ -218,40 +276,110 @@ def call_regression_head(regression_head_model, tokenizer, base_prompt, prompt_v
     return prediction
 
 
-def save_file(data, file_path):
+def save_file(base_prompt_strs, base_prompt_scores, pv_str, pv_scores, file_path):
     '''
-    Save the data to csv file.
+    Turns the 4 lists into a pandas dataframe and saves it to a csv file in file path
     '''
-    # Create the directory if it doesn't exist
-    os.makedirs(os.path.dirname(file_path), exist_ok=True)
-    # Save the data to a CSV file
-    data.to_csv(file_path, index=False)
-    print(f"Data saved to {file_path}")
-    return
+    df = pd.DataFrame({
+        'base_prompt': base_prompt_strs,
+        'base_prompt_score': base_prompt_scores,
+        'generated_prompt': pv_str,
+        'score': pv_scores
+    })
+    df.to_csv(file_path, index=False)
+    print(f"Results saved to {file_path}")
 
-def main():
-    '''
-    Collects all Base Prompts, generates variations using the prompt generator model, and evaluates them using the regression head model. Finally, it saves the results to a CSV file.
-    '''
-    # Load the base prompts
-    base_prompts = load_test_base_prompts()
+# def main():
+#     '''
+#     Collects all Base Prompts, generates variations using the prompt generator model, and evaluates them using the regression head model. Finally, it saves the results to a CSV file.
+#     '''
+#     # Load the base prompts
+#     base_prompts = load_test_base_prompts()
 
-    # Load the base prompts and their scores
-    base_prompt_scoores = load_test_base_prompts_scores()
+#     # Load the base prompts and their scores
+#     base_prompt_scoores = load_test_base_prompts_scores()
+
+#     # Load the prompt generator model and tokenizer
+#     tokenizer, prompt_generator = load_prompt_gen_model(lora_rank=16, lora_alpha=32, dropout_rate=0.1)
+#     # Load the regression head model and tokenizer
+#     regression_head_model, regression_head_tokenizer = load_regression_head_model()
+
+#     prompt_variations = []
+#     prompt_variations_scores = []
+
+
+#     for i in len(base_prompts):
+#         base_prompt = base_prompts[i]
+#         print(f"Processing base prompt {i+1}/{len(base_prompts)}: {base_prompt}")
+
+#         # Format the base prompt with an instruction
+#         formatted_prompt = format_prompt_with_instruction(base_prompt)
+
+#         # Generate a prompt variation
+#         generated_text = generate_prompt_variation(prompt_generator, tokenizer, formatted_prompt)
+#         prompt_variation = parse_model_output(generated_text)
+#         print(f"Generated prompt variation: {prompt_variation}")
+
+#         # Append the generated prompt variation to the list
+#         prompt_variations.append(prompt_variation)
+
+#         # Call the regression head model to get the score for the generated prompt variation
+#         score = call_regression_head(regression_head_model, regression_head_tokenizer, base_prompt, prompt_variation)
+        
+#         # Append the score to the list
+#         prompt_variations_scores.append(score)
+
+#     df = pd.DataFrame({
+#         'base_prompt': base_prompts,
+#         'base_prompt_score': base_prompt_scoores,
+#         'generated_prompt': prompt_variations,
+#         'score': prompt_variations_scores
+#     })
+
+#     # PLACEHOLDER - TO BE WORKED ON. WANT TO RETURN LIST OF BASE PROMPTS
+#     file_path = os.path.join(MODEL_OUTPUTS, 'prompt_variations_scores.csv')
+
+#     return
+
+
+def main(file_path):
+    '''
+    Process:
+    1. Load the prompt generator model and tokenizer
+    2. Load the regression head model and tokenizer
+    3. Load the base prompts and their scores
+    4. For each base prompt:
+        a. Format the base prompt with an instruction
+        b. Generate a prompt variation
+        c. Call the regression head model to get the score for the generated prompt variation
+        d. Append the generated prompt variation and its score to the list
+    5. Aggregate the results and create a csv save file path
+    6. Save the results to a CSV file
+    '''
+
+    # Process the command line arguments
+    parser = argparse.ArgumentParser()
+    parser.add_argument('start_indices', type = str)
+    args = parser.parse_args()
+    list_of_start_indices = eval(args.start_indices)
 
     # Load the prompt generator model and tokenizer
     tokenizer, prompt_generator = load_prompt_gen_model(lora_rank=16, lora_alpha=32, dropout_rate=0.1)
+
     # Load the regression head model and tokenizer
     regression_head_model, regression_head_tokenizer = load_regression_head_model()
 
-    prompt_variations = []
-    prompt_variations_ scores = []
+    base_prompts = load_test_base_prompts(list_of_start_indices)[0:12]
+    base_prompt_scores = load_test_base_prompts_scores(list_of_start_indices)[0:12]
 
+    prompt_variation_strs = []
+    prompt_variations_scores = []
 
-    for i in len(base_prompts):
-        base_prompt = base_prompts[i]
-        print(f"Processing base prompt {i+1}/{len(base_prompts)}: {base_prompt}")
+    if len(base_prompts) != len(base_prompt_scores):
+        raise ValueError('Base prompts and their scores do not match in length')
 
+    for base_prompt in base_prompts:
+        print(f"Processing base prompt: {base_prompt}")
         # Format the base prompt with an instruction
         formatted_prompt = format_prompt_with_instruction(base_prompt)
 
@@ -260,30 +388,49 @@ def main():
         prompt_variation = parse_model_output(generated_text)
         print(f"Generated prompt variation: {prompt_variation}")
 
-        # Append the generated prompt variation to the list
-        prompt_variations.append(prompt_variation)
-
         # Call the regression head model to get the score for the generated prompt variation
         score = call_regression_head(regression_head_model, regression_head_tokenizer, base_prompt, prompt_variation)
         
         # Append the score to the list
+        prompt_variation_strs.append(prompt_variation)
         prompt_variations_scores.append(score)
 
-    df = pd.DataFrame({
-        'base_prompt': base_prompts,
-        'base_prompt_score': base_prompt_scoores,
-        'generated_prompt': prompt_variations,
-        'score': prompt_variations_scores
-    })
-
-    # PLACEHOLDER - TO BE WORKED ON. WANT TO RETURN LIST OF BASE PROMPTS
-    file_path = os.path.join(MODEL_OUTPUTS, 'prompt_variations_scores.csv')
-
-    return
+    # Save the results to a CSV file
+    save_file(base_prompts, base_prompt_scores, prompt_variation_strs, prompt_variations_scores, file_path)
 
 
 if __name__ == "__main__":
-    main()
+
+    # TO BE WORKED ON: take in start and end index corresponding to the test base prompts to be used
+    #main()
+
+    # parser = argparse.ArgumentParser()
+
+    # parser.add_argument('start_indices', type = str)
+
+    # args = parser.parse_args()
+
+    # list_of_start_indices = eval(args.start_indices)
+
+
+    # # if len(sys.argv) != 1:
+    # #     raise ValueError('Usage: python prompt_gen_inference.py <[list of start indices]>')
+
+    # # list_of_start_indices = list(sys.argv[1])
+
+    # # if type(list_of_start_indices) != list:
+    # #     raise ValueError('Start indices should be a list of integers')
+
+    # # if all(isinstance(x, int) for x in list_of_start_indices):
+    # #     raise ValueError('All start indices should be integers')
+
+    # # testing retrieval of base prompts and their scores
+
+    # base_prompts = load_test_base_prompts(list_of_start_indices)
+    # base_prompt_scores = load_test_base_prompts_scores(list_of_start_indices)
+
+    file_path = os.path.join(ANALYSIS_PATH, 'testing.csv')
+    main(file_path)
 
 
 

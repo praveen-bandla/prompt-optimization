@@ -98,6 +98,25 @@ class BasePromptDB:
         result = cursor.fetchone()
         return result[0] if result else None
 
+    def fetch_list_of_prompts(self, bp_idx_list):
+        '''
+        Fetches a list of prompts from the database by a list of bp_idx.
+
+        Args:
+            - bp_idx_list (list of int): A list of bp_idx.
+
+        Returns:
+            - list of str: A list of prompt strings.
+        '''
+        cursor = self.conn.cursor()
+        placeholders = ','.join(['?'] * len(bp_idx_list))
+        query = f'SELECT base_prompt_string FROM base_prompts WHERE bp_idx IN ({placeholders})'
+        cursor.execute(query, bp_idx_list)
+        results = cursor.fetchall()
+
+        return [result[0] for result in results]
+        
+
     def close_connection(self):
         '''
         Closes the database connection.
@@ -386,6 +405,17 @@ class ValidationScoreParquet:
         
         df = self._access_parquet()
         return df
+
+    def fetch_all_agg_validation_scores(self):
+        '''
+        Fetches the aggregated validation scores for the base prompt. Returns the total score for each prompt variation.
+
+        Returns:
+            - pd.Series: A Series containing the total score for each prompt variation.
+
+        '''
+        df = self._access_parquet()
+        return list(df['total_score'])
 
     def fetch_base_prompt_str(self):
         '''
@@ -861,12 +891,19 @@ class RegressionHeadDatasetSubset(torch.utils.data.Dataset):
             "total_score": row["total_score"]
         }
 
-if __name__ == "__main__":
-    dataset = RegressionHeadDataset()
-    train = dataset.train_data
-    test = dataset.test_data
-    val = dataset.val_data
+# if __name__ == "__main__":
+#     dataset = RegressionHeadDataset()
+#     train = dataset.train_data
+#     test = dataset.test_data
+#     val = dataset.val_data
 
-    print("Train Data:", train)
-    print("Test Data:", test)
-    print("Validation Data:", val)
+#     print("Train Data:", train)
+#     print("Test Data:", test)
+#     print("Validation Data:", val)
+
+
+if __name__ == "__main__":
+    bp_db = BasePromptDB()
+    test_indices = [0, 1, 2]
+    test_results = bp_db.fetch_list_of_prompts(test_indices)
+    print("Test Results:", test_results)

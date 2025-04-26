@@ -170,6 +170,15 @@ def load_regression_head_model():
         regression_head_model.config.hidden_size,
         1
     ).to(device).to(torch.float16)
+
+    # Load the regression head weights
+    try:
+        regression_head_model.regression_head.load_state_dict(torch.load(REGRESSION_HEAD_PATH))
+        print("Regression head weights loaded successfully.")
+    except Exception as e:
+        print(f"Error loading regression head weights: {e}")
+        raise
+    
     # Load the tokenizer
     tokenizer = AutoTokenizer.from_pretrained(
         REGRESSION_HEAD_BASE_MODEL_ID,
@@ -306,6 +315,9 @@ if __name__ == "__main__":
 
     print(f'Base prompt: {test_base_prompt}')
     formatted_prompt = format_prompt_with_instruction(test_base_prompt)
+
+    print("Formatted prompt for model input:")
+    print(formatted_prompt)
 
     # Run inference to generate a prompt variation
     print("\nGenerating prompt variation...")
