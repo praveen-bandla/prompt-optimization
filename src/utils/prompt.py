@@ -372,7 +372,7 @@ class MainModelOutput:
             fetched_output = self.mo_parquet.fetch_model_output(self.bpv_idx)
             return fetched_output
     
-    def get_output_str_test(self):
+    def get_output_str_test(self, bp_idx):
         '''
         Fetches the main model output from the stored Parquet database. 
 
@@ -383,7 +383,7 @@ class MainModelOutput:
         if self.model_output_str is not None:
             return self.model_output_str
         else:
-            fetched_output = self.mo_parquet.fetch_model_output_test(self.bp_idx)
+            fetched_output = self.mo_parquet.fetch_model_output_test(bp_idx)
             return fetched_output
     
     def get_bpv_idx(self):

@@ -55,11 +55,17 @@ def parse_model_output(model_output):
     '''
     Model output is a list of integers returned as a string. This function parses the string and returns a list of integers.
     '''
-    parsed_list = json.loads(model_output)
+    # parsed_list = json.loads(model_output)
 
-    print(parsed_list)
+    # print(parsed_list)
 
-    return parsed_list
+    # return parsed_list
+
+    try:
+        parsed_list = json.loads(model_output)
+        return parsed_list
+    except (json.JSONDecodeError, TypeError):
+        return []
 
 def load_configs():
     '''
@@ -238,6 +244,20 @@ def validator_model_inference_per_bp(base_prompt_str, main_model_output_str, mod
         # Step 3e: Parse and store the model output
         parsed_list = parse_model_output(generated_text)
 
+        counter = 0
+        while len(parsed_list) != NUM_RUBRIC_SECTIONS:
+            counter+=1
+            print(f'error caught with model generation')
+            output = pipe(full_prompt, **generation_args)
+            generated_text = output[0]['generated_text']
+            parsed_list = parse_model_output(generated_text)
+
+            if counter == 5:
+                parsed_list = [0] * NUM_RUBRIC_SECTIONS
+
+        for i, score in enumerate(parsed_list):
+            scores[f'section_{i+1}'][idx] = score
+
         if len(parsed_list) != NUM_RUBRIC_SECTIONS:
             raise ValueError(f"Parsed list length {len(parsed_list)} does not match expected number of sections {NUM_RUBRIC_SECTIONS}")
         
@@ -271,8 +291,11 @@ def validator_model_inference_for_bps(model_dict, configs, mo_parquet, vs_parque
     bp_obj = BasePrompt(bp_idx, bp_db)
     base_prompt_str = bp_obj.get_prompt_str()
 
-    model_output_obj = MainModelOutput(bp_idx=bp_idx, mo_parquet=mo_parquet)
-    main_model_output_str = model_output_obj.get_output_str_test()
+    bp_idx_file = math.floor(bp_idx / 100) * 100
+    print(bp_idx_file)
+
+    model_output_obj = MainModelOutput(bp_idx=bp_idx_file, mo_parquet=mo_parquet)
+    main_model_output_str = model_output_obj.get_output_str_test(bp_idx)
 
     scores = validator_model_inference_per_bp(base_prompt_str, main_model_output_str, model_dict, configs)
 
@@ -304,10 +327,9 @@ if __name__ == "__main__":
 
     all_vs = []
     # Run inference for the given base prompt index
+    mo_parquet = ModelOutputParquet(start_idx, MODEL_TEST_OUTPUTS)
+    vs_parquet = ValidationScoreParquet(bp_idx=start_idx, test=True, parquet_root_path=VALIDATION_TEST_SCORES)
     for bp_idx in range(start_idx, end_idx):
-        mo_parquet = ModelOutputParquet(bp_idx, MODEL_TEST_OUTPUTS)
-        vs_parquet = ValidationScoreParquet(bp_idx=bp_idx, test=True, parquet_root_path=VALIDATION_TEST_SCORES)
-
         all_vs.append(validator_model_inference_for_bps(models_dict, configs, mo_parquet, vs_parquet, bp_idx))
     
     # Write the validation scores to Parquet
