@@ -59,7 +59,7 @@ def load_test_base_prompts(start_indices):
     list_of_base_prompts = bp_db.fetch_list_of_prompts(indices)
 
     # return list
-    return list_of_base_prompts
+    return indices, list_of_base_prompts
 
 
 def load_test_base_prompts_scores(indices):
@@ -136,14 +136,13 @@ def format_prompt_with_instruction(base_prompt):
     Returns:
         str: A single formatted input string for the model.
     """
-    # Example of the desired behavior
+    # Define the instruction and example
     example_base_prompt = "Create a learning guide for a third-grader on the concept of gravity."
-    example_variation = "Draft a concise learning guide for a third-grader on gravity. Make it fun and engaging with strong structure."
+    example_variation = "CREATE A LEARNING GUIDE FOR A THIRD-GRADER ON THE CONCEPT OF GRAVITY."
 
-    # Instruction with an example
     instruction = (
-        f"Rewrite the following base instruction to create an alternative LLM prompt phrasing. Adjust the wording and structure of the prompt and include cues to create guidance for a model to generate a higher quality response."
-        f"The rewritten prompt MUST include the EXACT phrase 'learning guide' and the word 'third-grade' or 'third-grader'. "
+        f"Make every letter of the following base prompt capitalized. Everything about the rewritten prompt should be the same as the original prompt, except for every letter being capitalized."
+        f"The rewritten prompt MUST include the EXACT phrases 'LEARNING GUIDE' and the word 'THIRD-GRADE' or 'THIRD-GRADER'. "
         f"Do not include any additional text or explanation. Return only the rewritten prompt.\n\n"
         f"Example Base Instruction: {example_base_prompt}\n"
         f"Example Rewritten Prompt: {example_variation}\n\n"
@@ -276,11 +275,12 @@ def call_regression_head(regression_head_model, tokenizer, base_prompt, prompt_v
     return prediction
 
 
-def save_file(base_prompt_strs, base_prompt_scores, bp_regression_scores, pv_str, pv_scores, file_path):
+def save_file(indices,base_prompt_strs, base_prompt_scores, bp_regression_scores, pv_str, pv_scores, file_path):
     '''
-    Turns the 4 lists into a pandas dataframe and saves it to a csv file in file path
+    Turns the lists into a pandas dataframe and saves it to a csv file in file path
     '''
     df = pd.DataFrame({
+        'bp_idx': indices,
         'base_prompt': base_prompt_strs,
         'base_prompt_score': base_prompt_scores,
         'base_prompt_regression_score': bp_regression_scores,
@@ -370,8 +370,8 @@ def main(file_path):
     # Load the regression head model and tokenizer
     regression_head_model, regression_head_tokenizer = load_regression_head_model()
 
-    base_prompts = load_test_base_prompts(list_of_start_indices)[0:12]
-    base_prompt_scores = load_test_base_prompts_scores(list_of_start_indices)[0:12]
+    indices, base_prompts = load_test_base_prompts(list_of_start_indices)
+    base_prompt_scores = load_test_base_prompts_scores(list_of_start_indices)
 
     base_prompt_regression_scores = []
 
@@ -398,11 +398,11 @@ def main(file_path):
         base_prompt_regression_scores.append(bp_regression_score)
         
         # Append the score to the list
-        prompt_variation_strs.append(base_prompt)
+        prompt_variation_strs.append(prompt_variation)
         prompt_variations_scores.append(pv_score)
 
     # Save the results to a CSV file
-    save_file(base_prompts, base_prompt_scores, base_prompt_regression_scores,prompt_variation_strs, prompt_variations_scores, file_path)
+    save_file(indices, base_prompts, base_prompt_scores, base_prompt_regression_scores,prompt_variation_strs, prompt_variations_scores, file_path)
 
 
 if __name__ == "__main__":
@@ -435,7 +435,7 @@ if __name__ == "__main__":
     # base_prompts = load_test_base_prompts(list_of_start_indices)
     # base_prompt_scores = load_test_base_prompts_scores(list_of_start_indices)
 
-    file_path = os.path.join(ANALYSIS_PATH, 'testing.csv')
+    file_path = os.path.join(ANALYSIS_PATH, 'capitalization.csv')
     main(file_path)
 
 
