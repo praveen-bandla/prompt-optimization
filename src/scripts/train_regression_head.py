@@ -154,6 +154,42 @@ def objective(trial):
         "test_loss": []
     }
 
+    model.eval()  # Set model to evaluation mode
+
+    # Function to compute RMSE for a given data loader
+    def compute_rmse(loader):
+        preds = []
+        labels = []
+        with torch.no_grad():
+            for batch in loader:
+                inputs = {key: val.to(device) for key, val in batch.items() if key != "labels"}
+                labels_batch = batch["labels"].to(device).to(torch.float16)
+
+                outputs = model(**inputs)
+                hidden_states = outputs.hidden_states[-1]  # Shape: [batch_size, sequence_length, hidden_size]
+                pooled_output = hidden_states.mean(dim=1).to(device)  # Shape: [batch_size, hidden_size]
+                logits = model.regression_head(pooled_output)  # Shape: [batch_size, 1]
+
+                preds.extend(logits.squeeze(-1).detach().cpu().numpy())
+                labels.extend(labels_batch.squeeze(-1).detach().cpu().numpy())
+        rmse = mean_squared_error(labels, preds, squared=False)
+        return rmse
+
+    # Compute RMSE for train, validation, and test datasets
+    initial_train_rmse = compute_rmse(train_loader)
+    initial_val_rmse = compute_rmse(val_loader)
+    initial_test_rmse = compute_rmse(test_loader)
+
+    # Store the initial RMSE in metrics
+    metrics["train_rmse"].append(float(initial_train_rmse))
+    metrics["val_rmse"].append(float(initial_val_rmse))
+    metrics["test_rmse"].append(float(initial_test_rmse))
+
+    # Print the initial RMSE values
+    print(f"Initial Train RMSE: {initial_train_rmse}")
+    print(f"Initial Validation RMSE: {initial_val_rmse}")
+    print(f"Initial Test RMSE: {initial_test_rmse}")
+
     # Training loop
     for epoch in range(3):
         model.train()
