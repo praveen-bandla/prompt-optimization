@@ -374,4 +374,4 @@ class MainModelOutput:
         '''
         Reads the main model output from the stored Parquet database.
         '''
-        self.model_output_str = self.mo_parquet.fetch_model_output(self.bpv_idx)
+        self.model_output_str = self.mo_parquet.fetch_model_output(self.bpv_idx)        

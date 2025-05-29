@@ -151,13 +151,13 @@ def load_model():
     return model, tokenizer
 
 # Step 2: Run inference to collect all the prompt variations
-def prompt_variation_inference():
+def prompt_variation_inference(configs, model, tokenizer):
     '''
     Runs inference on the prompt_variation_model to generate the desired output. It solely retrievers the response as a string and does not process it further.
     '''
     instruction = collect_instruction(bp_idx)
-    model, tokenizer = load_model()
-    configs = load_configs()
+    # model, tokenizer = load_model()
+    # configs = load_configs()
 
     max_new_tokens = configs.get("max_new_tokens")
     temperature = configs.get("temperature")
@@ -312,7 +312,7 @@ def write_parquet(bp_idx, prompt_variations):
 # tester = parse_model_output()
 # print(tester)
 
-def main(bp_idx):
+def main(bp_idx, configs, model, tokenizer):
     '''
     Runs the entire process of generating prompt variations. It collects the instruction, loads the model, runs inference, and writes the prompt variations to a parquet file.
     '''
@@ -328,7 +328,7 @@ def main(bp_idx):
     configs = load_configs()
 
     # # Step 3: Run inference to collect prompt variations
-    model_output = prompt_variation_inference()
+    model_output = prompt_variation_inference(configs, model, tokenizer)
 
     # tester code
 
@@ -362,6 +362,10 @@ if __name__ == "__main__":
     except:
         raise ValueError("The argument must be a list of integers in the format: [0, 1, 2]")
 
+    # Load the model and configs once
+    model, tokenizer = load_model()
+    configs = load_configs()
     for bp_idx in bp_indices:
         print(f"Processing base prompt index: {bp_idx}")
-        main(bp_idx)
+        main(bp_idx, configs, model, tokenizer)
+        print(f"Finished processing base prompt index: {bp_idx}")

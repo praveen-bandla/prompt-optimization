@@ -381,7 +381,7 @@ def validator_model_inference_per_prompt_variation(base_prompt_str, main_model_o
     return scores
 
 
-def validator_model_inference_per_base_prompt(mo_parquet, vs_parquet, bp_idx):
+def validator_model_inference_per_base_prompt(model_dict, configs, mo_parquet, vs_parquet, bp_idx):
     # add vs_parquet as an argument
     '''
     Performs main model inference on all prompt variations for the given bp_idx. Stores all the outputs in its respective Parquet file.
@@ -399,10 +399,11 @@ def validator_model_inference_per_base_prompt(mo_parquet, vs_parquet, bp_idx):
     # Load the base_prompt_str
     base_prompt_str = bp_obj.get_prompt_str()
 
-    models_dict = load_models()
-    configs = load_configs()
+    # models_dict = load_models()
+    # configs = load_configs()
 
     for idx in range(-1, NUM_PROMPT_VARIATIONS):
+    # for idx in range(-1,4):
         # Load the main model output string for the given bpv_idx
         model_output_obj = MainModelOutput((bp_idx, idx), mo_parquet)
         main_model_output_str = model_output_obj.get_output_str()
@@ -512,13 +513,16 @@ if __name__ == "__main__":
     
     start_idx = int(sys.argv[1])
     end_idx = int(sys.argv[2])
+    models_dict = load_models()
+    configs = load_configs()
     for bp_idx in range(start_idx, end_idx):
         vs_parquet = ValidationScoreParquet(bp_idx)
         # Run inference for the given base prompt index
         mo_parquet = ModelOutputParquet(bp_idx)
         vs_parquet = ValidationScoreParquet(bp_idx)
 
-        vs_objs = validator_model_inference_per_base_prompt(mo_parquet, vs_parquet, bp_idx)
+        # vs_objs = validator_model_inference_per_base_prompt(mo_parquet, vs_parquet, bp_idx)
+        vs_objs = validator_model_inference_per_base_prompt(models_dict, configs, mo_parquet, vs_parquet, bp_idx)
         
         # Write the validation scores to Parquet
         write_validation_scores_to_parquet(vs_parquet, vs_objs, bp_idx)

@@ -1,0 +1,3 @@
+train_indices: [3, 7, 0, 4, 1, 2, 8, 6]
+test_indices: [9]
+val_indices: [5]
