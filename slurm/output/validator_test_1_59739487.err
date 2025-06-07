@@ -1,0 +1,77 @@
+2025-04-24 18:22:46.847361: I tensorflow/core/util/port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+2025-04-24 18:22:47.637196: E external/local_xla/xla/stream_executor/cuda/cuda_fft.cc:467] Unable to register cuFFT factory: Attempting to register factory for plugin cuFFT when one has already been registered
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+E0000 00:00:1745533367.874574  165448 cuda_dnn.cc:8579] Unable to register cuDNN factory: Attempting to register factory for plugin cuDNN when one has already been registered
+E0000 00:00:1745533368.010017  165448 cuda_blas.cc:1407] Unable to register cuBLAS factory: Attempting to register factory for plugin cuBLAS when one has already been registered
+W0000 00:00:1745533368.607578  165448 computation_placer.cc:177] computation placer already registered. Please check linkage and avoid linking the same target more than once.
+W0000 00:00:1745533368.607655  165448 computation_placer.cc:177] computation placer already registered. Please check linkage and avoid linking the same target more than once.
+W0000 00:00:1745533368.607669  165448 computation_placer.cc:177] computation placer already registered. Please check linkage and avoid linking the same target more than once.
+W0000 00:00:1745533368.607680  165448 computation_placer.cc:177] computation placer already registered. Please check linkage and avoid linking the same target more than once.
+2025-04-24 18:22:48.621518: I tensorflow/core/platform/cpu_feature_guard.cc:210] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: AVX2 AVX512F AVX512_VNNI FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards:  50%|█████     | 1/2 [00:14<00:14, 14.93s/it]Loading checkpoint shards: 100%|██████████| 2/2 [00:18<00:00,  8.28s/it]Loading checkpoint shards: 100%|██████████| 2/2 [00:18<00:00,  9.28s/it]
+Loading checkpoint shards:   0%|          | 0/4 [00:00<?, ?it/s]Loading checkpoint shards:  25%|██▌       | 1/4 [00:11<00:35, 11.83s/it]Loading checkpoint shards:  50%|█████     | 2/4 [00:25<00:25, 12.87s/it]Loading checkpoint shards:  75%|███████▌  | 3/4 [00:38<00:13, 13.10s/it]Loading checkpoint shards: 100%|██████████| 4/4 [00:49<00:00, 12.01s/it]Loading checkpoint shards: 100%|██████████| 4/4 [00:49<00:00, 12.28s/it]
+Starting from v4.46, the `logits` model output will have the same type as the model (except at train time, where it will always be FP32)
+The 'max_batch_size' argument of HybridCache is deprecated and will be removed in v4.46. Use the more precisely named 'batch_size' argument instead.
+Starting from v4.46, the `logits` model output will have the same type as the model (except at train time, where it will always be FP32)
+/scratch/dj2565/prompt-optimization/src/utils/data_handler.py:485: FutureWarning: The behavior of DataFrame concatenation with empty or all-NA entries is deprecated. In a future version, this will no longer exclude empty or all-NA columns when determining the result dtypes. To retain the old behavior, exclude the relevant entries before the concat operation.
+  self.df = pd.concat([self.df, new_data], ignore_index=True)
+/scratch/dj2565/prompt-optimization/src/utils/data_handler.py:485: FutureWarning: The behavior of DataFrame concatenation with empty or all-NA entries is deprecated. In a future version, this will no longer exclude empty or all-NA columns when determining the result dtypes. To retain the old behavior, exclude the relevant entries before the concat operation.
+  self.df = pd.concat([self.df, new_data], ignore_index=True)
+/scratch/dj2565/prompt-optimization/src/utils/data_handler.py:485: FutureWarning: The behavior of DataFrame concatenation with empty or all-NA entries is deprecated. In a future version, this will no longer exclude empty or all-NA columns when determining the result dtypes. To retain the old behavior, exclude the relevant entries before the concat operation.
+  self.df = pd.concat([self.df, new_data], ignore_index=True)
+/scratch/dj2565/prompt-optimization/src/utils/data_handler.py:485: FutureWarning: The behavior of DataFrame concatenation with empty or all-NA entries is deprecated. In a future version, this will no longer exclude empty or all-NA columns when determining the result dtypes. To retain the old behavior, exclude the relevant entries before the concat operation.
+  self.df = pd.concat([self.df, new_data], ignore_index=True)
+/scratch/dj2565/prompt-optimization/src/utils/data_handler.py:485: FutureWarning: The behavior of DataFrame concatenation with empty or all-NA entries is deprecated. In a future version, this will no longer exclude empty or all-NA columns when determining the result dtypes. To retain the old behavior, exclude the relevant entries before the concat operation.
+  self.df = pd.concat([self.df, new_data], ignore_index=True)
+/scratch/dj2565/prompt-optimization/src/utils/data_handler.py:485: FutureWarning: The behavior of DataFrame concatenation with empty or all-NA entries is deprecated. In a future version, this will no longer exclude empty or all-NA columns when determining the result dtypes. To retain the old behavior, exclude the relevant entries before the concat operation.
+  self.df = pd.concat([self.df, new_data], ignore_index=True)
+/scratch/dj2565/prompt-optimization/src/utils/data_handler.py:485: FutureWarning: The behavior of DataFrame concatenation with empty or all-NA entries is deprecated. In a future version, this will no longer exclude empty or all-NA columns when determining the result dtypes. To retain the old behavior, exclude the relevant entries before the concat operation.
+  self.df = pd.concat([self.df, new_data], ignore_index=True)
+/scratch/dj2565/prompt-optimization/src/utils/data_handler.py:485: FutureWarning: The behavior of DataFrame concatenation with empty or all-NA entries is deprecated. In a future version, this will no longer exclude empty or all-NA columns when determining the result dtypes. To retain the old behavior, exclude the relevant entries before the concat operation.
+  self.df = pd.concat([self.df, new_data], ignore_index=True)
+/scratch/dj2565/prompt-optimization/src/utils/data_handler.py:485: FutureWarning: The behavior of DataFrame concatenation with empty or all-NA entries is deprecated. In a future version, this will no longer exclude empty or all-NA columns when determining the result dtypes. To retain the old behavior, exclude the relevant entries before the concat operation.
+  self.df = pd.concat([self.df, new_data], ignore_index=True)
+/scratch/dj2565/prompt-optimization/src/utils/data_handler.py:485: FutureWarning: The behavior of DataFrame concatenation with empty or all-NA entries is deprecated. In a future version, this will no longer exclude empty or all-NA columns when determining the result dtypes. To retain the old behavior, exclude the relevant entries before the concat operation.
+  self.df = pd.concat([self.df, new_data], ignore_index=True)
+/scratch/dj2565/prompt-optimization/src/utils/data_handler.py:485: FutureWarning: The behavior of DataFrame concatenation with empty or all-NA entries is deprecated. In a future version, this will no longer exclude empty or all-NA columns when determining the result dtypes. To retain the old behavior, exclude the relevant entries before the concat operation.
+  self.df = pd.concat([self.df, new_data], ignore_index=True)
+/scratch/dj2565/prompt-optimization/src/utils/data_handler.py:485: FutureWarning: The behavior of DataFrame concatenation with empty or all-NA entries is deprecated. In a future version, this will no longer exclude empty or all-NA columns when determining the result dtypes. To retain the old behavior, exclude the relevant entries before the concat operation.
+  self.df = pd.concat([self.df, new_data], ignore_index=True)
+/scratch/dj2565/prompt-optimization/src/utils/data_handler.py:485: FutureWarning: The behavior of DataFrame concatenation with empty or all-NA entries is deprecated. In a future version, this will no longer exclude empty or all-NA columns when determining the result dtypes. To retain the old behavior, exclude the relevant entries before the concat operation.
+  self.df = pd.concat([self.df, new_data], ignore_index=True)
+/scratch/dj2565/prompt-optimization/src/utils/data_handler.py:485: FutureWarning: The behavior of DataFrame concatenation with empty or all-NA entries is deprecated. In a future version, this will no longer exclude empty or all-NA columns when determining the result dtypes. To retain the old behavior, exclude the relevant entries before the concat operation.
+  self.df = pd.concat([self.df, new_data], ignore_index=True)
+/scratch/dj2565/prompt-optimization/src/utils/data_handler.py:485: FutureWarning: The behavior of DataFrame concatenation with empty or all-NA entries is deprecated. In a future version, this will no longer exclude empty or all-NA columns when determining the result dtypes. To retain the old behavior, exclude the relevant entries before the concat operation.
+  self.df = pd.concat([self.df, new_data], ignore_index=True)
+/scratch/dj2565/prompt-optimization/src/utils/data_handler.py:485: FutureWarning: The behavior of DataFrame concatenation with empty or all-NA entries is deprecated. In a future version, this will no longer exclude empty or all-NA columns when determining the result dtypes. To retain the old behavior, exclude the relevant entries before the concat operation.
+  self.df = pd.concat([self.df, new_data], ignore_index=True)
+/scratch/dj2565/prompt-optimization/src/utils/data_handler.py:485: FutureWarning: The behavior of DataFrame concatenation with empty or all-NA entries is deprecated. In a future version, this will no longer exclude empty or all-NA columns when determining the result dtypes. To retain the old behavior, exclude the relevant entries before the concat operation.
+  self.df = pd.concat([self.df, new_data], ignore_index=True)
+/scratch/dj2565/prompt-optimization/src/utils/data_handler.py:485: FutureWarning: The behavior of DataFrame concatenation with empty or all-NA entries is deprecated. In a future version, this will no longer exclude empty or all-NA columns when determining the result dtypes. To retain the old behavior, exclude the relevant entries before the concat operation.
+  self.df = pd.concat([self.df, new_data], ignore_index=True)
+/scratch/dj2565/prompt-optimization/src/utils/data_handler.py:485: FutureWarning: The behavior of DataFrame concatenation with empty or all-NA entries is deprecated. In a future version, this will no longer exclude empty or all-NA columns when determining the result dtypes. To retain the old behavior, exclude the relevant entries before the concat operation.
+  self.df = pd.concat([self.df, new_data], ignore_index=True)
+/scratch/dj2565/prompt-optimization/src/utils/data_handler.py:485: FutureWarning: The behavior of DataFrame concatenation with empty or all-NA entries is deprecated. In a future version, this will no longer exclude empty or all-NA columns when determining the result dtypes. To retain the old behavior, exclude the relevant entries before the concat operation.
+  self.df = pd.concat([self.df, new_data], ignore_index=True)
+/scratch/dj2565/prompt-optimization/src/utils/data_handler.py:485: FutureWarning: The behavior of DataFrame concatenation with empty or all-NA entries is deprecated. In a future version, this will no longer exclude empty or all-NA columns when determining the result dtypes. To retain the old behavior, exclude the relevant entries before the concat operation.
+  self.df = pd.concat([self.df, new_data], ignore_index=True)
+/scratch/dj2565/prompt-optimization/src/utils/data_handler.py:485: FutureWarning: The behavior of DataFrame concatenation with empty or all-NA entries is deprecated. In a future version, this will no longer exclude empty or all-NA columns when determining the result dtypes. To retain the old behavior, exclude the relevant entries before the concat operation.
+  self.df = pd.concat([self.df, new_data], ignore_index=True)
+/scratch/dj2565/prompt-optimization/src/utils/data_handler.py:485: FutureWarning: The behavior of DataFrame concatenation with empty or all-NA entries is deprecated. In a future version, this will no longer exclude empty or all-NA columns when determining the result dtypes. To retain the old behavior, exclude the relevant entries before the concat operation.
+  self.df = pd.concat([self.df, new_data], ignore_index=True)
+/scratch/dj2565/prompt-optimization/src/utils/data_handler.py:485: FutureWarning: The behavior of DataFrame concatenation with empty or all-NA entries is deprecated. In a future version, this will no longer exclude empty or all-NA columns when determining the result dtypes. To retain the old behavior, exclude the relevant entries before the concat operation.
+  self.df = pd.concat([self.df, new_data], ignore_index=True)
+/scratch/dj2565/prompt-optimization/src/utils/data_handler.py:485: FutureWarning: The behavior of DataFrame concatenation with empty or all-NA entries is deprecated. In a future version, this will no longer exclude empty or all-NA columns when determining the result dtypes. To retain the old behavior, exclude the relevant entries before the concat operation.
+  self.df = pd.concat([self.df, new_data], ignore_index=True)
+Traceback (most recent call last):
+  File "/scratch/dj2565/prompt-optimization/src/scripts/validator_model_inference.py", line 534, in <module>
+    vs_objs = validator_model_inference_per_base_prompt(models_dict, configs, mo_parquet, vs_parquet, bp_idx)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/dj2565/prompt-optimization/src/scripts/validator_model_inference.py", line 421, in validator_model_inference_per_base_prompt
+    scores = validator_model_inference_per_prompt_variation(base_prompt_str, main_model_output_str, models_dict, configs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/dj2565/prompt-optimization/src/scripts/validator_model_inference.py", line 362, in validator_model_inference_per_prompt_variation
+    while len(parsed_list) != NUM_RUBRIC_SECTIONS:
+          ^^^^^^^^^^^^^^^^
+TypeError: object of type 'int' has no len()

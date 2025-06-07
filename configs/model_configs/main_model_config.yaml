@@ -1,5 +1,5 @@
 # hyperparameters specific to the chosen main_model = Phi-3-mini-4k-instruct 
-max_new_tokens: 800
+max_new_tokens: 4000
 return_full_text: False # returns the prompt as part of the output
 temperature: 0.8
 do_sample: True

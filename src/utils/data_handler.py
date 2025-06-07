@@ -12,6 +12,113 @@ import numpy as np
 #NUM_RUBRIC_SECTIONS
 #from prompt import ValidationScore
 
+class PromptTopicDB:
+    '''
+    A class to manage the SQLite database for prompt topics.
+    This class is meant to handle all calls to the database. No other module anywhere will handle database calls directly. They will simply call the methods of this class.
+
+    Further, this class will store the database connection object as an instance variable, so that the connection is not opened and closed for every call. This will improve performance. Every instance of this class will have a connection to the database, and the connection will be closed when the instance is destroyed.
+    '''
+
+    def __init__(self, db_path = SQL_DB):
+        '''
+        Initializes the PromptTopicDB class and creates the database if it doesn't exist.
+
+        Args:
+            - db_path (str): The path to the SQLite database file.
+        '''
+        self.db_path = db_path
+        self.conn = None
+        self._initialize_db()
+
+    def _initialize_db(self):
+        '''
+        Initializes the database by creating the table if it doesn't exist.
+        '''
+        db_exists = os.path.exists(self.db_path)
+        self.conn = sqlite3.connect(self.db_path)
+        
+        if not db_exists:
+            cursor = self.conn.cursor()
+            cursor.execute('''
+                CREATE TABLE topics (
+                    idx INT PRIMARY KEY,
+                    topic TEXT NOT NULL
+                )
+            ''')
+            self.conn.commit()
+            print(f"Database created at {self.db_path}")
+        else:
+            print(f"Database accessed at {self.db_path}")
+
+    def insert_topics(self, prompts):
+        '''
+        Inserts a batch of topics into the database.
+
+        Args:
+            - prompts (list of tuples): A list of tuples where each tuple contains (idx, topic). Here idx is an integer and topic is a string.
+        '''
+        cursor = self.conn.cursor()
+        cursor.executemany('''
+            INSERT INTO topics (idx, topic) VALUES (?, ?)
+        ''', prompts)
+        self.conn.commit()
+
+    def fetch_all_topics(self):
+        '''
+        Primarily used for testing purposes.
+        Fetches all topics from the database.
+
+        Returns:
+            - list of strings: A list of strings, which are each topics.
+        '''
+        cursor = self.conn.cursor()
+        cursor.execute('SELECT topic FROM topics')
+        return cursor.fetchall()
+    
+    def fetch_topic(self, idx):
+        '''
+        Fetches a specific topic from the database by iidx.
+        Is called by the Prompt class.
+
+        Args:
+            - idx (int): The index.
+
+        Returns:
+            - str: The topic string.
+        '''
+        cursor = self.conn.cursor()
+        cursor.execute('SELECT topic FROM topics WHERE idx = ?', (idx,))
+        result = cursor.fetchone()
+        return result[0] if result else None
+
+    def close_connection(self):
+        '''
+        Closes the database connection.
+        '''
+        if self.conn:
+            self.conn.close()
+            print(f"Database connection to {self.db_path} closed.")
+
+    def delete_database(self):
+        '''
+        Deletes the SQLite database file.
+        Closes the connection before deleting the file.
+        '''
+        self.close_connection()
+        if os.path.exists(self.db_path):
+            os.remove(self.db_path)
+            print(f"Database at {self.db_path} deleted.")
+        else:
+            print(f"No database found at {self.db_path} to delete.")
+
+    def reset_database(self):
+        '''
+        Resets the database by deleting and recreating it.
+        '''
+        self.delete_database()
+        self._initialize_db()
+
 class BasePromptDB:
     '''
     A class to manage the SQLite database for base prompts.
@@ -69,6 +176,7 @@ class BasePromptDB:
             INSERT INTO base_prompts (bp_idx, base_prompt_string) VALUES (?, ?)
         ''', prompts)
         self.conn.commit()
+        print("Base prompts inserted.")
 
     def fetch_all_prompts(self):
         '''
@@ -144,19 +252,30 @@ class BasePromptDB:
         self.delete_database()
         self._initialize_db()
 
+    def fetch_prompt_by_rownum(self, rownum):
+        query = f"SELECT * FROM base_prompts LIMIT 1 OFFSET {rownum};"
+        cursor = self.conn.cursor()
+        cursor.execute(query)
+        row = cursor.fetchone()
+        if row:
+            return row['base_prompt_string'], row['bp_idx']
+        else:
+            return None, None
+
 
 class PromptVariationParquet:
     '''
     Class used to manage the Prompt Variations in Parquet format as we discussed and is in README. This class will be initialized with a bp_idx and will have methods to access, write, read prompt variations. It will be similar to the BasePromptDB class, but will have to handle different Parquet files indexed by base prompt, as opposed to a single SQLite database.
     '''
 
-    def __init__(self, bp_idx, parquet_root_path = PROMPT_VARIATIONS):
+    def __init__(self, bp_idx, parquet_root_path = PROMPT_VARIATIONS, suffix=""):
         '''
-        Initializes the PromptVariationParquet class. This is base prompt specific. When needing to access prompt variations for a specific base prompt, the bp_idx will be passed to the methods of this class.
+        Initializes the PromptVariationParquet class with an optional suffix for the filename.
         '''
         self.parquet_root_path = parquet_root_path
         self.bp_idx = bp_idx
-        self.file_path = f'{self.parquet_root_path}/{bp_idx}_prompt_variation.parquet'
+        self.suffix = suffix
+        self.file_path = f'{self.parquet_root_path}/{bp_idx}_prompt_variation{self.suffix}.parquet'
         self.df = self._access_parquet()
 
     def _initialize_parquet(self): 
@@ -545,6 +664,11 @@ class ModelOutputParquet:
         self._initialize_parquet()
         return pd.read_parquet(self.file_path)
 
+    def get_num_modeloutputs(self):
+        num_mos = len(self.df) - 1
+        return num_mos
+
+
     def insert_model_outputs(self, model_outputs):
         '''
         Inserts a batch of model outputs into the respective parquet file. Assumes that the first model output of this batch is the base prompt model output.
@@ -646,7 +770,6 @@ class ModelOutputParquet:
         '''
         self.delete_parquet()
         self._initialize_parquet()
-
 
 
 class RegressionHeadDataset(torch.utils.data.Dataset):

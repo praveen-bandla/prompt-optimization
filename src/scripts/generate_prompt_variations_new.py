@@ -69,7 +69,7 @@ def collect_instruction(bp_idx):
     '''
 
     # collecting base_prompt_str from the database based on the given index
-    bp_db = BasePromptDB()
+    bp_db = BasePromptDB(FILTERED_SQL_DB)
     bp = BasePrompt(bp_idx)
     bp_str = bp.get_prompt_str()
     
@@ -151,7 +151,7 @@ def load_model():
     return model, tokenizer
 
 # Step 2: Run inference to collect all the prompt variations
-def prompt_variation_inference(configs, model, tokenizer):
+def prompt_variation_inference(bp_idx, configs, model, tokenizer):
     '''
     Runs inference on the prompt_variation_model to generate the desired output. It solely retrievers the response as a string and does not process it further.
     '''
@@ -206,6 +206,10 @@ def prompt_variation_inference(configs, model, tokenizer):
     # Decode the generated text
     generated_text = tokenizer.decode(outputs[0][input_tensor.shape[1]:], skip_special_tokens=True)
     
+    # Empty output check
+    if not generated_text or generated_text.strip() == "":
+        raise ValueError(f"❌ Model output is empty for bp_idx {bp_idx}. Check model inference or prompt formatting.")
+
     # Enforce the model to start its response with "<think>\n"
     if not generated_text.startswith("<think>\n"):
         generated_text = f"<think>\n{generated_text}"
@@ -213,16 +217,12 @@ def prompt_variation_inference(configs, model, tokenizer):
     print("Inference complete.")
     print("Outputs: ", generated_text)
     return generated_text
+ 
 
 def parse_model_output(model_output, bp_idx):
     '''
-    This function parses the model output to extract the prompt variations from two JSON arrays.
-
-    Inputs:
-        - model_output: The model output string from prompt_variation_inference()
-
-    Outputs:
-        - list: A list of tuples, each containing the base prompt variation index and the prompt variation string. Stored as a list of (bpv_idx, bpv_str)
+    Parses model output and returns unique prompt variations.
+    Limits to NUM_PROMPT_VARIATIONS.
     '''
     print('Model Output:', model_output)
 
@@ -231,14 +231,29 @@ def parse_model_output(model_output, bp_idx):
 
     if isinstance(model_output, dict) and "generated_text" in model_output:
         model_output = model_output["generated_text"]
-    
-    # FOR ONE ARRAY - PREVIOUS CODE
-    json_text = re.search(r"\[.*\]", model_output, re.DOTALL)
-    if json_text:
-        model_output = json_text.group(0)
-    else:
+
+    # Extract JSON array using regex
+    json_text_match = re.search(r"\[.*\]", model_output, re.DOTALL)
+    if not json_text_match:
         raise ValueError("No JSON-like output found in model response.")
-    return [((bp_idx,idx), str(pv)) for idx, pv in enumerate(json.loads(model_output))]
+
+    json_text = json_text_match.group(0)
+
+    # Sanitize control characters
+    json_text = re.sub(r'[\x00-\x1f\x7f]', '', json_text)
+
+    try:
+        variations_raw = json.loads(json_text)
+    except json.JSONDecodeError as e:
+        print(f"🚨 JSON parsing error: {e}")
+        print(f"📝 Problematic JSON snippet:\n{json_text[:500]}...")
+        raise
+
+    # Remove duplicates and limit to NUM_PROMPT_VARIATIONS
+    unique_variations = list(dict.fromkeys(variations_raw))[:NUM_PROMPT_VARIATIONS]
+
+    return [((bp_idx, idx), pv) for idx, pv in enumerate(unique_variations)]
+
 
     # FOR TWO ARRAYS
     # Extract JSON arrays form the model output
@@ -283,7 +298,7 @@ def write_parquet(bp_idx, prompt_variations):
     # pv_parquet = PromptVariationParquet(bp_idx)
     # pv_parquet.insert_prompt_variations(prompt_variations)
     try: 
-        bp_db = BasePromptDB()
+        bp_db = BasePromptDB(FILTERED_SQL_DB)
         bp_str = bp_db.fetch_prompt(bp_idx)
         if not bp_str:
             raise ValueError(f"Base prompt with index {bp_idx} not found in the database.")
@@ -324,21 +339,31 @@ def main(bp_idx, configs, model, tokenizer):
     # # Step 2: Load model
     # pipe = load_model()
 
+    # DARREN: removed because redundant, we already load the model configs in the function below
     # # Step 2: Load model configuration
-    configs = load_configs()
+    # configs = load_configs()
 
-    # # Step 3: Run inference to collect prompt variations
-    model_output = prompt_variation_inference(configs, model, tokenizer)
+    # # Step 2: Run inference to collect prompt variations
+    model_output = prompt_variation_inference(bp_idx, configs, model, tokenizer)
 
     # tester code
 
     # model_output = "[\"prompt_variation1\", \"prompt_variation2\", \"prompt_variation3\"]"
 
-    # Step 4: Parse the model output to extract prompt variations
+    # Step 3: Parse the model output to extract prompt variations
     prompt_variations = parse_model_output(model_output, bp_idx)
 
-    # Step 5: Write the prompt variations to a parquet file
+    # Check if the number of prompt variations is less than the expected number
+    if len(prompt_variations) < NUM_PROMPT_VARIATIONS:
+        print(f"⚠️ Warning: Only {len(prompt_variations)} prompt variations generated for bp_idx {bp_idx}")
+
+
+    # Step 4: Write the prompt variations to a parquet file
     write_parquet(bp_idx, prompt_variations)
+
+    # Confirm successful writing to parquet
+    print(f"✅ Successfully saved {len(prompt_variations)} prompt variations for bp_idx {bp_idx}.")
+
 
 
 

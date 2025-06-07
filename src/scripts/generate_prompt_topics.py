@@ -1,27 +1,6 @@
 #!/usr/bin/env python3
 '''
-Generate Base Prompts (New)
-
-This updated script generates a set of base prompts by calling the main model to produce base prompts based on the stored inputs. It runs inferences and generates 'n' base prompts for further use (n found in the data_size_configs file).
-
-Inputs:
-    None
-
-Dependencies:
-    - base_prompt_model_input.json: A JSON file containing instructions for generating base prompts.
-    - base_prompt_model_config.yaml: A YAML file specifying model parameters and settings.
-    - data_handler.py: base prompt class
-    - prompt.py: base prompt class
-
-Outputs:
-    None
-
-Process:
-1. Collect the instruction for generating base prompts. Uses the number_of_base_prompts from the data_size_configs file for n and the base_prompt_model_input.json file for the instruction.
-2. Loads the model
-3. Loads the model configuration file
-4. Runs inference to collect all the base prompts
-5. Writes the base prompts to a SQLite database
+Generate Prompt Topics
 
 '''
 
@@ -35,16 +14,15 @@ import torch
 import transformers
 import re
 from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
-import random
 
 from huggingface_hub import login
 
 login(token="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")
 
 # Step 1: Collect the instruction for generating base prompts
-def collect_instruction(batch_size, topic):
+def collect_instruction():
     '''
-    Creates instructions for generating base prompts. Uses the base_prompt_model_input.json file as the model input, along with NUM_BASE_PROMPTS from the data_size_configs file.
+    Creates instructions for generating base prompts. Uses the prompt_topic_model_input.json file as the model input.
 
     Inputs: None
 
@@ -52,16 +30,14 @@ def collect_instruction(batch_size, topic):
         - full_prompt: A list containing the system role and content template for generating base prompts, stored as two dictionaries.
     
     '''
-    if not os.path.exists(BASE_PROMPT_MODEL_INPUT):
-        raise FileNotFoundError(f"Instruction file not found at {BASE_PROMPT_MODEL_INPUT}")
-    with open(BASE_PROMPT_MODEL_INPUT, 'r') as f:
-        prompt_structure = json.load(f)
+    if not os.path.exists(PROMPT_TOPIC_MODEL_INPUT):
+        raise FileNotFoundError(f"Instruction file not found at {PROMPT_TOPIC_MODEL_INPUT}")
+    with open(PROMPT_TOPIC_MODEL_INPUT , 'r') as f:
+        topic_structure = json.load(f)
     
-    system_role = prompt_structure["system_role"]
-    content_template = prompt_structure["content_template"]
+    system_role = topic_structure["system_role"]
+    content_template = topic_structure["content_template"]
     #instruction = system_role + " " + content_template
-
-    content = content_template.format(num_prompt = batch_size, topic = topic)
 
     full_prompt = [
         {
@@ -70,7 +46,7 @@ def collect_instruction(batch_size, topic):
         },
         {
             "role": "user",
-            "content": content
+            "content": content_template
         }
     ]
 
@@ -88,7 +64,7 @@ def load_configs():
     Outputs: 
         - configs: the configurations for the base prompt model.
     '''
-    config_path = BASE_PROMPT_MODEL_CONFIG
+    config_path = PROMPT_TEMPLATE_CONFIG
 
     with open(config_path, 'r') as f:
         configs = yaml.safe_load(f)
@@ -174,11 +150,11 @@ def load_model():
 
 # Step 2: Run inference to collect all the base prompts
 
-def base_prompt_inference(batch_size, topic): 
+def topic_inference(): 
     '''
-    This runs inference on the base_prompt_model to generate the desired output. It solely retrieves the response as a string and does not process it further.
+    This runs inference on the topic_model to generate the desired output. It solely retrieves the response as a string and does not process it further.
     '''
-    instruction = collect_instruction(batch_size, topic)
+    instruction = collect_instruction()
     model, tokenizer = load_model()
     configs = load_configs()
 
@@ -287,7 +263,7 @@ def base_prompt_inference(batch_size, topic):
     
     # return assistant_response
 
-def parse_model_output_as_bp_objects(model_output, offset=0):
+def parse_model_output_as_topics(model_output):
     '''
     This function parses the model output to extract the base prompts as tuples of (bp_idx, base_prompt_string). NB: This assumes that the db is empty. This handles the randomization of ordering of prompts as well.
 
@@ -297,17 +273,17 @@ def parse_model_output_as_bp_objects(model_output, offset=0):
     Outputs:
         - list: A list of tuples, each containing the base prompt index and the base prompt string. Stored as a list of (bp_idx, bp_str)
     '''
-    base_prompts = json.loads(model_output)
+    topics = json.loads(model_output)
 
     # creating random order of prompts stored as int indices
-    random_indices = random.sample(range(len(base_prompts)), len(base_prompts))
+    random_indices = random.sample(range(50), 50)
 
     # returning a list of tuples in the desired format of the random order of prompts
-    return [(offset + new_idx, base_prompts[random_idx]) for new_idx, random_idx in enumerate(random_indices)]
+    return [(new_idx, topics[random_idx]) for new_idx, random_idx in enumerate(random_indices)]
 
 
 # Step 3: Write the base prompts to a SQLite database
-def write_to_db(formatted_base_prompts, bp_db):
+def write_to_db(formatted_topics, topic_db):
     '''
     This function writes the base prompts to the SQLite database using the BasePromptDB object.
 
@@ -315,40 +291,30 @@ def write_to_db(formatted_base_prompts, bp_db):
         - formatted_base_prompts: A list of tuples, each containing the base prompt index and the base prompt string. Stored as a list of (bp_idx, bp_str)
         - bp_db: an object of type BasePromptDB (data handler) used to write
     '''
-    bp_db.insert_base_prompts(formatted_base_prompts)
+    topic_db.insert_topics(formatted_topics)
 
     return
 
 
 def main():
-    if os.path.exists(SQL_DB): #ensures that we do not have a pre-existing database
-        os.remove(SQL_DB)
+    if os.path.exists(SQL_TOPIC_DB): #ensures that we do not have a pre-existing database
+        os.remove(SQL_TOPIC_DB)
     # creates the BasePromptDB object
-    bp_db = BasePromptDB()
-
-    # grab necessary topics
     topic_db = PromptTopicDB(SQL_TOPIC_DB)
-    topics = topic_db.fetch_all_topics()
 
-    bp_idx_counter = 0
-    topic_counter = 0
+    # generates model output by inferencing
+    model_output = topic_inference()
+    
+    # formats the model output as a list of tuples in random order
+    formatted_topics= parse_model_output_as_topics(model_output)
 
-    for batch_num in range(NUM_BATCHES):
-        print(f"Batch {batch_num + 1}/{NUM_BATCHES}...")
-        try:
-            model_output = base_prompt_inference(BATCH_SIZE, topics[topic_counter])
-            formatted_prompts = parse_model_output_as_bp_objects(
-                model_output, offset=bp_idx_counter
-            )
-            write_to_db(formatted_prompts, bp_db)
-            bp_idx_counter += len(formatted_prompts)
-            topic_counter += 1
-        except Exception as e:
-            print(f"Batch {batch_num + 1} failed: {e}")
-            continue
-
-    bp_db.close_connection()
-    print(f"All base prompts written to DB: {bp_idx_counter} prompts total.")
+    #formatted_base_prompts = [(1, 'testing1'), (2, 'testing2'), (3, 'tesingt3'), (4, 'test4'), (5, 'test5')]
+    
+    # writes the base prompts to the SQLite database
+    write_to_db(formatted_topics, topic_db)
+    # closes the connection to the database
+    topic_db.close_connection()
+    print("Prompt topics generated and written to SQLite database.")
 
 
 if __name__ == "__main__":
