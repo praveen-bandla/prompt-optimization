@@ -13,7 +13,7 @@ The project is organized into several directories and files to help maintain mod
 ``` NB: A lot of this is due to change. Think of it as a working directory``` 
 
 ```md
-/synthetic_prompt_optimization
+/prompt-optimization
 │── model_input/
 │   ├── base_prompt_input.txt
 │   ├── prompt_variation_input.txt
@@ -26,7 +26,7 @@ The project is organized into several directories and files to help maintain mod
 │   ├── root_paths.py
 │   ├── data_size_configs.py
 │   ├── settings.yaml
-│   ├── model_configs
+│   ├── model_configs/
 │       ├── base_prompt_config.yaml
 │       ├── prompt_variation_config.yaml
 │       ├── main_model_config.yaml
@@ -55,7 +55,7 @@ The project is organized into several directories and files to help maintain mod
 │   │   ├── val_model_3/
 │   ├── prompt_optimization_model/
 │── src/
-│   ├──  utils/
+│   ├── utils/
 │   │   ├── model_loader.py
 │   │   ├── data_handler.py
 │   │   ├── metrics.py
@@ -70,6 +70,7 @@ The project is organized into several directories and files to help maintain mod
 │   │   ├── train_prompt_optimization.py
 │   │   ├── fine_tune_main_model.py
 │   │   ├── test_framework.py
+│   │   ├── download_models.py
 │── results/
 │   ├── logs/
 │   ├── evaluations/

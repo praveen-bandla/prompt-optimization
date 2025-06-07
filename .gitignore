@@ -13,4 +13,9 @@ src/utils/__pycache__/__init__.cpython-312.pyc
 src/utils/__pycache__/data_handler.cpython-312.pyc
 src/utils/__pycache__/prompt.cpython-312.pyc
 venv/
-get-pip.py"
+#get-pip.py
+models/lora_prompt_gen
+models/lora_regression_head
+models/lora_prompt_gen_best_trial
+models/prompt_opt_base
+models/prompt_gen_base

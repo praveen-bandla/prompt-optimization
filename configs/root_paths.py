@@ -54,3 +54,21 @@ MAIN_MODEL_INPUT = os.path.join(MODEL_INPUT_PATH, 'main_model_input.json')
 MAIN_MODEL_CONFIGS = os.path.join(MODEL_CONFIGS, 'main_model_config.yaml')
 MAIN_MODEL = os.path.join(MODELS_PATH, 'microsoft-Phi-3.5-mini-instruct/')   
 MAIN_MODEL_ID = "microsoft/Phi-3.5-mini-instruct"
+
+# prompt optimizer related paths
+REGRESSION_HEAD_BASE_MODEL_ID = 'meta-llama/Llama-3.2-1B'
+REGRESSION_HEAD_BASE_PATH = os.path.join(MODELS_PATH, 'prompt_opt_base')
+PROMPT_GEN_BASE_MODEL_ID = 'meta-llama/Llama-3.2-1B-Instruct'
+PROMPT_GEN_BASE_PATH = os.path.join(MODELS_PATH, 'prompt_gen_base')
+LORA_PROMPT_GEN_PATH = os.path.join(MODELS_PATH, 'lora_prompt_gen')
+LORA_REGRESSION_HEAD_PATH = os.path.join(MODELS_PATH, 'lora_regression_head')
+REGRESSION_HEAD_CONFIG_PATH = os.path.join(MODEL_CONFIGS, 'regression_head.yaml')
+BEST_LORA_REGRESSION_HEAD_PATH = os.path.join(MODELS_PATH, 'lora_regression_head_best_trial')
+BEST_LORA_PROMPT_GEN_PATH = os.path.join(MODELS_PATH, 'lora_prompt_gen_best_trial')
+PROMPT_GENERATOR_MODEL_INPUT = os.path.join(MODEL_INPUT_PATH, 'prompt_optimizer_input.json')
+SAVE_PATH = f"{LORA_REGRESSION_HEAD_PATH}_best_trial"
+REGRESSION_HEAD_PATH = os.path.join(SAVE_PATH, 'regression_head.pth')
+
+VALIDATION_TEST_SCORES = os.path.join(DATA_PATH, 'validation_test_scores')
+
+ANALYSIS_PATH = os.path.join(ROOT_PATH, 'analysis_data')

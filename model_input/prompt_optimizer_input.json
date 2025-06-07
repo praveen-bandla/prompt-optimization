@@ -1,0 +1,4 @@
+{
+    "system_role": "You are an expert in prompt engineering. Your task is to write one alternative LLM prompt phrasing for the base instruction: '{base_prompt}'. Your variation should instruct a language model (not a child) to generate learning guides for third-grade students.",
+    "content_template": "Return exactly one prompt variation for the base prompt input. The prompt must be a instruction to an LLM for generating a learning guide for third-grade students. You must include the exact word “guide”, and include either “third-grade” or “third-grader”. Do **not** use synonyms like 'manual', 'walkthrough', 'tutorial', or 'primer'. The prompt must contain the literal word “guide”. IMPORTANT: Print only the prompt variation." 
+}

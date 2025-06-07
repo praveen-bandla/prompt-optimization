@@ -5,7 +5,10 @@ import os
 import pandas as pd
 import sqlite3
 from configs.root_paths import *
+import yaml
 from configs.data_size_configs import *
+import torch
+import numpy as np
 #NUM_RUBRIC_SECTIONS
 #from prompt import ValidationScore
 
@@ -202,6 +205,25 @@ class BasePromptDB:
         cursor.execute('SELECT base_prompt_string FROM base_prompts WHERE bp_idx = ?', (bp_idx,))
         result = cursor.fetchone()
         return result[0] if result else None
+
+    def fetch_list_of_prompts(self, bp_idx_list):
+        '''
+        Fetches a list of prompts from the database by a list of bp_idx.
+
+        Args:
+            - bp_idx_list (list of int): A list of bp_idx.
+
+        Returns:
+            - list of str: A list of prompt strings.
+        '''
+        cursor = self.conn.cursor()
+        placeholders = ','.join(['?'] * len(bp_idx_list))
+        query = f'SELECT base_prompt_string FROM base_prompts WHERE bp_idx IN ({placeholders})'
+        cursor.execute(query, bp_idx_list)
+        results = cursor.fetchall()
+
+        return [result[0] for result in results]
+        
 
     def close_connection(self):
         '''
@@ -503,6 +525,17 @@ class ValidationScoreParquet:
         df = self._access_parquet()
         return df
 
+    def fetch_all_agg_validation_scores(self):
+        '''
+        Fetches the aggregated validation scores for the base prompt. Returns the total score for each prompt variation.
+
+        Returns:
+            - pd.Series: A Series containing the total score for each prompt variation.
+
+        '''
+        df = self._access_parquet()
+        return list(df['total_score'])
+
     def fetch_base_prompt_str(self):
         '''
         Returns the base prompt string associated with the bp_idx.
@@ -737,3 +770,263 @@ class ModelOutputParquet:
         '''
         self.delete_parquet()
         self._initialize_parquet()
+
+
+class RegressionHeadDataset(torch.utils.data.Dataset):
+    '''
+    This class will be used to load and manage the dataset used for training the regression head. It will load all the prompt variations (including the base prompt) and their respective validation scores from the Parquet file structure.
+    It will also shuffle the dataset and split it into training and validation sets.
+    It assumes that all prompt variations are to be loaded at the same time.
+    It is of type torch.utils.data.Dataset, so it can be used with DataLoader.
+    '''
+
+    def __init__(self, prompt_variations_path = PROMPT_VARIATIONS, validation_scores_path = VALIDATION_SCORES, regression_head_splits = REGRESSION_HEAD_CONFIG_PATH):
+        '''
+        Initializes the dataset with the path to the prompt variations and validation scores. Also creates the dataset and splits it into training, validation, and test sets. 
+        '''
+        self.prompt_variations_path = prompt_variations_path
+        self.validation_scores_path = validation_scores_path
+        self.regression_head_splits = regression_head_splits
+
+        with open(self.regression_head_splits, 'r') as f:
+            splits = yaml.safe_load(f)
+            self.train_indices = splits['train_indices']
+            self.test_indices = splits['test_indices']
+            self.val_indices = splits['val_indices']
+
+        # Load and merge the data
+        self.train_data, self.test_data, self.val_data = self._load_and_merge_data()
+
+        # Combine all data into a single DataFrame for indexing
+        # self.data = pd.concat(self.train_data + self.test_data + self.val_data, ignore_index=True)
+        self.data = self.train_data + self.test_data + self.val_data
+
+
+    def _load_and_merge_data(self):
+        '''
+        Loads the parquet files for prompt variations and validation scores, and uses the training splits to create the train, test, val splits.
+        '''
+        # # Retrieve the prompt variations and validation scores files
+        # prompt_variation_files = [os.path.join(self.prompt_variations_path, f) for f in os.listdir(self.prompt_variations_path) if f.endswith('.parquet')]
+        # validation_score_files = [os.path.join(self.validation_scores_path, f) for f in os.listdir(self.validation_scores_path) if f.endswith('.parquet')]
+
+        # # Sort the files by their numeric index extracted from the filenames
+        # prompt_variation_files.sort(key=lambda x: int(os.path.basename(x).split('_')[0]))
+        # validation_score_files.sort(key=lambda x: int(os.path.basename(x).split('_')[0]))
+
+        # # # For testing purposes, limit the number of files to 10
+        # # prompt_variation_files = prompt_variation_files[:10]
+        # # validation_score_files = validation_score_files[:10]
+
+        # train_data = []
+        # test_data = []
+        # val_data = []
+
+        # for pv_file, vs_file in zip(prompt_variation_files, validation_score_files):
+        #     # Load Parquet files
+        # Retrieve the prompt variations and validation scores files
+        prompt_variation_files = [os.path.join(self.prompt_variations_path, f) for f in os.listdir(self.prompt_variations_path) if f.endswith('.parquet')]
+        validation_score_files = [os.path.join(self.validation_scores_path, f) for f in os.listdir(self.validation_scores_path) if f.endswith('.parquet')]
+
+        # Extract numeric IDs from filenames and create dictionaries for matching
+        prompt_variation_dict = {int(os.path.basename(f).split('_')[0]): f for f in prompt_variation_files}
+        validation_score_dict = {int(os.path.basename(f).split('_')[0]): f for f in validation_score_files}
+
+        # Find common IDs between the two sets of files
+        common_ids = set(prompt_variation_dict.keys()).intersection(validation_score_dict.keys())
+
+        # Match files with the same ID
+        matched_files = [(prompt_variation_dict[id], validation_score_dict[id]) for id in sorted(common_ids)]
+
+        train_data = []
+        test_data = []
+        val_data = []
+
+        for pv_file, vs_file in matched_files:
+            prompt_variations = pd.read_parquet(pv_file)
+            validation_scores = pd.read_parquet(vs_file)
+
+            prompt_variations["bpv_idx"] = prompt_variations["bpv_idx"].apply(lambda x: tuple(x) if isinstance(x, (list, np.ndarray)) else x)
+            validation_scores["bpv_idx"] = validation_scores["bpv_idx"].apply(lambda x: tuple(x) if isinstance(x, (list, np.ndarray)) else x)
+
+            # Merge on bpv_idx
+            merged = pd.merge(prompt_variations, validation_scores, on="bpv_idx")
+
+            if merged.empty:
+                print(f"Warning: Merged DataFrame is empty for files {pv_file} and {vs_file}.")
+                print(f'length of prompt variations: {len(prompt_variations)}')
+                print(f'length of validation scores: {len(validation_scores)}')
+                continue
+
+            # Extract the prompt_variation_id from bpv_idx
+            merged['prompt_variation_id'] = merged['bpv_idx'].apply(lambda x: x[1])
+            base_prompt_str = merged.loc[merged['prompt_variation_id'] == -1, 'prompt_variation_string'].iloc[0]
+
+            # Assign the base prompt string to all rows in the 'base_prompt' column
+            merged['base_prompt'] = base_prompt_str
+
+            # Convert the merged DataFrame into a list of tuples
+            train_data.extend(
+                merged.loc[merged['prompt_variation_id'].isin(self.train_indices)][
+                    ['base_prompt', 'prompt_variation_string', 'total_score']
+                ].itertuples(index=False, name=None)
+            )
+            test_data.extend(
+                merged.loc[merged['prompt_variation_id'].isin(self.test_indices)][
+                    ['base_prompt', 'prompt_variation_string', 'total_score']
+                ].itertuples(index=False, name=None)
+            )
+            val_data.extend(
+                merged.loc[merged['prompt_variation_id'].isin(self.val_indices)][
+                    ['base_prompt', 'prompt_variation_string', 'total_score']
+                ].itertuples(index=False, name=None)
+            )
+
+        return train_data, test_data, val_data
+    
+    def get_data_split(self):
+        '''
+        Returns the train, test, and validation splits of the dataset.
+        '''
+        return self.train_data, self.test_data, self.val_data
+        
+        
+
+    # def _load_and_merge_data(self):
+    #     '''
+    #     Loads the parquet files for prompt variations and validation scores, and uses the training splits to create the train, test, val splits.
+    #     '''
+    #     # retrieve the prompt variations and validation scores files
+    #     prompt_variation_files = [os.path.join(self.prompt_variations_path, f) for f in os.listdir(self.prompt_variations_path) if f.endswith('.parquet')]
+    #     validation_score_files = [os.path.join(self.validation_scores_path, f) for f in os.listdir(self.validation_scores_path) if f.endswith('.parquet')]
+
+    #     # Sort the files by their numeric index extracted from the filenames
+    #     prompt_variation_files.sort(key=lambda x: int(os.path.basename(x).split('_')[0]))
+    #     validation_score_files.sort(key=lambda x: int(os.path.basename(x).split('_')[0]))
+
+    #     # for each pair of prompt variations and validation scores files, load the data and merge them per split
+
+    #     train_data = []
+    #     test_data = []
+    #     val_data = []
+
+    #     for pv_file, vs_file in zip(prompt_variation_files, validation_score_files):
+    #         # Load Parquet files
+    #         prompt_variations = pd.read_parquet(pv_file)
+    #         validation_scores = pd.read_parquet(vs_file)
+
+    #         prompt_variations["bpv_idx"] = prompt_variations["bpv_idx"].apply(lambda x: tuple(x) if isinstance(x, (list, np.ndarray)) else x)
+    #         validation_scores["bpv_idx"] = validation_scores["bpv_idx"].apply(lambda x: tuple(x) if isinstance(x, (list, np.ndarray)) else x)
+
+    #         # print(prompt_variations["bpv_idx"].head())
+    #         # print(type(prompt_variations["bpv_idx"].iloc[0]))
+
+    #         # print(validation_scores["bpv_idx"].head())
+    #         # print(type(validation_scores["bpv_idx"].iloc[0]))
+
+    #         # Merge on bpv_idx
+    #         merged = pd.merge(prompt_variations, validation_scores, on="bpv_idx")
+    #         # print(merged['bpv_idx'].values)
+
+    #         # Extract the prompt_variation_id from bpv_idx
+    #         merged['prompt_variation_id'] = merged['bpv_idx'].apply(lambda x: x[1])
+    #         # base_prompt_str = merged[merged['prompt_variation_id'] == -1]['prompt_variation_string']
+    #         # print(base_prompt_str)
+    #         # merged['base_prompt'] = base_prompt_str
+    #         base_prompt_str = merged.loc[merged['prompt_variation_id'] == -1, 'prompt_variation_string'].iloc[0]
+
+    #         # Assign the base prompt string to all rows in the 'base_prompt' column
+    #         merged['base_prompt'] = base_prompt_str
+
+    #         # Filter the data based on train, test, and val indices
+    #         train_data.append(merged.loc[merged['prompt_variation_id'].isin(self.train_indices)])
+    #         test_data.append(merged.loc[merged['prompt_variation_id'].isin(self.test_indices)])
+    #         val_data.append(merged.loc[merged['prompt_variation_id'].isin(self.val_indices)])
+        
+    #     return train_data, test_data, val_data
+
+
+    def get_subset(self, split):
+        '''
+        Returns a subset of the dataset (train, test, or validation).
+
+        Args:
+            split (str): The subset to return ('train', 'test', or 'val').
+
+        Returns:
+            RegressionHeadDatasetSubset: A subset of the dataset.
+        '''
+        if split == "train":
+            indices = self.train_indices
+        elif split == "test":
+            indices = self.test_indices
+        elif split == "val":
+            indices = self.val_indices
+        else:
+            raise ValueError(f"Invalid split: {split}. Must be 'train', 'test', or 'val'.")
+
+        return RegressionHeadDatasetSubset(self.data, indices)
+    
+    def __len__(self):
+        '''
+        Returns the total number of samples in the dataset.
+        '''
+        return len(self.data)
+
+    def __getitem__(self, idx):
+        '''
+        Returns a single data sample for the given index.
+
+        Args:
+            idx (int): The index of the sample to retrieve.
+
+        Returns:
+            dict: A dictionary containing the base prompt, prompt variation, and total score.
+        '''
+        row = self.data.iloc[idx]
+        return {
+            "base_prompt": row["base_prompt"],
+            "prompt_variation": row["prompt_variation_string"],
+            "total_score": row["total_score"]
+        }
+    
+class RegressionHeadDatasetSubset(torch.utils.data.Dataset):
+    '''
+    A subset of the RegressionHeadDataset (train, test, or validation).
+    '''
+
+    def __init__(self, full_data, indices):
+        '''
+        Args:
+            full_data (pd.DataFrame): The full dataset loaded by the master class.
+            indices (list): Indices for the subset.
+        '''
+        self.data = full_data.loc[indices]
+
+    def __len__(self):
+        return len(self.data)
+
+    def __getitem__(self, idx):
+        row = self.data.iloc[idx]
+        return {
+            "base_prompt": row["base_prompt"],
+            "prompt_variation": row["prompt_variation_string"],
+            "total_score": row["total_score"]
+        }
+
+# if __name__ == "__main__":
+#     dataset = RegressionHeadDataset()
+#     train = dataset.train_data
+#     test = dataset.test_data
+#     val = dataset.val_data
+
+#     print("Train Data:", train)
+#     print("Test Data:", test)
+#     print("Validation Data:", val)
+
+
+if __name__ == "__main__":
+    bp_db = BasePromptDB()
+    test_indices = [0, 1, 2]
+    test_results = bp_db.fetch_list_of_prompts(test_indices)
+    print("Test Results:", test_results)
