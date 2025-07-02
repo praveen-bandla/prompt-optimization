@@ -299,6 +299,9 @@ def parse_model_output_as_bp_objects(model_output, offset=0):
     '''
     base_prompts = json.loads(model_output)
 
+    if NUM_BASE_PROMPTS > len(base_prompts):
+        raise ValueError(f"NUM_BASE_PROMPTS ({NUM_BASE_PROMPTS}) exceeds the number of generated prompts ({len(base_prompts)}).")
+
     # creating random order of prompts stored as int indices
     random_indices = random.sample(range(len(base_prompts)), len(base_prompts))
 
