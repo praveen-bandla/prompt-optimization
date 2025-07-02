@@ -1,3 +1,0 @@
-2025-04-03 18:38:55.873 [info] Log level: Info
-2025-04-03 18:38:56.230 [warning] [GitHubBranchProtectionProvider][updateRepositoryBranchProtection] Failed to update repository branch protection: No GitHub authentication session available.
-2025-04-03 18:39:08.516 [warning] [GitHubSourceControlHistoryItemDetailsProvider][_loadAssignableUsers] Failed to load assignable user(s) for praveen-bandla/prompt-optimization: Error: No GitHub authentication session available.

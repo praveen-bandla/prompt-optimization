@@ -1,3 +1,0 @@
-#!/bin/sh
-unset NODE_OPTIONS
-ELECTRON_RUN_AS_NODE=1 "/teamspace/studios/this_studio/.vscode-server/cli/servers/Stable-ddc367ed5c8936efe395cffeec279b04ffd7db78/server/node" "/teamspace/studios/this_studio/.vscode-server/data/User/globalStorage/github.copilot-chat/debugCommand/copilotDebugCommand.js" "vscode://github.copilot-chat" "code --openExternal " "$@"
