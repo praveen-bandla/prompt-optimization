@@ -19,7 +19,7 @@ models/lora_regression_head
 models/lora_prompt_gen_best_trial
 models/prompt_opt_base
 models/prompt_gen_base
-.vscode_server/
+.vscode-server/
 .config
 .idea/
 .keras/
