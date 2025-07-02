@@ -14,3 +14,10 @@ src/utils/__pycache__/data_handler.cpython-312.pyc
 src/utils/__pycache__/prompt.cpython-312.pyc
 venv/
 .vscode_server/
+.config
+.idea/
+.keras/
+.lightning_studio/
+.cache/Microsoft/DeveloperTools/
+.dotnet/corefx/cryptography/crls/
+.local/share/code-server/
